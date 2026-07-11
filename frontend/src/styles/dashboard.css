@@ -1,0 +1,384 @@
+/* Dashboard Page Specific Styles */
+
+.dashboard-container {
+  background: radial-gradient(ellipse at top left, #021a0d 0%, #010a05 45%, #000000 100%) !important;
+  min-height: 100vh;
+  color: #fff;
+}
+
+.dashboard-nav {
+  position: sticky;
+  top: 0;
+  z-index: 90;
+  margin: 0.5rem 1rem;
+  padding: 0.8rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 12px;
+}
+
+.dashboard-nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dashboard-nav-logo-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: #00ff88;
+  box-shadow: 0 0 10px #00ff88;
+}
+
+.dashboard-nav-logo-text {
+  font-weight: 800;
+  font-size: 1.1rem;
+  letter-spacing: 1px;
+}
+
+.dashboard-nav-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.dashboard-nav-btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+}
+
+.dashboard-nav-btn-exit {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+}
+
+/* Main Layout Grid */
+.dashboard-grid-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  padding: 1.5rem;
+  max-width: 1280px;
+  margin: auto;
+}
+
+@media (min-width: 768px) {
+  .dashboard-grid-layout {
+    grid-template-columns: 280px 1fr;
+  }
+}
+
+/* Sidebar panel */
+.dashboard-sidebar {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  height: fit-content;
+}
+
+.dashboard-sidebar-profile {
+  text-align: center;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  margin-bottom: 1rem;
+}
+
+.dashboard-sidebar-avatar-wrap {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin: auto;
+  border: 2px solid var(--accent-green);
+  margin-bottom: 0.5rem;
+}
+
+.dashboard-sidebar-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.dashboard-sidebar-username {
+  font-weight: 700;
+}
+
+.dashboard-sidebar-role {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.dashboard-sidebar-btn {
+  justify-content: flex-start;
+  width: 100%;
+  padding: 0.8rem 1rem;
+}
+
+.dashboard-sidebar-btn svg {
+  margin-right: 0.2rem;
+}
+
+/* Content Area */
+.dashboard-content-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.dashboard-status-banner-success {
+  padding: 0.8rem 1.2rem;
+  background: rgba(0, 255, 136, 0.1);
+  border: 1px solid var(--accent-green);
+  border-radius: 8px;
+  color: var(--accent-green);
+  font-weight: 600;
+}
+
+.dashboard-status-banner-error {
+  padding: 0.8rem 1.2rem;
+  background: rgba(255, 82, 82, 0.1);
+  border: 1px solid #ff5252;
+  border-radius: 8px;
+  color: #ff5252;
+  font-weight: 600;
+}
+
+/* Tab contents */
+.dashboard-tab-panel {
+  padding: 2rem;
+}
+
+.dashboard-tab-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  padding-bottom: 0.5rem;
+}
+
+/* Upload Cards Grid */
+.dashboard-uploads-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  margin-bottom: 2.5rem;
+}
+
+@media (min-width: 768px) {
+  .dashboard-uploads-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.dashboard-upload-card {
+  text-align: center;
+}
+
+.dashboard-upload-card-title {
+  margin-bottom: 1rem;
+  font-size: 0.95rem;
+}
+
+.dashboard-upload-card-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  flex-direction: column;
+}
+
+.dashboard-upload-label {
+  cursor: pointer;
+}
+
+.dashboard-upload-filename {
+  font-size: 0.8rem;
+  color: var(--accent-green);
+}
+
+.dashboard-upload-btn-submit {
+  padding: 0.4rem 1rem;
+  font-size: 0.85rem;
+}
+
+/* OTP verification box */
+.dashboard-verification-card {
+  margin-bottom: 2.5rem;
+  border: 1px dashed var(--glass-border) !important;
+  transition: var(--transition-smooth) !important;
+}
+
+.dashboard-verification-card:hover {
+  border-color: var(--accent-green) !important;
+}
+
+/* Circular Checkbox styling */
+.circular-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--glass-border);
+  border-radius: 50% !important;
+  outline: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.03);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.circular-checkbox:checked {
+  background: var(--accent-green) !important;
+  border-color: var(--accent-green) !important;
+}
+
+.circular-checkbox:checked::after {
+  content: '✓';
+  color: #000000;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.circular-checkbox:hover {
+  border-color: var(--accent-green);
+}
+
+.dashboard-verification-title {
+  font-size: 1.1rem;
+  color: var(--accent-green);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.dashboard-verification-desc {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+.dashboard-verification-methods-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.dashboard-verification-method-box {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.dashboard-verification-input-wrap {
+  flex: 1;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.dashboard-verification-input-label {
+  font-size: 0.85rem;
+}
+
+/* Active OTP Form */
+.dashboard-active-otp-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+  background: rgba(0,0,0,0.3);
+  border-radius: 8px;
+}
+
+.dashboard-active-otp-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dashboard-active-otp-title {
+  font-weight: 600;
+  color: var(--accent-green);
+}
+
+.dashboard-active-otp-close-btn {
+  background: none;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+}
+
+.dashboard-active-otp-inputs-row {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.dashboard-active-otp-field {
+  text-align: center;
+  letter-spacing: 4px;
+  font-size: 1.1rem;
+  flex: 1;
+}
+
+/* Form profiles details */
+.dashboard-profile-details-title {
+  font-size: 1.1rem;
+  color: #fff;
+  margin-bottom: 0.5rem;
+}
+
+.dashboard-form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.dashboard-form-input-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.dashboard-form-input-label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.dashboard-profile-socials-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.dashboard-toast-alert {
+  position: fixed;
+  top: 90px;
+  right: 24px;
+  z-index: 99999;
+  max-width: 350px;
+  width: 90%;
+  animation: fadeIn 0.3s ease;
+  transition: all 0.3s ease;
+}
+
+@media (max-width: 768px) {
+  .dashboard-toast-alert {
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
+    top: 20px !important;
+    max-width: 90% !important;
+  }
+}

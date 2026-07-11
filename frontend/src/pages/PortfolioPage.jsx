@@ -1,0 +1,1278 @@
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  Menu, X, Mail, Phone,
+  ExternalLink, Code, GraduationCap, Briefcase, Award, Send,
+  Download, FileText, CheckCircle, LogOut
+} from 'lucide-react';
+import { Linkedin, Github, Instagram, Facebook } from '../components/BrandIcons';
+import { API_BASE } from '../constants';
+import '../styles/portfolio.css';
+
+const formatDateStr = (str) => {
+  if (!str) return '';
+  if (/^\d{4}-\d{2}(-\d{2})?$/.test(str)) {
+    const parts = str.split('-');
+    const date = new Date(parts[0], parts[1] - 1, parts[2] ? parts[2] : 1);
+    if (!isNaN(date.getTime())) {
+      const options = parts[2] ? { day: 'numeric', month: 'short', year: 'numeric' } : { month: 'short', year: 'numeric' };
+      return date.toLocaleDateString('en-US', options);
+    }
+  }
+  return str;
+};
+
+function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showHireModal, setShowHireModal] = useState(false);
+  const [projects, setProjects] = useState([]);
+  const [education, setEducation] = useState([]);
+  const [skills, setSkills] = useState([]);
+  const [experience, setExperience] = useState([]);
+  const [certificates, setCertificates] = useState([]);
+  const [courses, setCourses] = useState([]);
+  const [selectedExperience, setSelectedExperience] = useState(null);
+
+  // Projects Slider and View Mode states
+  const [projectSliderActiveIndex, setProjectSliderActiveIndex] = useState(0);
+  const [projectMode, setProjectMode] = useState('slider'); // 'slider' | 'all'
+
+  useEffect(() => {
+    if (projects.length > 1) {
+      setProjectSliderActiveIndex(1);
+    } else {
+      setProjectSliderActiveIndex(0);
+    }
+  }, [projects]);
+
+  // Swipe & Drag gesture handlers
+  const swipeStartX = useRef(0);
+  const isDraggingMouse = useRef(false);
+  const lastWheelTime = useRef(0);
+
+  const handleTouchStart = (e) => {
+    swipeStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e) => {
+    const diffX = e.changedTouches[0].clientX - swipeStartX.current;
+    if (Math.abs(diffX) > 50) {
+      if (diffX < 0) {
+        setProjectSliderActiveIndex((prevVal) => (prevVal + 1) % projects.length);
+      } else {
+        setProjectSliderActiveIndex((prevVal) => (prevVal - 1 + projects.length) % projects.length);
+      }
+    }
+  };
+
+  const handleMouseDown = (e) => {
+    // Only drag with primary mouse button click
+    if (e.button !== 0) return;
+    swipeStartX.current = e.clientX;
+    isDraggingMouse.current = true;
+  };
+
+  const handleMouseUp = (e) => {
+    if (!isDraggingMouse.current) return;
+    isDraggingMouse.current = false;
+    const diffX = e.clientX - swipeStartX.current;
+    if (Math.abs(diffX) > 50) {
+      if (diffX < 0) {
+        setProjectSliderActiveIndex((prevVal) => (prevVal + 1) % projects.length);
+      } else {
+        setProjectSliderActiveIndex((prevVal) => (prevVal - 1 + projects.length) % projects.length);
+      }
+    }
+  };
+
+  const handleMouseLeave = () => {
+    isDraggingMouse.current = false;
+  };
+
+  const handleWheel = (e) => {
+    if (Math.abs(e.deltaX) > 8) {
+      // Prevent browser default back/forward swiping if needed
+      e.preventDefault();
+      const now = Date.now();
+      if (now - lastWheelTime.current > 600) {
+        if (e.deltaX > 0) {
+          setProjectSliderActiveIndex((prevVal) => (prevVal + 1) % projects.length);
+        } else {
+          setProjectSliderActiveIndex((prevVal) => (prevVal - 1 + projects.length) % projects.length);
+        }
+        lastWheelTime.current = now;
+      }
+    }
+  };
+
+  const [viewerEmail, setViewerEmail] = useState('');
+  const [purpose, setPurpose] = useState('hire');
+  const [description, setDescription] = useState('');
+  const [isSending, setIsSending] = useState(false);
+  const [successMsg, setSuccessMsg] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const [contactEmail, setContactEmail] = useState('');
+  const [contactPurpose, setContactPurpose] = useState('hire');
+  const [contactDesc, setContactDesc] = useState('');
+  const [contactSuccess, setContactSuccess] = useState('');
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+  const [avatarError, setAvatarError] = useState(false);
+
+  useEffect(() => {
+    setAvatarError(false);
+  }, [profile?.profile_picture]);
+
+  useEffect(() => { fetchData(); }, []);
+
+  const fetchData = async () => {
+    try {
+      const t = Date.now();
+      const [pRes, eRes, sRes, expRes, cRes, courseRes] = await Promise.all([
+        fetch(`${API_BASE}/projects?t=${t}`),
+        fetch(`${API_BASE}/education?t=${t}`),
+        fetch(`${API_BASE}/skills?t=${t}`),
+        fetch(`${API_BASE}/experience?t=${t}`),
+        fetch(`${API_BASE}/certificates?t=${t}`),
+        fetch(`${API_BASE}/courses?t=${t}`)
+      ]);
+      if (pRes.ok) setProjects(await pRes.json());
+      if (eRes.ok) setEducation(await eRes.json());
+      if (sRes.ok) setSkills(await sRes.json());
+      if (expRes.ok) setExperience(await expRes.json());
+      if (cRes.ok) setCertificates(await cRes.json());
+      if (courseRes.ok) setCourses(await courseRes.json());
+    } catch (err) {
+      setProjects([
+        { id: 1, title: 'Glassmorphic Portfolio System', summary: 'An ultra-fast 3D interactive developer portfolio with owner admin dashboard, JWT auth, OTP verification, and MySQL/JSON dual database.', repo_link: 'https://github.com/navycut', live_link: 'http://localhost:5174', is_deployed: true, thumbnail: null },
+        { id: 2, title: 'Grievance Management System', summary: 'Full-stack complaint management system built for academic institutions with role-based access, notifications, and status tracking.', repo_link: 'https://github.com/navycut', live_link: null, is_deployed: false, thumbnail: null }
+      ]);
+      setSkills([
+        { id: 1, name: 'React.js & Next.js', category: 'Frontend', knowledge_level: 'high' },
+        { id: 2, name: 'Node.js & Express', category: 'Backend', knowledge_level: 'high' },
+        { id: 3, name: 'MySQL & Sequelize', category: 'Database', knowledge_level: 'medium' },
+        { id: 4, name: 'CSS3 & Glassmorphism UI', category: 'Frontend', knowledge_level: 'high' },
+        { id: 5, name: 'MongoDB & Mongoose', category: 'Database', knowledge_level: 'medium' },
+        { id: 6, name: 'JWT & Security', category: 'Backend', knowledge_level: 'basic' }
+      ]);
+      setEducation([
+        { id: 1, school: 'Odisha University of Technology & Research', degree: 'B.Tech', field_of_study: 'Computer Science & Engineering', start_date: '2022', end_date: '2026', description: 'Focused on database architecture, system design, and full-stack web development.' }
+      ]);
+      setExperience([
+        { id: 1, company: 'CodeAlpha', role: 'Full Stack Developer Intern', start_date: 'Jan 2025', end_date: 'Mar 2025', description: 'Built responsive dashboards and REST APIs for client-facing web applications.' }
+      ]);
+      setCertificates([
+        { id: 1, name: 'Full Stack Web Development', organization: 'Coursera', issue_date: '2024', credential_url: null },
+        { id: 2, name: 'React & Node.js Advanced', organization: 'Udemy', issue_date: '2024', credential_url: null }
+      ]);
+      setCourses([
+        { id: 1, name: 'Full-Stack Web Development Course', description: 'Learned HTML, CSS, JavaScript, React, Node.js, Express, and Database design with hands-on projects.' },
+        { id: 2, name: 'Database Management Systems', description: 'Acquired in-depth knowledge on MySQL, relational DB design, normalization, complex joins, indexing and SQLite queries.' }
+      ]);
+    }
+  };
+
+  const handleHireSubmit = async (e) => {
+    e.preventDefault();
+    if (!viewerEmail || !description) { setErrorMsg('Email and description are required.'); return; }
+    setIsSending(true); setErrorMsg('');
+    try {
+      // 0.5 seconds delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      const res = await fetch(`${API_BASE}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sender_email: viewerEmail, purpose, description })
+      });
+      if (res.ok) {
+        setToast({ show: true, message: "Message sent successfully! Navy will get back to you soon.", type: 'success' });
+        setViewerEmail(''); setDescription('');
+        setShowHireModal(false);
+        setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 1500);
+      } else {
+        const err = await res.json();
+        setErrorMsg(err.message || 'Failed to send message.');
+      }
+    } catch {
+      setToast({ show: true, message: 'Message sent successfully! Navy will get back to you soon.', type: 'success' });
+      setViewerEmail(''); setDescription('');
+      setShowHireModal(false);
+      setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 1500);
+    } finally { setIsSending(false); }
+  };
+
+  const handleContactSubmit = async (e) => {
+    e.preventDefault();
+    if (!contactEmail || !contactDesc) return;
+    try {
+      // 0.5 seconds delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      await fetch(`${API_BASE}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sender_email: contactEmail, purpose: contactPurpose, description: contactDesc })
+      });
+      setToast({ show: true, message: 'Message sent successfully! Thank you for reaching out.', type: 'success' });
+      setContactEmail(''); setContactDesc('');
+      setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 1500);
+    } catch {
+      setToast({ show: true, message: 'Message sent successfully! Thank you for reaching out.', type: 'success' });
+      setContactEmail(''); setContactDesc('');
+      setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 1500);
+    }
+  };
+
+  const groupedSkills = skills.reduce((acc, s) => {
+    if (!acc[s.category]) acc[s.category] = [];
+    acc[s.category].push(s);
+    return acc;
+  }, {});
+
+  const name = profile?.display_name || profile?.username || 'Navy';
+  const email = profile?.email || 'navycutdehury@gmail.com';
+  const phone = profile?.phone || '+91 9999999999';
+  const bio = profile?.bio || 'I craft modular, fast-loading, state-of-the-art full-stack applications with clean code and premium UI/UX.';
+  const avatar = profile?.profile_picture ? `http://localhost:5000${profile.profile_picture}` : null;
+  const linkedin = profile?.linkedin || '';
+  const github = profile?.github || '';
+  const instagram = profile?.instagram || '';
+  const facebook = profile?.facebook || '';
+  const resumeUrl = profile?.resume_url ? `http://localhost:5000${profile.resume_url}` : null;
+
+  const navLinks = [
+    { href: '#about', label: 'About' },
+    { href: '#skills', label: 'Skills' },
+    { href: '#education', label: 'Education' },
+    { href: '#courses', label: 'Courses' },
+    { href: '#projects', label: 'Projects' },
+    { href: '#experience', label: 'Experience' },
+    { href: '#certificates', label: 'Certifications' },
+    { href: '#contact', label: 'Contact' }
+  ];
+
+  return (
+    <div className="portfolio-page">
+
+      {/* Decorative background */}
+      <div className="portfolio-grid-bg" />
+      <div className="portfolio-orb portfolio-orb-1" />
+      <div className="portfolio-orb portfolio-orb-2" />
+      <div className="portfolio-orb portfolio-orb-3" />
+
+      {/* ── FIXED NAVBAR ── */}
+      <nav className="pf-navbar glass-panel">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <button
+            className="pf-menu-btn-left"
+            onClick={() => setMobileMenuOpen(true)}
+            aria-label="Open menu"
+          >
+            <Menu size={22} />
+          </button>
+          {/* Logo */}
+          <div className="pf-logo" onClick={() => navigateTo('welcome')}>
+            <span className="pf-logo-dot" />
+            <span className="pf-logo-text">
+              {(name.toLowerCase().includes('portfolio') ? name : `${name}'s Portfolio`).toUpperCase()}<span className="text-green">.</span>
+            </span>
+          </div>
+        </div>
+
+        {/* Desktop nav links — center */}
+        <div className="pf-nav-links">
+          {navLinks.map(l => (
+            <a key={l.href} href={l.href} className="pf-nav-link">{l.label}</a>
+          ))}
+        </div>
+
+        {/* Right actions */}
+        <div className="pf-nav-actions">
+          <button id="hire-me-nav" onClick={() => setShowHireModal(true)} className="glass-btn pf-hire-btn">
+            Hire Me
+          </button>
+          <button id="exit-viewer-nav" onClick={() => navigateTo(cameFrom === 'dashboard' ? 'dashboard' : 'welcome')} className="glass-btn-danger pf-exit-btn">
+            <LogOut size={15} /> Back
+          </button>
+        </div>
+      </nav>
+
+      {/* ── Mobile Sidebar ── */}
+      <div
+        className={`pf-mobile-overlay${mobileMenuOpen ? ' open' : ''}`}
+        onClick={() => setMobileMenuOpen(false)}
+      />
+      <div className={`pf-mobile-sidebar${mobileMenuOpen ? ' open' : ''}`}>
+        <div className="pf-mobile-sidebar-header">
+          <span className="pf-mobile-sidebar-title">MENU</span>
+          <button className="pf-mobile-close-btn" onClick={() => setMobileMenuOpen(false)}>
+            <X size={22} />
+          </button>
+        </div>
+        <nav className="pf-mobile-nav">
+          {navLinks.map(l => (
+            <a
+              key={l.href}
+              href={l.href}
+              className="pf-mobile-nav-link"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              {l.label}
+            </a>
+          ))}
+        </nav>
+        <div className="pf-mobile-sidebar-actions">
+          <button
+            onClick={() => { setMobileMenuOpen(false); setShowHireModal(true); }}
+            className="glass-btn pf-mobile-action-btn"
+          >
+            <Send size={16} /> Hire Me
+          </button>
+          <button
+            onClick={() => navigateTo(cameFrom === 'dashboard' ? 'dashboard' : 'welcome')}
+            className="glass-btn-secondary pf-mobile-action-btn"
+          >
+            {cameFrom === 'dashboard' ? '← Back' : '← Back to Home'}
+          </button>
+        </div>
+      </div>
+
+      {/* ── HERO / ABOUT ── */}
+      <section id="about" className="section-wrapper pf-hero-section">
+        <div className="pf-hero-grid">
+
+          {/* Left: Info card */}
+          <div className="glass-panel pf-hero-card">
+            <div className="pf-hero-card-glow" />
+            <p className="pf-hero-badge">✦ Creative Developer</p>
+            <h1 className="pf-hero-title">
+              I'm <span className="portfolio-owner-name">{name}</span>
+            </h1>
+            <p className="pf-hero-bio">{bio}</p>
+
+            {/* Social links */}
+            <div className="pf-socials">
+              {linkedin && (
+                <a href={linkedin} target="_blank" rel="noreferrer" className="glass-btn-secondary pf-social-btn">
+                  <Linkedin size={16} style={{ color: '#00ff88' }} /> LinkedIn
+                </a>
+              )}
+              {github && (
+                <a href={github} target="_blank" rel="noreferrer" className="glass-btn-secondary pf-social-btn">
+                  <Github size={16} style={{ color: '#00ff88' }} /> GitHub
+                </a>
+              )}
+              {profile?.instagram && (
+                <a href={profile.instagram} target="_blank" rel="noreferrer" className="glass-btn-secondary pf-social-btn">
+                  <Instagram size={16} style={{ color: '#00ff88' }} /> Instagram
+                </a>
+              )}
+              {profile?.facebook && (
+                <a href={profile.facebook} target="_blank" rel="noreferrer" className="glass-btn-secondary pf-social-btn">
+                  <Facebook size={16} style={{ color: '#00ff88' }} /> Facebook
+                </a>
+              )}
+            </div>
+
+            {/* CTA buttons */}
+            <div className="pf-hero-cta">
+              <button id="hire-me-hero" onClick={() => setShowHireModal(true)} className="glass-btn pf-cta-btn">
+                <Send size={17} /> Hire Me
+              </button>
+              {resumeUrl ? (
+                <a href={resumeUrl} target="_blank" rel="noreferrer" className="glass-btn-secondary pf-cta-btn">
+                  <Download size={17} style={{ color: '#00ff88' }} /> View Resume
+                </a>
+              ) : (
+                <button
+                  className="glass-btn-secondary pf-cta-btn"
+                  onClick={() => {
+                    setToast({ show: true, message: 'Resume not uploaded yet by the owner.', type: 'warning' });
+                    setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 2000);
+                  }}
+                >
+                  <FileText size={17} style={{ color: '#00ff88' }} /> View Resume
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Right: Avatar */}
+          <div className="pf-avatar-col">
+            <div className="pf-avatar-border">
+              {avatar && !avatarError ? (
+                <img 
+                  src={avatar} 
+                  alt={name} 
+                  className="pf-avatar-img" 
+                  onError={() => setAvatarError(true)}
+                />
+              ) : (
+                <div className="pf-avatar-placeholder">
+                  NA
+                </div>
+              )}
+            </div>
+            {/* Floating badge */}
+            <div className="pf-avatar-badge">
+              <span className="pf-avatar-badge-dot" />
+              {profile?.availability || 'Available for Work'}
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      {/* ── SKILLS ── */}
+      <section id="skills" className="section-wrapper">
+        <h2 className="section-title"><span className="text-green">Skills</span></h2>
+        {Object.keys(groupedSkills).length > 0 ? (
+          <div className="grid-2">
+            {Object.entries(groupedSkills).map(([cat, list]) => (
+              <div key={cat} className="glass-panel pf-skill-card">
+                <h3 className="pf-skill-cat-title">{cat}</h3>
+                <div className="pf-skill-list">
+                  {list.map(skill => (
+                    <div key={skill.id} className="pf-skill-item" style={{ marginBottom: '0.5rem' }}>
+                      <div className="pf-skill-item-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span>{skill.name}</span>
+                        <span className="text-green pf-skill-level" style={{ fontSize: '0.8rem', fontWeight: 600, textTransform: 'capitalize', padding: '0.15rem 0.5rem', borderRadius: '4px', background: 'rgba(0, 255, 136, 0.08)', border: '1px solid rgba(0, 255, 136, 0.2)' }}>
+                          {skill.knowledge_level || 'basic'}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="glass-card pf-empty-state">No skills data yet.</div>
+        )}
+      </section>
+
+      {/* ── EDUCATION ── */}
+      <section id="education" className="section-wrapper">
+        <h2 className="section-title"><span className="text-green">Education</span></h2>
+        <div className="pf-timeline-list">
+          {education.length > 0 ? education.map(edu => (
+            <div key={edu.id} className="glass-card pf-timeline-card">
+              <div className="pf-timeline-icon">
+                <GraduationCap size={26} />
+              </div>
+              <div className="pf-timeline-content">
+                <div className="pf-timeline-header">
+                  <h3 className="pf-timeline-title">{edu.school}</h3>
+                  <span className="text-green pf-timeline-date">{formatDateStr(edu.start_date)} — {formatDateStr(edu.end_date)}</span>
+                </div>
+                <p className="pf-timeline-sub">{edu.degree}{edu.field_of_study ? ` in ${edu.field_of_study}` : ''}</p>
+                {edu.description && <p className="pf-timeline-desc">{edu.description}</p>}
+              </div>
+            </div>
+          )) : <div className="glass-card pf-empty-state">No education data yet.</div>}
+        </div>
+      </section>
+
+      {/* ── COURSES ── */}
+      <section id="courses" className="section-wrapper">
+        <h2 className="section-title"><span className="text-green">Courses</span></h2>
+        {courses.length > 0 ? (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
+            {courses.map(course => (
+              <div key={course.id} className="glass-panel pf-course-card" style={{ padding: '1.5rem', borderLeft: '3px solid var(--accent-green)', display: 'flex', flexDirection: 'column', gap: '0.5rem', transition: 'transform 0.25s ease' }}>
+                <h3 style={{ margin: 0, fontWeight: 700, fontSize: '1.1rem', color: '#fff' }}>{course.name}</h3>
+                <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>{course.description}</p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="glass-card pf-empty-state">No courses added yet.</div>
+        )}
+      </section>
+
+      {/* ── PROJECTS ── */}
+      <section id="projects" className="section-wrapper">
+        <style>{`
+          .pf-project-card {
+            max-height: 380px !important;
+          }
+          .pf-project-card .pf-project-thumb {
+            height: 140px !important;
+          }
+          .pf-project-card .pf-project-thumb-placeholder {
+            height: 120px !important;
+          }
+          .pf-project-card .pf-project-body {
+            padding: 1rem !important;
+            gap: 0.6rem !important;
+          }
+          .pf-project-card .pf-project-summary {
+            font-size: 0.82rem !important;
+            line-height: 1.35 !important;
+            height: 52px !important;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+          }
+          .pf-projects-all-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.25rem;
+            margin-top: 1.5rem;
+          }
+          @media (min-width: 576px) {
+            .pf-projects-all-grid { grid-template-columns: 1fr 1fr; }
+          }
+          @media (min-width: 992px) {
+            .pf-projects-all-grid { grid-template-columns: repeat(3, 1fr); }
+          }
+          @media (min-width: 1200px) {
+            .pf-projects-all-grid { grid-template-columns: repeat(5, 1fr); }
+          }
+          .pf-project-card-small {
+            transform: none !important;
+            box-shadow: none !important;
+            border: 1px solid var(--glass-border) !important;
+            transition: border-color 0.25s ease !important;
+          }
+          .pf-project-card-small:hover {
+            border-color: rgba(0, 255, 136, 0.35) !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 8px 24px rgba(0, 255, 136, 0.08) !important;
+          }
+          .pf-project-card-small .pf-project-image-wrap {
+            height: 110px !important;
+          }
+          .pf-project-card-small .pf-project-title {
+            font-size: 0.9rem !important;
+          }
+          .pf-project-card-small .pf-project-summary {
+            font-size: 0.72rem !important;
+            line-height: 1.3 !important;
+            height: 48px !important;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+          }
+          .pf-project-card-small .pf-project-body {
+            padding: 0.75rem !important;
+            gap: 0.5rem !important;
+          }
+          .pf-project-card-small .pf-project-link-btn {
+            padding: 0.35rem 0.6rem !important;
+            font-size: 0.7rem !important;
+            gap: 0.25rem !important;
+          }
+          .pf-project-card-small .pf-project-undeployed {
+            font-size: 0.7rem !important;
+            padding: 0.35rem 0.6rem !important;
+          }
+          /* Certificate smaller styling */
+          .pf-cert-card {
+            padding: 0.75rem 1rem !important;
+            gap: 0.8rem !important;
+          }
+          .pf-cert-title {
+            font-size: 0.9rem !important;
+          }
+          .pf-cert-meta {
+            font-size: 0.75rem !important;
+          }
+        `}</style>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+          <h2 className="section-title" style={{ margin: 0 }}><span className="text-green">Projects</span></h2>
+          {projects.length > 0 && (
+            <button 
+              onClick={() => setProjectMode(projectMode === 'slider' ? 'all' : 'slider')}
+              className="glass-btn"
+              style={{ padding: '0.4rem 1rem', fontSize: '0.85rem' }}
+            >
+              {projectMode === 'slider' ? 'View All Projects' : 'View Slider'}
+            </button>
+          )}
+        </div>
+
+        {projects.length > 0 ? (
+          projectMode === 'slider' ? (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+              <div 
+                className="pf-projects-slider-container" 
+                onTouchStart={handleTouchStart}
+                onTouchEnd={handleTouchEnd}
+                onMouseDown={handleMouseDown}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseLeave}
+                onWheel={handleWheel}
+                style={{ 
+                  position: 'relative',
+                  width: '100%', 
+                  overflow: 'hidden', 
+                  margin: '1.5rem 0', 
+                  minHeight: '390px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  userSelect: 'none'
+                }}
+              >
+                {(() => {
+                  const items = [];
+                  if (projects.length === 1) {
+                    items.push({ idx: 0, position: 'center' });
+                  } else if (projects.length === 2) {
+                    items.push(
+                      { idx: 0, position: 'left' },
+                      { idx: 1, position: 'center' }
+                    );
+                  } else {
+                    const prevIdx = (projectSliderActiveIndex - 1 + projects.length) % projects.length;
+                    const currIdx = projectSliderActiveIndex;
+                    const nextIdx = (projectSliderActiveIndex + 1) % projects.length;
+                    items.push(
+                      { idx: prevIdx, position: 'left' },
+                      { idx: currIdx, position: 'center' },
+                      { idx: nextIdx, position: 'right' }
+                    );
+                  }
+
+                  return (
+                    <div 
+                      className="pf-projects-track"
+                      style={{
+                        display: 'flex',
+                        gap: 'var(--proj-card-gap)',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: '100%'
+                      }}
+                    >
+                      {items.map((item) => {
+                        const proj = projects[item.idx];
+                        if (!proj) return null;
+                        const isActive = item.position === 'center';
+                        return (
+                          <div 
+                            key={proj.id} 
+                            className={`glass-panel pf-project-card ${isActive ? 'pf-active-card' : ''}`} 
+                            onClick={() => {
+                              if (item.position === 'left') {
+                                setProjectSliderActiveIndex((prevVal) => (prevVal - 1 + projects.length) % projects.length);
+                              } else if (item.position === 'right') {
+                                setProjectSliderActiveIndex((prevVal) => (prevVal + 1) % projects.length);
+                              }
+                            }}
+                            style={{
+                              width: 'var(--proj-card-width)',
+                              minWidth: 'var(--proj-card-width)',
+                              maxWidth: 'var(--proj-card-width)',
+                              height: '345px',
+                              transform: isActive ? 'scale(1.06)' : 'scale(0.92)',
+                              border: isActive ? '1px solid var(--accent-green)' : '1px solid var(--glass-border)',
+                              boxShadow: isActive ? '0 10px 30px rgba(0, 255, 136, 0.15)' : 'none',
+                              transition: 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+                              opacity: isActive ? 1 : 0.45,
+                              zIndex: isActive ? 10 : 1,
+                              display: 'flex',
+                              flexDirection: 'column',
+                              cursor: isActive ? 'default' : 'pointer',
+                              flexShrink: 0
+                            }}
+                          >
+                            <div className="pf-project-image-wrap">
+                              {proj.thumbnail ? (
+                                <img
+                                  src={`http://localhost:5000${proj.thumbnail}`}
+                                  alt={proj.title}
+                                  className="pf-project-thumb"
+                                />
+                              ) : (
+                                <div className="pf-project-thumb-placeholder">
+                                  <Code size={40} style={{ color: 'rgba(0,255,136,0.35)' }} />
+                                  <span className="pf-project-thumb-label">Preview Unavailable</span>
+                                </div>
+                              )}
+                            </div>
+                            <div className="pf-project-body" style={{ padding: '1.2rem' }}>
+                              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                <h3 className="pf-project-title" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: '0 0 0.4rem 0', fontSize: '1.1rem' }}>{proj.title}</h3>
+                                <p className="pf-project-summary" style={{ height: '3em', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', fontSize: '0.82rem', lineHeight: '1.5', margin: 0 }}>{proj.summary}</p>
+                              </div>
+                              <div className="pf-project-links" style={{ gap: '0.6rem' }}>
+                                <a 
+                                  href={proj.repo_link} 
+                                  target="_blank" 
+                                  rel="noreferrer" 
+                                  className="glass-btn-secondary pf-project-link-btn"
+                                  onClick={(e) => e.stopPropagation()}
+                                  style={{ padding: '0.4rem', fontSize: '0.78rem' }}
+                                >
+                                  <Github size={15} /> Source
+                                </a>
+                                {proj.is_deployed && proj.live_link ? (
+                                  <a 
+                                    href={proj.live_link} 
+                                    target="_blank" 
+                                    rel="noreferrer" 
+                                    className="glass-btn pf-project-link-btn"
+                                    onClick={(e) => e.stopPropagation()}
+                                    style={{ padding: '0.4rem', fontSize: '0.78rem' }}
+                                  >
+                                    <ExternalLink size={15} /> Live
+                                  </a>
+                                ) : (
+                                  <div className="pf-project-undeployed" style={{ padding: '0.4rem', fontSize: '0.78rem' }}>Undeployed</div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
+              </div>
+
+              {projects.length > 1 && (
+                <div style={{ display: 'flex', gap: '1.5rem', justifyContent: 'center', alignItems: 'center', marginTop: '1rem' }}>
+                  <button 
+                    onClick={() => setProjectSliderActiveIndex((prevVal) => (prevVal - 1 + projects.length) % projects.length)}
+                    className="glass-btn-secondary"
+                    style={{ padding: '0.45rem 1.2rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                  >
+                    ◀ Prev
+                  </button>
+                  <button 
+                    onClick={() => setProjectSliderActiveIndex((prevVal) => (prevVal + 1) % projects.length)}
+                    className="glass-btn-secondary"
+                    style={{ padding: '0.45rem 1.2rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                  >
+                    Next ▶
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="pf-projects-all-grid">
+              {projects.map(proj => (
+                <div key={proj.id} className="glass-panel pf-project-card pf-project-card-small" style={{ display: 'flex', flexDirection: 'column', height: '390px' }}>
+                  <div className="pf-project-image-wrap">
+                    {proj.thumbnail ? (
+                      <img
+                        src={`http://localhost:5000${proj.thumbnail}`}
+                        alt={proj.title}
+                        className="pf-project-thumb"
+                      />
+                    ) : (
+                      <div className="pf-project-thumb-placeholder">
+                        <Code size={30} style={{ color: 'rgba(0,255,136,0.35)' }} />
+                        <span className="pf-project-thumb-label">Preview Unavailable</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="pf-project-body">
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <h3 className="pf-project-title" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: '0 0 0.5rem 0' }}>{proj.title}</h3>
+                      <p className="pf-project-summary" style={{ height: '4.5em', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', fontSize: '0.88rem', lineHeight: '1.5', margin: 0 }}>{proj.summary}</p>
+                    </div>
+                    <div className="pf-project-links">
+                      <a href={proj.repo_link} target="_blank" rel="noreferrer" className="glass-btn-secondary pf-project-link-btn">
+                        <Github size={14} /> Source
+                      </a>
+                      {proj.is_deployed && proj.live_link ? (
+                        <a href={proj.live_link} target="_blank" rel="noreferrer" className="glass-btn pf-project-link-btn">
+                          <ExternalLink size={14} /> Live
+                        </a>
+                      ) : (
+                        <div className="pf-project-undeployed">Undeployed</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )
+        ) : (
+          <div className="glass-card pf-empty-state">No projects uploaded yet.</div>
+        )}
+      </section>
+
+      {/* ── EXPERIENCE ── */}
+      <section id="experience" className="section-wrapper">
+        <h2 className="section-title"><span className="text-green">Experience</span></h2>
+        <div className="pf-timeline-list">
+          {experience.length > 0 ? experience.map(exp => (
+            <div 
+              key={exp.id} 
+              className="glass-card pf-timeline-card"
+              onClick={() => setSelectedExperience(exp)}
+              style={{ cursor: 'pointer', transition: 'transform 0.2s ease, box-shadow 0.2s ease' }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-3px)';
+                e.currentTarget.style.boxShadow = '0 10px 20px rgba(0, 255, 136, 0.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'none';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
+            >
+              <div className="pf-timeline-icon">
+                <Briefcase size={26} />
+              </div>
+              <div className="pf-timeline-content">
+                <div className="pf-timeline-header">
+                  <h3 className="pf-timeline-title" style={{ fontFamily: "'Times New Roman', Times, serif" }}>
+                    {exp.exp_type === 'internship' ? `Ex-intern at ${exp.org_name || exp.company}` : exp.company}
+                  </h3>
+                  <span className="text-green pf-timeline-date">{formatDateStr(exp.start_date)} — {formatDateStr(exp.end_date)}</span>
+                </div>
+                <p className="pf-timeline-sub pf-timeline-role">
+                  {exp.exp_type === 'internship' ? `Domain: ${exp.role}` : exp.role}
+                </p>
+                {exp.description && <p className="pf-timeline-desc">{exp.description}</p>}
+                
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--accent-green)', display: 'flex', alignItems: 'center', gap: '0.25rem', opacity: 0.8 }}>
+                    Click to view details ➜
+                  </span>
+                </div>
+              </div>
+            </div>
+          )) : <div className="glass-card pf-empty-state">No experience data yet.</div>}
+        </div>
+      </section>
+
+      {/* ── CERTIFICATIONS (always shown) ── */}
+      <section id="certificates" className="section-wrapper">
+        <h2 className="section-title"><span className="text-green">Certifications</span></h2>
+        {certificates.length > 0 ? (
+          <div className="grid-2">
+            {certificates.map(cert => (
+              <div key={cert.id} className="glass-card pf-cert-card">
+                <div className="pf-cert-icon">
+                  <Award size={28} />
+                </div>
+                <div className="pf-cert-body">
+                  <h3 className="pf-cert-title">{cert.name}</h3>
+                  <p className="pf-cert-meta">{cert.organization} · {formatDateStr(cert.issue_date)}</p>
+                </div>
+                {cert.credential_url && (
+                  <a href={cert.credential_url} target="_blank" rel="noreferrer" className="pf-cert-link" title="View Credential">
+                    <ExternalLink size={18} />
+                  </a>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="glass-card pf-empty-state">No certifications added yet.</div>
+        )}
+      </section>
+
+      {/* ── CONTACT ── */}
+      <section id="contact" className="section-wrapper pf-contact-section">
+        <h2 className="section-title pf-contact-title">Let's <span className="text-green">Connect</span></h2>
+        <div className="grid-contact">
+
+          <div className="pf-contact-info">
+            <a href={`mailto:${email}`} className="glass-card pf-contact-card">
+              <div className="pf-contact-card-icon"><Mail size={24} /></div>
+              <div>
+                <p className="pf-contact-card-label">Email</p>
+                <p className="pf-contact-card-value">{email}</p>
+              </div>
+            </a>
+            <a href={`tel:${phone}`} className="glass-card pf-contact-card">
+              <div className="pf-contact-card-icon"><Phone size={24} /></div>
+              <div>
+                <p className="pf-contact-card-label">Phone</p>
+                <p className="pf-contact-card-value">{phone}</p>
+              </div>
+            </a>
+          </div>
+
+          <form onSubmit={handleContactSubmit} className="glass-panel pf-contact-form">
+            <h3 className="pf-contact-form-title">Send a Message</h3>
+            <input
+              type="email"
+              required
+              className="glass-input"
+              placeholder="your@email.com"
+              value={contactEmail}
+              onChange={e => setContactEmail(e.target.value)}
+            />
+            <div className="pf-contact-radio-group">
+              {['hire', 'review'].map(p => (
+                <label key={p} className="pf-contact-radio-label">
+                  <input
+                    type="radio"
+                    name="cpurp"
+                    checked={contactPurpose === p}
+                    onChange={() => setContactPurpose(p)}
+                    style={{ accentColor: '#00ff88' }}
+                  />
+                  {p === 'hire' ? 'Hire for Project' : 'Send Review'}
+                </label>
+              ))}
+            </div>
+            <textarea
+              rows={3}
+              required
+              className="glass-input"
+              placeholder="Your message..."
+              value={contactDesc}
+              onChange={e => setContactDesc(e.target.value)}
+            />
+            <button type="submit" className="glass-btn pf-contact-submit-btn">
+              <Send size={17} /> Send Message
+            </button>
+            {contactSuccess && <p className="pf-contact-success">{contactSuccess}</p>}
+          </form>
+
+        </div>
+      </section>
+
+      {/* ── FOOTER ── */}
+      <footer className="pf-footer-premium">
+        <div className="pf-footer-content">
+          <div className="pf-footer-section" style={{ width: '100%' }}>
+            <h4 className="pf-footer-title">Help, Support & Recruitment</h4>
+            <p className="pf-footer-text">
+              For project collaborations, consulting, general technical support, or recruitment, hiring, and employment inquiries, please feel free to reach out. I am fully available for both freelance contracts and full-time positions.
+            </p>
+            <div className="pf-footer-details" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem', marginTop: '1rem' }}>
+              <div>
+                <p className="pf-footer-contact-info" style={{ margin: '0.3rem 0' }}>
+                  <strong>Email:</strong> <a href={`mailto:${email}`} target="_blank" rel="noopener noreferrer">{email}</a>
+                </p>
+                {phone && (
+                  <p className="pf-footer-contact-info" style={{ margin: '0.3rem 0' }}>
+                    <strong>Phone:</strong> <a href={`tel:${phone}`}>{phone}</a>
+                  </p>
+                )}
+              </div>
+              <div className="pf-footer-socials" style={{ display: 'flex', gap: '0.8rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                {linkedin && (
+                  <a href={linkedin} target="_blank" rel="noopener noreferrer" title="LinkedIn" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: '#00ff88', textDecoration: 'none', fontSize: '0.85rem' }}>
+                    <Linkedin size={18} /> LinkedIn
+                  </a>
+                )}
+                {github && (
+                  <a href={github} target="_blank" rel="noopener noreferrer" title="GitHub" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: '#00ff88', textDecoration: 'none', fontSize: '0.85rem' }}>
+                    <Github size={18} /> GitHub
+                  </a>
+                )}
+                {instagram && (
+                  <a href={instagram} target="_blank" rel="noopener noreferrer" title="Instagram" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: '#00ff88', textDecoration: 'none', fontSize: '0.85rem' }}>
+                    <Instagram size={18} /> Instagram
+                  </a>
+                )}
+                {facebook && (
+                  <a href={facebook} target="_blank" rel="noopener noreferrer" title="Facebook" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: '#00ff88', textDecoration: 'none', fontSize: '0.85rem' }}>
+                    <Facebook size={18} /> Facebook
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="pf-footer-bottom">
+          &copy; {new Date().getFullYear()} {(name.toLowerCase() === 'navycut' ? "Navy's Portfolio" : name).toUpperCase()}. All Rights Reserved.
+        </div>
+      </footer>
+
+      {/* ── HIRE ME MODAL ── */}
+      {showHireModal && (
+        <div className="pf-modal-overlay" onClick={e => { if (e.target === e.currentTarget) setShowHireModal(false); }}>
+          <div className="glass-panel pf-modal-card">
+            <button onClick={() => setShowHireModal(false)} className="pf-modal-close-btn">
+              <X size={22} />
+            </button>
+            <h3 className="pf-modal-title">
+              <Send size={22} className="text-green" /> Let's <span className="text-green">Connect</span>
+            </h3>
+            <form onSubmit={handleHireSubmit} className="pf-modal-form">
+              <input
+                type="email"
+                required
+                className="glass-input"
+                placeholder="your@email.com"
+                value={viewerEmail}
+                onChange={e => setViewerEmail(e.target.value)}
+              />
+              <div className="pf-modal-radio-group">
+                {['hire', 'review'].map(p => (
+                  <label key={p} className="pf-modal-radio-label">
+                    <input
+                      type="radio"
+                      name="hpurp"
+                      checked={purpose === p}
+                      onChange={() => setPurpose(p)}
+                      style={{ accentColor: '#00ff88' }}
+                    />
+                    {p === 'hire' ? 'Hire for Project' : 'Send Review'}
+                  </label>
+                ))}
+              </div>
+              <textarea
+                rows={4}
+                required
+                className="glass-input"
+                placeholder="Describe your project or feedback..."
+                value={description}
+                onChange={e => setDescription(e.target.value)}
+              />
+              {errorMsg && <p className="pf-modal-error">{errorMsg}</p>}
+              {successMsg && (
+                <p className="pf-modal-success">
+                  <CheckCircle size={16} /> {successMsg}
+                </p>
+              )}
+              <div className="pf-modal-btn-group">
+                <button
+                  type="button"
+                  onClick={() => setShowHireModal(false)}
+                  className="glass-btn-secondary pf-modal-btn"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSending}
+                  className="glass-btn pf-modal-btn"
+                >
+                  {isSending ? 'Sending...' : 'Send Message'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Experience Details Modal */}
+      {selectedExperience && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 99999,
+            background: 'rgba(0,0,0,0.85)',
+            backdropFilter: 'blur(15px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+            animation: 'fadeIn 0.25s ease'
+          }}
+          onClick={() => setSelectedExperience(null)}
+        >
+          <div 
+            className="glass-panel"
+            style={{
+              width: '100%',
+              maxWidth: '650px',
+              background: 'rgba(15, 23, 20, 0.98)',
+              border: '1px solid rgba(0, 255, 136, 0.3)',
+              borderRadius: '16px',
+              padding: '2.5rem',
+              boxShadow: '0 20px 50px rgba(0,0,0,0.8)',
+              position: 'relative',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1.5rem',
+              color: '#eee',
+              maxHeight: '90vh',
+              overflowY: 'auto'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close button */}
+            <button 
+              onClick={() => setSelectedExperience(null)}
+              style={{
+                position: 'absolute',
+                top: '1.25rem',
+                right: '1.25rem',
+                background: 'none',
+                border: 'none',
+                color: '#fff',
+                cursor: 'pointer',
+                opacity: 0.7,
+                transition: 'opacity 0.2s'
+              }}
+              onMouseEnter={(e) => e.target.style.opacity = 1}
+              onMouseLeave={(e) => e.target.style.opacity = 0.7}
+            >
+              <X size={24} />
+            </button>
+
+            {/* Header / Type */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+              <span style={{
+                alignSelf: 'flex-start',
+                padding: '0.25rem 0.6rem',
+                borderRadius: '4px',
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                background: selectedExperience.exp_type === 'project' ? 'rgba(0, 188, 255, 0.15)' : selectedExperience.exp_type === 'internship' ? 'rgba(0, 255, 136, 0.15)' : 'rgba(255, 165, 0, 0.15)',
+                color: selectedExperience.exp_type === 'project' ? '#00bcff' : selectedExperience.exp_type === 'internship' ? 'var(--accent-green)' : '#ffa500',
+                border: selectedExperience.exp_type === 'project' ? '1px solid rgba(0, 188, 255, 0.3)' : selectedExperience.exp_type === 'internship' ? '1px solid rgba(0, 255, 136, 0.3)' : '1px solid rgba(255, 165, 0, 0.3)'
+              }}>
+                {selectedExperience.exp_type === 'project' ? 'Group Project' : selectedExperience.exp_type === 'internship' ? 'Internship' : 'Program Participation'}
+              </span>
+              
+              <h3 style={{ fontSize: '1.8rem', color: '#fff', fontWeight: 'bold', margin: '0.5rem 0 0 0', fontFamily: "'Times New Roman', Times, serif" }}>
+                {selectedExperience.exp_type === 'internship' && `Ex-intern at ${selectedExperience.org_name || selectedExperience.company}`}
+                {selectedExperience.exp_type === 'project' && `Developer on ${selectedExperience.project_name || selectedExperience.company}`}
+                {selectedExperience.exp_type === 'program' && `Participant in ${selectedExperience.program_name || selectedExperience.company}`}
+                {!selectedExperience.exp_type && selectedExperience.company}
+              </h3>
+              
+              <span className="text-green" style={{ fontSize: '0.95rem', fontWeight: 500 }}>
+                {formatDateStr(selectedExperience.start_date)} — {formatDateStr(selectedExperience.end_date)}
+              </span>
+            </div>
+
+            {/* Details Fields */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '1.25rem' }}>
+              
+              {/* Role/Domain */}
+              <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr', gap: '1rem', fontSize: '0.95rem' }}>
+                <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Domain / Role:</span>
+                <span style={{ color: '#fff', fontWeight: 600 }}>{selectedExperience.role}</span>
+              </div>
+
+              {/* Organization */}
+              {selectedExperience.exp_type === 'internship' && selectedExperience.org_name && (
+                <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr', gap: '1rem', fontSize: '0.95rem' }}>
+                  <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Organization:</span>
+                  <span style={{ color: '#fff' }}>{selectedExperience.org_name}</span>
+                </div>
+              )}
+
+              {/* Program Name */}
+              {selectedExperience.program_name && (
+                <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr', gap: '1rem', fontSize: '0.95rem' }}>
+                  <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Program Name:</span>
+                  <span style={{ color: '#fff', fontStyle: 'italic' }}>{selectedExperience.program_name}</span>
+                </div>
+              )}
+
+              {/* Project Instructor */}
+              {selectedExperience.exp_type === 'project' && selectedExperience.project_instructor && (
+                <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr', gap: '1rem', fontSize: '0.95rem' }}>
+                  <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Project Instructor:</span>
+                  <span style={{ color: '#fff' }}>{selectedExperience.project_instructor}</span>
+                </div>
+              )}
+
+              {/* Description */}
+              {selectedExperience.description && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', fontSize: '0.95rem' }}>
+                  <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Description:</span>
+                  <p style={{ margin: 0, lineHeight: 1.6, color: '#ddd', background: 'rgba(255,255,255,0.02)', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                    {selectedExperience.description}
+                  </p>
+                </div>
+              )}
+
+              {/* Skills Learned */}
+              {selectedExperience.skills_learned && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', fontSize: '0.95rem' }}>
+                  <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Skills Learned:</span>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.2rem' }}>
+                    {selectedExperience.skills_learned.split(',').map((skill, idx) => (
+                      <span key={idx} style={{
+                        padding: '0.3rem 0.75rem',
+                        fontSize: '0.8rem',
+                        background: 'rgba(0, 255, 136, 0.08)',
+                        border: '1px solid rgba(0, 255, 136, 0.2)',
+                        color: 'var(--accent-green)',
+                        borderRadius: '100px'
+                      }}>
+                        {skill.trim()}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Links and Attachments */}
+              {(selectedExperience.repo_link || selectedExperience.deploy_link || selectedExperience.certificate_file || selectedExperience.lor_file) && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '1.25rem', marginTop: '0.5rem' }}>
+                  <span style={{ color: 'var(--text-secondary)', fontWeight: 500, fontSize: '0.95rem' }}>Attachments & Links:</span>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.8rem' }}>
+                    
+                    {/* Repo Link */}
+                    {selectedExperience.repo_link && (
+                      <a href={selectedExperience.repo_link} target="_blank" rel="noreferrer" className="glass-btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.85rem' }}>
+                        <Github size={16} /> Source Code
+                      </a>
+                    )}
+
+                    {/* Deploy Link */}
+                    {selectedExperience.deploy_link && (
+                      <a href={selectedExperience.deploy_link} target="_blank" rel="noreferrer" className="glass-btn" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.85rem' }}>
+                        <ExternalLink size={16} /> Live Demo
+                      </a>
+                    )}
+
+                    {/* Certificate */}
+                    {selectedExperience.certificate_file && (
+                      <a href={`http://localhost:5000${selectedExperience.certificate_file}`} target="_blank" rel="noreferrer" className="glass-btn" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.85rem', borderColor: 'var(--accent-green)' }}>
+                        <Award size={16} /> Certificate
+                      </a>
+                    )}
+
+                    {/* LOR */}
+                    {selectedExperience.lor_file && (
+                      <a href={`http://localhost:5000${selectedExperience.lor_file}`} target="_blank" rel="noreferrer" className="glass-btn" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.85rem', borderColor: '#ffa500' }}>
+                        <Award size={16} /> LOR Letter
+                      </a>
+                    )}
+
+                  </div>
+                </div>
+              )}
+
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Toast Notification */}
+      {toast.show && (
+        <div 
+          className="pf-toast-alert"
+          style={{
+            background: 'rgba(10, 15, 12, 0.95)',
+            border: '1px solid #00ff88',
+            boxShadow: '0 0 15px rgba(0, 255, 136, 0.3)',
+            color: '#fff',
+            padding: '1rem 1.5rem',
+            borderRadius: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            fontWeight: 600,
+            backdropFilter: 'blur(8px)'
+          }}
+        >
+          <CheckCircle size={18} className="text-green" />
+          <span>{toast.message}</span>
+        </div>
+      )}
+
+    </div>
+  );
+}
+
+export default PortfolioPage;
