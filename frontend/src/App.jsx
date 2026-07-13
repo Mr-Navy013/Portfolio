@@ -4,7 +4,8 @@ import WelcomePage from './pages/WelcomePage';
 import PortfolioPage from './pages/PortfolioPage';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
-import { API_BASE } from './constants';
+
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000/api';
 
 function App() {
   const [currentPage, setCurrentPage] = useState('welcome');

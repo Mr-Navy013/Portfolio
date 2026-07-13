@@ -5,8 +5,9 @@ import {
   Download, FileText, CheckCircle, LogOut
 } from 'lucide-react';
 import { Linkedin, Github, Instagram, Facebook } from '../components/BrandIcons';
-import { API_BASE } from '../constants';
 import '../styles/portfolio.css';
+
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000/api';
 
 const formatDateStr = (str) => {
   if (!str) return '';

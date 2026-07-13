@@ -6,8 +6,9 @@ import {
   Download, Menu, Eye, EyeOff, Check
 } from 'lucide-react';
 import { Linkedin, Github, Instagram, Facebook } from '../components/BrandIcons';
-import { API_BASE } from '../constants';
 import '../styles/dashboard.css';
+
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000/api';
 
 const DragDropUpload = ({ onFileSelect, accept, currentFile, placeholder, required = false }) => {
   const [isDragging, setIsDragging] = useState(false);
