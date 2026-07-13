@@ -88,62 +88,103 @@ function generateOTP() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-// Robust SMTP Transporter Creator for Production/Cloud Environments
-const createSMTPTransporter = () => {
-  return nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true, // Use SSL
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS
-    },
-    connectionTimeout: 15000, // 15 seconds connection timeout
-    greetingTimeout: 15000,
-    socketTimeout: 20000
-  });
-};
+// Universal Email Dispatcher
+// Bypasses Render SMTP port blocking using Resend HTTP API in production, with SMTP fallback for local development
+async function dispatchEmail({ to, subject, text, html, replyTo }) {
+  // 1. Try Resend HTTP API if key is present (production/Render free tier bypass)
+  if (process.env.RESEND_API_KEY) {
+    try {
+      const res = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          from: 'Portfolio Alerts <onboarding@resend.dev>',
+          to: to,
+          reply_to: replyTo || undefined,
+          subject: subject,
+          text: text,
+          html: html
+        })
+      });
+      if (res.ok) {
+        console.log(`[EMAIL SUCCESS] Dispatched via Resend API to: ${to}`);
+        return { success: true, mode: 'resend' };
+      } else {
+        const err = await res.json();
+        console.error('[RESEND API FAILED]', err);
+      }
+    } catch (err) {
+      console.error('[RESEND FETCH FAILED]', err.message);
+    }
+  }
 
-// Helper to send OTP (either via nodemailer or printed to console as a mock)
-async function sendOTPEmail(email, otp, purpose = 'Verification') {
-  console.log(`[OTP NOTIFICATION] To: ${email} | Code: ${otp} | Purpose: ${purpose}`);
-
+  // 2. SMTP fallback (Nodemailer)
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS || process.env.EMAIL_PASS === 'mock') {
+    console.log(`[MOCK EMAIL] To: ${to} | Subject: ${subject}`);
     return { success: true, mode: 'mock' };
   }
 
   try {
-    const transporter = createSMTPTransporter();
-
-    transporter.sendMail({
-      from: `"Navycut Portfolio" <${process.env.EMAIL_USER}>`,
-      to: email,
-      subject: `[OTP] Portfolio ${purpose} Code`,
-      text: `Your OTP verification code for your portfolio is: ${otp}. It expires in 10 minutes.`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ccc; border-radius: 10px; background-color: #0d0d0d; color: #fff;">
-          <h2 style="color: #00ff88; text-align: center;">Portfolio OTP Code</h2>
-          <hr style="border: 0; height: 1px; background: #00ff88; margin: 20px 0;"/>
-          <p>Hello,</p>
-          <p>We received a request to perform <strong>${purpose}</strong> on your portfolio account.</p>
-          <div style="text-align: center; margin: 30px 0;">
-            <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #00ff88; padding: 10px 20px; border: 2px dashed #00ff88; border-radius: 5px; background: rgba(0, 255, 136, 0.1);">
-              ${otp}
-            </span>
-          </div>
-          <p>This code will expire in 10 minutes. If you did not request this, you can ignore this email.</p>
-          <br/>
-          <p style="font-size: 12px; color: #666; text-align: center;">Navycut Portfolio Dashboard Management System</p>
-        </div>
-      `
-    }).catch(err => {
-      console.error('SMTP background sending error:', err.message);
+    const transporter = nodemailer.createTransport({
+      host: 'smtp.gmail.com',
+      port: 465,
+      secure: true,
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      },
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 15000
     });
+
+    await transporter.sendMail({
+      from: `"Navycut Portfolio" <${process.env.EMAIL_USER}>`,
+      to: to,
+      replyTo: replyTo || undefined,
+      subject: subject,
+      text: text,
+      html: html
+    });
+    console.log(`[EMAIL SUCCESS] Dispatched via Nodemailer SMTP to: ${to}`);
     return { success: true, mode: 'smtp' };
   } catch (error) {
-    console.error('SMTP sending error (fallback to mock):', error.message);
-    return { success: true, mode: 'mock_fallback' };
+    console.error('[SMTP EMAIL ERROR]', error.message);
+    return { success: false, error: error.message };
   }
+}
+
+// Helper to send OTP (either via nodemailer/resend or printed to console as a mock)
+async function sendOTPEmail(email, otp, purpose = 'Verification') {
+  console.log(`[OTP NOTIFICATION] To: ${email} | Code: ${otp} | Purpose: ${purpose}`);
+
+  const subject = `[OTP] Portfolio ${purpose} Code`;
+  const text = `Your OTP verification code for your portfolio is: ${otp}. It expires in 10 minutes.`;
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ccc; border-radius: 10px; background-color: #0d0d0d; color: #fff;">
+      <h2 style="color: #00ff88; text-align: center;">Portfolio OTP Code</h2>
+      <hr style="border: 0; height: 1px; background: #00ff88; margin: 20px 0;"/>
+      <p>Hello,</p>
+      <p>We received a request to perform <strong>${purpose}</strong> on your portfolio account.</p>
+      <div style="text-align: center; margin: 30px 0;">
+        <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #00ff88; padding: 10px 20px; border: 2px dashed #00ff88; border-radius: 5px; background: rgba(0, 255, 136, 0.1);">
+          ${otp}
+        </span>
+      </div>
+      <p>This code will expire in 10 minutes. If you did not request this, you can ignore this email.</p>
+      <br/>
+      <p style="font-size: 12px; color: #666; text-align: center;">Navycut Portfolio Dashboard Management System</p>
+    </div>
+  `;
+
+  // Dispatch email in background to maintain instant API responsiveness
+  dispatchEmail({ to: email, subject, text, html }).catch(err => {
+    console.error('OTP background dispatch error:', err.message);
+  });
+  return { success: true, mode: 'dispatched' };
 }
 
 // Helper to notify owner about contact message
@@ -152,39 +193,24 @@ async function sendMessageEmail(sender_email, purpose, description, ownerEmail) 
   console.log(`[DESCRIPTION] ${description}`);
   console.log(`======================================================\n`);
 
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS || process.env.EMAIL_PASS === 'mock') {
-    return { success: true, mode: 'mock' };
-  }
+  const subject = `[New Portfolio Message] ${purpose === 'hire' ? 'Hiring Query' : 'Feedback / Review'} from ${sender_email}`;
+  const text = `You have received a new message on your portfolio:\n\nSender: ${sender_email}\nPurpose: ${purpose}\nMessage: ${description}`;
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ccc; border-radius: 10px; background-color: #0d0d0d; color: #fff;">
+      <h2 style="color: #00ff88; text-align: center;">New Portfolio Message Received</h2>
+      <hr style="border: 0; height: 1px; background: #00ff88; margin: 20px 0;"/>
+      <p><strong>From Viewer:</strong> ${sender_email}</p>
+      <p><strong>Purpose:</strong> ${purpose === 'hire' ? 'Hiring Inquiry' : 'Feedback/Review'}</p>
+      <div style="margin: 20px 0; padding: 15px; border-radius: 5px; background: rgba(255, 255, 255, 0.05); border-left: 4px solid #00ff88;">
+        <p style="margin: 0; white-space: pre-wrap;">${description}</p>
+      </div>
+      <p>You can reply directly to this email to contact the viewer.</p>
+      <br/>
+      <p style="font-size: 12px; color: #666; text-align: center;">Navycut Portfolio Dashboard Management System</p>
+    </div>
+  `;
 
-  try {
-    const transporter = createSMTPTransporter();
-
-    await transporter.sendMail({
-      from: `"Navycut Portfolio Viewer" <${process.env.EMAIL_USER}>`,
-      to: ownerEmail,
-      replyTo: sender_email,
-      subject: `[New Portfolio Message] ${purpose === 'hire' ? 'Hiring Query' : 'Feedback / Review'} from ${sender_email}`,
-      text: `You have received a new message on your portfolio:\n\nSender: ${sender_email}\nPurpose: ${purpose}\nMessage: ${description}`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ccc; border-radius: 10px; background-color: #0d0d0d; color: #fff;">
-          <h2 style="color: #00ff88; text-align: center;">New Portfolio Message Received</h2>
-          <hr style="border: 0; height: 1px; background: #00ff88; margin: 20px 0;"/>
-          <p><strong>From Viewer:</strong> ${sender_email}</p>
-          <p><strong>Purpose:</strong> ${purpose === 'hire' ? 'Hiring Inquiry' : 'Feedback/Review'}</p>
-          <div style="margin: 20px 0; padding: 15px; border-radius: 5px; background: rgba(255, 255, 255, 0.05); border-left: 4px solid #00ff88;">
-            <p style="margin: 0; white-space: pre-wrap;">${description}</p>
-          </div>
-          <p>You can reply directly to this email to contact the viewer.</p>
-          <br/>
-          <p style="font-size: 12px; color: #666; text-align: center;">Navycut Portfolio Dashboard Management System</p>
-        </div>
-      `
-    });
-    return { success: true, mode: 'smtp' };
-  } catch (error) {
-    console.error('SMTP notification email sending error:', error.message);
-    return { success: false, error: error.message };
-  }
+  return await dispatchEmail({ to: ownerEmail, replyTo: sender_email, subject, text, html });
 }
 
 // Authentication Middleware
@@ -1122,26 +1148,20 @@ app.post('/api/document-requests', async (req, res) => {
     const [ownerRows] = await query('SELECT email FROM owner_profile LIMIT 1');
     const ownerEmail = ownerRows[0]?.email || 'navycutdehury@gmail.com';
 
-    // Nodemailer notification (non-awaited/background)
-    if (process.env.EMAIL_USER && process.env.EMAIL_PASS && process.env.EMAIL_PASS !== 'mock') {
-      const transporter = createSMTPTransporter();
-      transporter.sendMail({
-        from: `"Portfolio Alerts" <${process.env.EMAIL_USER}>`,
-        to: ownerEmail,
-        subject: `[Access Request] Viewer requesting document permission`,
-        text: `Viewer ${viewer_name} (${viewer_email}) is requesting permission to view: "${document_name}".\nPurpose: ${purpose || 'No purpose specified'}.\n\nPlease review it in your Owner Dashboard.`,
-        html: `
-          <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #0d0d0d; color: #fff; border-radius: 8px;">
-            <h3 style="color: #00ff88;">Document Access Request</h3>
-            <hr style="border:0; height:1px; background:#00ff88;"/>
-            <p><strong>Viewer:</strong> ${viewer_name} (${viewer_email})</p>
-            <p><strong>Requested File:</strong> ${document_name}</p>
-            <p><strong>Purpose:</strong> ${purpose || 'N/A'}</p>
-            <p>Go to your Owner Dashboard to Approve or Decline this request.</p>
-          </div>
-        `
-      }).catch(err => console.error('Alert email error:', err.message));
-    }
+    const subject = `[Access Request] Viewer requesting document permission`;
+    const text = `Viewer ${viewer_name} (${viewer_email}) is requesting permission to view: "${document_name}".\nPurpose: ${purpose || 'No purpose specified'}.\n\nPlease review it in your Owner Dashboard.`;
+    const html = `
+      <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #0d0d0d; color: #fff; border-radius: 8px;">
+        <h3 style="color: #00ff88;">Document Access Request</h3>
+        <hr style="border:0; height:1px; background:#00ff88;"/>
+        <p><strong>Viewer:</strong> ${viewer_name} (${viewer_email})</p>
+        <p><strong>Requested File:</strong> ${document_name}</p>
+        <p><strong>Purpose:</strong> ${purpose || 'N/A'}</p>
+        <p>Go to your Owner Dashboard to Approve or Decline this request.</p>
+      </div>
+    `;
+
+    dispatchEmail({ to: ownerEmail, subject, text, html }).catch(err => console.error('Alert email error:', err.message));
 
     res.json({ success: true, message: 'Access request sent successfully! The owner will review it.' });
   } catch (error) {
@@ -1174,29 +1194,24 @@ app.post('/api/document-requests/:id/approve', authenticateToken, async (req, re
     await query('UPDATE document_requests SET status = "Approved", access_token = ? WHERE id = ?', [otp, id]);
 
     // Send email to viewer
-    if (process.env.EMAIL_USER && process.env.EMAIL_PASS && process.env.EMAIL_PASS !== 'mock') {
-      const transporter = createSMTPTransporter();
-      transporter.sendMail({
-        from: `"Navycut Portfolio" <${process.env.EMAIL_USER}>`,
-        to: request.viewer_email,
-        subject: `[APPROVED] Access granted to view: ${request.document_name}`,
-        text: `Hello ${request.viewer_name},\n\nYour request to view "${request.document_name}" has been approved!\n\nUse this 6-digit Access Token to verify your access:\n\nVerification Token: ${otp}\n\nThanks,\nPortfolio Administration`,
-        html: `
-          <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #0d0d0d; color: #fff; border-radius: 8px; max-width: 500px; margin: auto;">
-            <h3 style="color: #00ff88; text-align: center;">Access Approved!</h3>
-            <hr style="border:0; height:1px; background:#00ff88;"/>
-            <p>Hello ${request.viewer_name},</p>
-            <p>Your request to view the document <strong>"${request.document_name}"</strong> has been approved by the owner.</p>
-            <p>Use the following 6-digit verification code on the portfolio website to view the file:</p>
-            <div style="text-align: center; margin: 25px 0;">
-              <span style="font-size: 26px; font-weight: bold; color: #00ff88; border: 2px dashed #00ff88; padding: 10px 20px; border-radius: 4px; background: rgba(0, 255, 136, 0.05);">${otp}</span>
-            </div>
-            <p>Thanks,</p>
-            <p>Navycut Portfolio Admin</p>
-          </div>
-        `
-      }).catch(err => console.error('Approval email error:', err.message));
-    }
+    const subject = `[APPROVED] Access granted to view: ${request.document_name}`;
+    const text = `Hello ${request.viewer_name},\n\nYour request to view "${request.document_name}" has been approved!\n\nUse this 6-digit Access Token to verify your access:\n\nVerification Token: ${otp}\n\nThanks,\nPortfolio Administration`;
+    const html = `
+      <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #0d0d0d; color: #fff; border-radius: 8px; max-width: 500px; margin: auto;">
+        <h3 style="color: #00ff88; text-align: center;">Access Approved!</h3>
+        <hr style="border:0; height:1px; background:#00ff88;"/>
+        <p>Hello ${request.viewer_name},</p>
+        <p>Your request to view the document <strong>"${request.document_name}"</strong> has been approved by the owner.</p>
+        <p>Use the following 6-digit verification code on the portfolio website to view the file:</p>
+        <div style="text-align: center; margin: 25px 0;">
+          <span style="font-size: 26px; font-weight: bold; color: #00ff88; border: 2px dashed #00ff88; padding: 10px 20px; border-radius: 4px; background: rgba(0, 255, 136, 0.05);">${otp}</span>
+        </div>
+        <p>Thanks,</p>
+        <p>Navycut Portfolio Admin</p>
+      </div>
+    `;
+
+    dispatchEmail({ to: request.viewer_email, subject, text, html }).catch(err => console.error('Approval email error:', err.message));
 
     res.json({ success: true, message: 'Request approved and access token sent to viewer!' });
   } catch (error) {
@@ -1217,15 +1232,10 @@ app.post('/api/document-requests/:id/decline', authenticateToken, async (req, re
     await query('UPDATE document_requests SET status = "Rejected" WHERE id = ?', [id]);
 
     // Send email to viewer
-    if (process.env.EMAIL_USER && process.env.EMAIL_PASS && process.env.EMAIL_PASS !== 'mock') {
-      const transporter = createSMTPTransporter();
-      transporter.sendMail({
-        from: `"Navycut Portfolio" <${process.env.EMAIL_USER}>`,
-        to: request.viewer_email,
-        subject: `[DECLINED] Access request for: ${request.document_name}`,
-        text: `Hello ${request.viewer_name},\n\nWe regret to inform you that your request to view "${request.document_name}" has been declined by the owner.\n\nThanks,\nPortfolio Administration`
-      }).catch(err => console.error('Decline email error:', err.message));
-    }
+    const subject = `[DECLINED] Access request for: ${request.document_name}`;
+    const text = `Hello ${request.viewer_name},\n\nWe regret to inform you that your request to view "${request.document_name}" has been declined by the owner.\n\nThanks,\nPortfolio Administration`;
+
+    dispatchEmail({ to: request.viewer_email, subject, text }).catch(err => console.error('Decline email error:', err.message));
 
     res.json({ success: true, message: 'Request declined.' });
   } catch (error) {
