@@ -105,7 +105,7 @@ async function sendOTPEmail(email, otp, purpose = 'Verification') {
       }
     });
 
-    await transporter.sendMail({
+    transporter.sendMail({
       from: `"Navycut Portfolio" <${process.env.EMAIL_USER}>`,
       to: email,
       subject: `[OTP] Portfolio ${purpose} Code`,
@@ -126,6 +126,8 @@ async function sendOTPEmail(email, otp, purpose = 'Verification') {
           <p style="font-size: 12px; color: #666; text-align: center;">Navycut Portfolio Dashboard Management System</p>
         </div>
       `
+    }).catch(err => {
+      console.error('SMTP background sending error:', err.message);
     });
     return { success: true, mode: 'smtp' };
   } catch (error) {
@@ -763,7 +765,9 @@ const educationUploadFields = upload.fields([
   { name: 'certificate_12th', maxCount: 1 },
   { name: 'marksheet_12th', maxCount: 1 },
   { name: 'gradesheet_bachelor', maxCount: 1 },
-  { name: 'certificate_bachelor', maxCount: 1 }
+  { name: 'certificate_bachelor', maxCount: 1 },
+  { name: 'certificate_others', maxCount: 1 },
+  { name: 'marksheet_others', maxCount: 1 }
 ]);
 
 app.post('/api/education', authenticateToken, educationUploadFields, async (req, res) => {
@@ -786,6 +790,8 @@ app.post('/api/education', authenticateToken, educationUploadFields, async (req,
   const marksheet12th = fileUrl('marksheet_12th');
   const gradesheetBach = fileUrl('gradesheet_bachelor');
   const certBach = fileUrl('certificate_bachelor');
+  const certOthers = fileUrl('certificate_others');
+  const marksheetOthers = fileUrl('marksheet_others');
 
   try {
     await query(`
@@ -793,8 +799,8 @@ app.post('/api/education', authenticateToken, educationUploadFields, async (req,
         school, degree, field_of_study, start_date, end_date, description,
         passing_year, full_marks, marks_obtained, percentage, course, branch,
         semester_sgpa, cgpa, certificate_10th, certificate_12th, marksheet_12th,
-        gradesheet_bachelor, certificate_bachelor
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        gradesheet_bachelor, certificate_bachelor, certificate_others, marksheet_others
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
       school, degree, field_of_study || null, start_date, end_date, description || null,
       passing_year || null, 
@@ -804,7 +810,7 @@ app.post('/api/education', authenticateToken, educationUploadFields, async (req,
       course || null, branch || null,
       semester_sgpa || null, 
       cgpa ? parseFloat(cgpa) : null,
-      cert10th, cert12th, marksheet12th, gradesheetBach, certBach
+      cert10th, cert12th, marksheet12th, gradesheetBach, certBach, certOthers, marksheetOthers
     ]);
     res.status(201).json({ success: true, message: 'Education history added!' });
   } catch (error) {
@@ -1088,6 +1094,215 @@ app.delete('/api/messages/:id', authenticateToken, async (req, res) => {
   try {
     await query('DELETE FROM messages WHERE id = ?', [id]);
     res.json({ success: true, message: 'Message deleted successfully!' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ==========================================
+// DOCUMENT ACCESS PERMISSIONS ENDPOINTS
+// ==========================================
+
+// 1. Viewer submits a request for a document
+app.post('/api/document-requests', async (req, res) => {
+  const { viewer_name, viewer_email, purpose, document_id, document_name } = req.body;
+  if (!viewer_name || !viewer_email || !document_id || !document_name) {
+    return res.status(400).json({ message: 'Name, Email, Document ID and Name are required' });
+  }
+
+  try {
+    // Save to DB
+    await query(`
+      INSERT INTO document_requests (viewer_name, viewer_email, purpose, document_id, document_name)
+      VALUES (?, ?, ?, ?, ?)
+    `, [viewer_name, viewer_email, purpose || null, document_id, document_name]);
+
+    // Send notification email to owner
+    const [ownerRows] = await query('SELECT email FROM owner_profile LIMIT 1');
+    const ownerEmail = ownerRows[0]?.email || 'navycutdehury@gmail.com';
+
+    // Nodemailer notification (non-awaited/background)
+    if (process.env.EMAIL_USER && process.env.EMAIL_PASS && process.env.EMAIL_PASS !== 'mock') {
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS
+        }
+      });
+      transporter.sendMail({
+        from: `"Portfolio Alerts" <${process.env.EMAIL_USER}>`,
+        to: ownerEmail,
+        subject: `[Access Request] Viewer requesting document permission`,
+        text: `Viewer ${viewer_name} (${viewer_email}) is requesting permission to view: "${document_name}".\nPurpose: ${purpose || 'No purpose specified'}.\n\nPlease review it in your Owner Dashboard.`,
+        html: `
+          <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #0d0d0d; color: #fff; border-radius: 8px;">
+            <h3 style="color: #00ff88;">Document Access Request</h3>
+            <hr style="border:0; height:1px; background:#00ff88;"/>
+            <p><strong>Viewer:</strong> ${viewer_name} (${viewer_email})</p>
+            <p><strong>Requested File:</strong> ${document_name}</p>
+            <p><strong>Purpose:</strong> ${purpose || 'N/A'}</p>
+            <p>Go to your Owner Dashboard to Approve or Decline this request.</p>
+          </div>
+        `
+      }).catch(err => console.error('Alert email error:', err.message));
+    }
+
+    res.json({ success: true, message: 'Access request sent successfully! The owner will review it.' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 2. Owner fetches requests (Authenticated)
+app.get('/api/document-requests', authenticateToken, async (req, res) => {
+  try {
+    const [rows] = await query('SELECT * FROM document_requests ORDER BY created_at DESC');
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 3. Owner approves request (Authenticated)
+app.post('/api/document-requests/:id/approve', authenticateToken, async (req, res) => {
+  const { id } = req.params;
+  const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6 digit OTP
+
+  try {
+    const [reqRows] = await query('SELECT * FROM document_requests WHERE id = ?', [id]);
+    if (reqRows.length === 0) {
+      return res.status(404).json({ message: 'Request not found.' });
+    }
+    const request = reqRows[0];
+
+    await query('UPDATE document_requests SET status = "Approved", access_token = ? WHERE id = ?', [otp, id]);
+
+    // Send email to viewer
+    if (process.env.EMAIL_USER && process.env.EMAIL_PASS && process.env.EMAIL_PASS !== 'mock') {
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS
+        }
+      });
+      transporter.sendMail({
+        from: `"Navycut Portfolio" <${process.env.EMAIL_USER}>`,
+        to: request.viewer_email,
+        subject: `[APPROVED] Access granted to view: ${request.document_name}`,
+        text: `Hello ${request.viewer_name},\n\nYour request to view "${request.document_name}" has been approved!\n\nUse this 6-digit Access Token to verify your access:\n\nVerification Token: ${otp}\n\nThanks,\nPortfolio Administration`,
+        html: `
+          <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #0d0d0d; color: #fff; border-radius: 8px; max-width: 500px; margin: auto;">
+            <h3 style="color: #00ff88; text-align: center;">Access Approved!</h3>
+            <hr style="border:0; height:1px; background:#00ff88;"/>
+            <p>Hello ${request.viewer_name},</p>
+            <p>Your request to view the document <strong>"${request.document_name}"</strong> has been approved by the owner.</p>
+            <p>Use the following 6-digit verification code on the portfolio website to view the file:</p>
+            <div style="text-align: center; margin: 25px 0;">
+              <span style="font-size: 26px; font-weight: bold; color: #00ff88; border: 2px dashed #00ff88; padding: 10px 20px; border-radius: 4px; background: rgba(0, 255, 136, 0.05);">${otp}</span>
+            </div>
+            <p>Thanks,</p>
+            <p>Navycut Portfolio Admin</p>
+          </div>
+        `
+      }).catch(err => console.error('Approval email error:', err.message));
+    }
+
+    res.json({ success: true, message: 'Request approved and access token sent to viewer!' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 4. Owner declines request (Authenticated)
+app.post('/api/document-requests/:id/decline', authenticateToken, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [reqRows] = await query('SELECT * FROM document_requests WHERE id = ?', [id]);
+    if (reqRows.length === 0) {
+      return res.status(404).json({ message: 'Request not found.' });
+    }
+    const request = reqRows[0];
+
+    await query('UPDATE document_requests SET status = "Rejected" WHERE id = ?', [id]);
+
+    // Send email to viewer
+    if (process.env.EMAIL_USER && process.env.EMAIL_PASS && process.env.EMAIL_PASS !== 'mock') {
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS
+        }
+      });
+      transporter.sendMail({
+        from: `"Navycut Portfolio" <${process.env.EMAIL_USER}>`,
+        to: request.viewer_email,
+        subject: `[DECLINED] Access request for: ${request.document_name}`,
+        text: `Hello ${request.viewer_name},\n\nWe regret to inform you that your request to view "${request.document_name}" has been declined by the owner.\n\nThanks,\nPortfolio Administration`
+      }).catch(err => console.error('Decline email error:', err.message));
+    }
+
+    res.json({ success: true, message: 'Request declined.' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 5. Viewer verifies Access Token and retrieves document URL
+app.post('/api/document-requests/verify', async (req, res) => {
+  const { email, token, document_id } = req.body;
+  if (!email || !token || !document_id) {
+    return res.status(400).json({ message: 'Email, Verification Token, and Document ID are required' });
+  }
+
+  try {
+    // Check if approved request exists
+    const [rows] = await query(`
+      SELECT * FROM document_requests 
+      WHERE viewer_email = ? AND access_token = ? AND document_id = ? AND status = "Approved" 
+      LIMIT 1
+    `, [email, token, document_id]);
+
+    if (rows.length === 0) {
+      return res.status(400).json({ message: 'Verification failed. Either email/token is invalid or request is not approved yet.' });
+    }
+
+    // Access granted! Resolve the file path based on the document_id
+    let fileUrl = null;
+
+    if (document_id.startsWith('edu_')) {
+      const parts = document_id.split('_'); // edu, id, fieldType
+      const id = parseInt(parts[1]);
+      const fieldType = parts[2];
+
+      const [eduRows] = await query('SELECT * FROM education WHERE id = ?', [id]);
+      if (eduRows.length > 0) {
+        const edu = eduRows[0];
+        if (fieldType === 'cert10') fileUrl = edu.certificate_10th;
+        else if (fieldType === 'cert12') fileUrl = edu.certificate_12th;
+        else if (fieldType === 'marks12') fileUrl = edu.marksheet_12th;
+        else if (fieldType === 'certbach') fileUrl = edu.certificate_bachelor;
+        else if (fieldType === 'gradesbach') fileUrl = edu.gradesheet_bachelor;
+        else if (fieldType === 'certothers') fileUrl = edu.certificate_others;
+        else if (fieldType === 'marksothers') fileUrl = edu.marksheet_others;
+      }
+    } else if (document_id.startsWith('cert_')) {
+      const parts = document_id.split('_'); // cert, id
+      const id = parseInt(parts[1]);
+
+      const [certRows] = await query('SELECT credential_url FROM certificates WHERE id = ?', [id]);
+      if (certRows.length > 0) {
+        fileUrl = certRows[0].credential_url;
+      }
+    }
+
+    if (!fileUrl) {
+      return res.status(404).json({ message: 'Document file not found in databases.' });
+    }
+
+    res.json({ success: true, document_url: fileUrl });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

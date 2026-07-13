@@ -20,6 +20,57 @@ function LoginPage({ navigateTo, onLoginSuccess }) {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
+  // Resend Timer state
+  const [resendTimer, setResendTimer] = useState(0);
+  const timerRef = React.useRef(null);
+
+  const startResendTimer = () => {
+    setResendTimer(5);
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => {
+      setResendTimer((prev) => {
+        if (prev <= 1) {
+          clearInterval(timerRef.current);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  React.useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, []);
+
+  const handleResendOtp = async () => {
+    if (!forgotEmail || resendTimer > 0) return;
+    setLoading(true);
+    clearMessages();
+    try {
+      const res = await fetch(`${API_BASE}/auth/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: forgotEmail })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to send OTP code');
+      }
+      if (data.otp) {
+        setSuccessMsg(`Resent OTP successfully! (Dev Mode: Reset code is ${data.otp})`);
+      } else {
+        setSuccessMsg('OTP code resent successfully!');
+      }
+      startResendTimer();
+    } catch (err) {
+      setErrorMsg(err.message || 'Error executing request.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Password visibility states
   const [showPassword, setShowPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -126,6 +177,7 @@ function LoginPage({ navigateTo, onLoginSuccess }) {
         setSuccessMsg(data.message);
       }
       setView('reset');
+      startResendTimer();
     } catch (err) {
       setErrorMsg(err.message || 'Error executing request.');
     } finally {
@@ -411,7 +463,7 @@ function LoginPage({ navigateTo, onLoginSuccess }) {
                 className="glass-btn" 
                 style={{ width: '100%', justifyContent: 'center' }}
               >
-                {loading ? 'Generating Code...' : 'Transmit Verification OTP'}
+                {loading ? 'Generating Code...' : 'Send Verification OTP'}
               </button>
 
               <button 
@@ -528,6 +580,33 @@ function LoginPage({ navigateTo, onLoginSuccess }) {
                     {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
+              </div>
+
+              {/* Resend OTP option */}
+              <div style={{ textAlign: 'center', marginTop: '0.2rem', marginBottom: '0.2rem', fontSize: '0.85rem' }}>
+                {resendTimer > 0 ? (
+                  <span style={{ color: 'var(--text-secondary)' }}>
+                    Resend code in <strong style={{ color: 'var(--accent-green)' }}>{resendTimer}s</strong>
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleResendOtp}
+                    disabled={loading}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--accent-green)',
+                      cursor: 'pointer',
+                      textDecoration: 'underline',
+                      padding: 0,
+                      fontFamily: 'inherit',
+                      fontSize: '0.85rem'
+                    }}
+                  >
+                    Resend OTP Code
+                  </button>
+                )}
               </div>
 
               {errorMsg && (

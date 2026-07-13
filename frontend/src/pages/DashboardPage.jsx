@@ -648,6 +648,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
   const [certificates, setCertificates] = useState([]);
   const [messages, setMessages] = useState([]);
   const [courses, setCourses] = useState([]);
+  const [docRequests, setDocRequests] = useState([]);
 
   // Custom states
   const [skillLevel, setSkillLevel] = useState('basic'); // 'high' | 'medium' | 'basic'
@@ -721,6 +722,8 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
   const [edu12thMarksheet, setEdu12thMarksheet] = useState(null);
   const [eduBachGradesheet, setEduBachGradesheet] = useState(null);
   const [eduBachCert, setEduBachCert] = useState(null);
+  const [eduOthersCert, setEduOthersCert] = useState(null);
+  const [eduOthersMarksheet, setEduOthersMarksheet] = useState(null);
 
   const [showSkillModal, setShowSkillModal] = useState(false);
   const [customSkillName, setCustomSkillName] = useState('');
@@ -1015,6 +1018,11 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       return;
     }
     fetchDashboardCollections();
+
+    if (sessionStorage.getItem('justLoggedIn') === 'true') {
+      showStatus('Login Successful!');
+      sessionStorage.removeItem('justLoggedIn');
+    }
   }, [authToken]);
 
   const fetchDashboardCollections = async () => {
@@ -1043,8 +1051,47 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       const courseRes = await fetch(`${API_BASE}/courses?t=${t}`);
       if (courseRes.ok) setCourses(await courseRes.json());
 
+      const reqRes = await fetch(`${API_BASE}/document-requests?t=${t}`, { headers });
+      if (reqRes.ok) setDocRequests(await reqRes.json());
+
     } catch (err) {
       console.error("Dashboard fetching error:", err);
+    }
+  };
+
+  const handleApproveRequest = async (id) => {
+    try {
+      const res = await fetch(`${API_BASE}/document-requests/${id}/approve`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showStatus('Request approved and token sent!');
+        fetchDashboardCollections();
+      } else {
+        showStatus(data.message || 'Approval failed.', true);
+      }
+    } catch (err) {
+      showStatus('Error approving request.', true);
+    }
+  };
+
+  const handleDeclineRequest = async (id) => {
+    try {
+      const res = await fetch(`${API_BASE}/document-requests/${id}/decline`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showStatus('Request declined.');
+        fetchDashboardCollections();
+      } else {
+        showStatus(data.message || 'Decline failed.', true);
+      }
+    } catch (err) {
+      showStatus('Error declining request.', true);
     }
   };
 
@@ -1483,6 +1530,18 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       
       if (eduBachGradesheet) formData.append('gradesheet_bachelor', eduBachGradesheet);
       if (eduBachCert) formData.append('certificate_bachelor', eduBachCert);
+    } else if (eduType === 'Others') {
+      formData.append('field_of_study', eduCourse || 'Others');
+      formData.append('start_date', eduPassingYear);
+      formData.append('end_date', eduPassingYear);
+      formData.append('passing_year', eduPassingYear);
+      formData.append('full_marks', eduFullMarks);
+      formData.append('marks_obtained', eduMarksObtained);
+      const pct = eduFullMarks && eduMarksObtained ? ((parseFloat(eduMarksObtained) / parseFloat(eduFullMarks)) * 100).toFixed(2) : '0';
+      formData.append('percentage', pct);
+      formData.append('description', `Education details complete at ${eduSchool}. Full Marks: ${eduFullMarks}, Obtained: ${eduMarksObtained}, Percentage: ${pct}%`);
+      if (eduOthersCert) formData.append('certificate_others', eduOthersCert);
+      if (eduOthersMarksheet) formData.append('marksheet_others', eduOthersMarksheet);
     }
 
     try {
@@ -1510,6 +1569,8 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
         setEdu12thMarksheet(null);
         setEduBachGradesheet(null);
         setEduBachCert(null);
+        setEduOthersCert(null);
+        setEduOthersMarksheet(null);
       } else {
         const err = await res.json();
         showStatus(err.message || 'Failed to save education.', true);
@@ -2024,6 +2085,15 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
               return ` (${unreadCount})`;
             })()}
           </button>
+
+          <button onClick={() => setActiveTab('permissions')} className={`glass-btn-secondary ${activeTab === 'permissions' ? 'active-tab' : ''}`} style={{ justifyContent: 'flex-start', width: '100%', padding: '0.8rem 1rem' }}>
+            <ShieldCheck size={18} className="text-green" /> Document Requests
+            {(() => {
+              const pendingCount = docRequests.filter(r => r.status === 'Pending').length;
+              if (pendingCount === 0) return '';
+              return ` (${pendingCount})`;
+            })()}
+          </button>
         </div>
 
         <style>{`
@@ -2062,14 +2132,21 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
             left: 0 !important;
             right: 0 !important;
             bottom: 0 !important;
-            background: rgba(0, 0, 0, 0.3) !important;
+            background: rgba(0, 0, 0, 0.75) !important;
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
             z-index: 1000 !important;
             padding: 1rem !important;
+            backdrop-filter: blur(8px) !important;
+            -webkit-backdrop-filter: blur(8px) !important;
+          }
+          .dashboard-modal-overlay .glass-panel {
+            background: #0c140e !important;
+            border: 1px solid rgba(0, 255, 136, 0.15) !important;
             backdrop-filter: none !important;
             -webkit-backdrop-filter: none !important;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6) !important;
           }
           @media (max-width: 649px) {
             .dashboard-grid {
@@ -2318,13 +2395,13 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
 
                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                     <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Full Name / Display Name <span style={{ color: '#ff5252' }}>*</span></label>
-                     <input type="text" className="glass-input" placeholder="Enter your display name (e.g., Navy)" value={displayName} onChange={(e) => setDisplayName(e.target.value)} required />
+                     <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Display Name <span style={{ color: '#ff5252' }}>*</span></label>
+                     <input type="text" className="glass-input" placeholder="Enter display name" value={displayName} onChange={(e) => setDisplayName(e.target.value)} required />
                    </div>
                    
                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                      <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Login Username <span style={{ color: '#ff5252' }}>*</span></label>
-                     <input type="text" className="glass-input" placeholder="Enter login username (e.g., rugha)" value={username} onChange={(e) => setUsername(e.target.value)} required />
+                     <input type="text" className="glass-input" placeholder="Enter username " value={username} onChange={(e) => setUsername(e.target.value)} required />
                    </div>
                  </div>
 
@@ -2336,7 +2413,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                          <input 
                            type={showPasswordText ? "text" : "password"} 
                            className="glass-input" 
-                           placeholder="Leave blank to keep current password" 
+                           placeholder="Enter new password" 
                            value={newPassword} 
                            onChange={(e) => setNewPassword(e.target.value)} 
                            style={{ paddingRight: '2.5rem', width: '100%' }}
@@ -2390,7 +2467,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
 
                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                      <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>About Profile Summary</label>
-                     <input type="text" className="glass-input" value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Summary of yourself..." style={{ height: '46px' }} />
+                     <input type="text" className="glass-input" value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Describe about your profession..." style={{ height: '46px' }} />
                    </div>
                  </div>
 
@@ -2406,7 +2483,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                         required
                         className="glass-input" 
                         style={{ width: '100%', paddingLeft: '2.5rem' }} 
-                        placeholder="https://linkedin.com/in/..."
+                        placeholder="LinkedIn Link"
                         value={linkedin}
                         onChange={(e) => setLinkedin(e.target.value)}
                       />
@@ -2423,7 +2500,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                         required
                         className="glass-input" 
                         style={{ width: '100%', paddingLeft: '2.5rem' }} 
-                        placeholder="https://github.com/..."
+                        placeholder="GitHub Link"
                         value={github}
                         onChange={(e) => setGithub(e.target.value)}
                       />
@@ -2439,7 +2516,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                         type="url" 
                         className="glass-input" 
                         style={{ width: '100%', paddingLeft: '2.5rem' }} 
-                        placeholder="https://instagram.com/..."
+                        placeholder="Instagram Link"
                         value={instagram}
                         onChange={(e) => setInstagram(e.target.value)}
                       />
@@ -2455,8 +2532,8 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                         type="url" 
                         className="glass-input" 
                         style={{ width: '100%', paddingLeft: '2.5rem' }} 
-                        placeholder="https://facebook.com/..."
-                        value={facebook}
+                        placeholder="Facebook Link"
+                        value={facebook}  
                         onChange={(e) => setFacebook(e.target.value)}
                       />
                     </div>
@@ -3035,6 +3112,101 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
             </div>
           )}
 
+          {/* TAB 9: DOCUMENT PERMISSIONS */}
+          {activeTab === 'permissions' && (
+            <div className="glass-panel" style={{ padding: '2rem' }}>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>
+                Document Access Requests
+              </h2>
+
+              {docRequests.length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {docRequests.map((req) => (
+                    <div 
+                      key={req.id} 
+                      style={{
+                        padding: '1rem',
+                        borderRadius: '8px',
+                        background: 'rgba(255, 255, 255, 0.02)',
+                        border: '1px solid rgba(255, 255, 255, 0.05)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.75rem',
+                        transition: 'all 0.3s ease'
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem' }}>
+                        <div>
+                          <h4 style={{ margin: 0, fontWeight: 700, fontSize: '1rem', color: '#fff' }}>{req.viewer_name}</h4>
+                          <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{req.viewer_email}</span>
+                        </div>
+                        <span 
+                          style={{
+                            fontSize: '0.75rem',
+                            padding: '0.2rem 0.6rem',
+                            borderRadius: '4px',
+                            fontWeight: 600,
+                            background: req.status === 'Approved' ? 'rgba(0, 255, 136, 0.1)' : req.status === 'Rejected' ? 'rgba(255, 82, 82, 0.1)' : 'rgba(255, 193, 7, 0.1)',
+                            color: req.status === 'Approved' ? 'var(--accent-green)' : req.status === 'Rejected' ? '#ff5252' : '#ffc107',
+                            border: req.status === 'Approved' ? '1px solid var(--accent-green)' : req.status === 'Rejected' ? '1px solid #ff5252' : '1px solid #ffc107'
+                          }}
+                        >
+                          {req.status}
+                        </span>
+                      </div>
+
+                      <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                        <p style={{ margin: '0 0 0.25rem 0' }}>
+                          <strong style={{ color: '#fff' }}>Requested:</strong> {req.document_name}
+                        </p>
+                        {req.purpose && (
+                          <p style={{ margin: 0, fontStyle: 'italic' }}>
+                            <strong style={{ color: '#fff', fontStyle: 'normal' }}>Purpose:</strong> "{req.purpose}"
+                          </p>
+                        )}
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', borderTop: '1px solid rgba(255,255,255,0.03)', paddingTop: '0.75rem', marginTop: '0.25rem' }}>
+                        <span style={{ fontSize: '0.75rem', color: 'rgba(255, 255, 255, 0.3)' }}>
+                          Requested on: {new Date(req.created_at).toLocaleDateString()} at {new Date(req.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+
+                        {req.status === 'Pending' && (
+                          <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            <button 
+                              onClick={() => handleDeclineRequest(req.id)}
+                              className="glass-btn-secondary" 
+                              style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', border: '1px solid #ff5252', color: '#ff5252' }}
+                            >
+                              Decline
+                            </button>
+                            <button 
+                              onClick={() => handleApproveRequest(req.id)}
+                              className="glass-btn" 
+                              style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+                            >
+                              Approve Access
+                            </button>
+                          </div>
+                        )}
+
+                        {req.status === 'Approved' && req.access_token && (
+                          <span style={{ fontSize: '0.8rem', color: 'var(--accent-green)', fontWeight: 600 }}>
+                            Access Code: <code style={{ letterSpacing: '1px', background: 'rgba(0,255,136,0.1)', padding: '0.1rem 0.3rem', borderRadius: '3px' }}>{req.access_token}</code>
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
+                  No document access requests received yet.
+                </div>
+              )}
+            </div>
+          )}
+
         </div>
       </div>
 
@@ -3066,17 +3238,17 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
               
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
                 <label style={{ fontSize: '0.85rem' }}>Project Title <span style={{ color: '#ff5252' }}>*</span></label>
-                <input type="text" required className="glass-input" value={projTitle} onChange={(e) => setProjTitle(e.target.value)} placeholder="e.g. Modern Web Dashboard" />
+                <input type="text" required className="glass-input" value={projTitle} onChange={(e) => setProjTitle(e.target.value)} placeholder="Project itle" />
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
                 <label style={{ fontSize: '0.85rem' }}>Project Summary / Context <span style={{ color: '#ff5252' }}>*</span></label>
-                <textarea rows={3} required className="glass-input" style={{ resize: 'none' }} value={projSummary} onChange={(e) => setProjSummary(e.target.value)} placeholder="Provide short descriptions of the project stack and context..." />
+                <textarea rows={3} required className="glass-input" style={{ resize: 'none' }} value={projSummary} onChange={(e) => setProjSummary(e.target.value)} placeholder="Project Summary" />
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
                 <label style={{ fontSize: '0.85rem' }}>GitHub Codebase Link <span style={{ color: '#ff5252' }}>*</span></label>
-                <input type="url" required className="glass-input" value={projRepo} onChange={(e) => setProjRepo(e.target.value)} placeholder="https://github.com/owner/repo" />
+                <input type="url" required className="glass-input" value={projRepo} onChange={(e) => setProjRepo(e.target.value)} placeholder="GitRepo Link" />
               </div>
 
               {/* Deployed Toggle Box */}
@@ -3095,8 +3267,8 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
 
               {projDeployed && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-                  <label style={{ fontSize: '0.85rem', color: 'var(--accent-green)' }}>Live Target Demo URL <span style={{ color: '#ff5252' }}>*</span></label>
-                  <input type="url" required={projDeployed} className="glass-input" value={projLive} onChange={(e) => setProjLive(e.target.value)} placeholder="https://myproject.live" />
+                  <label style={{ fontSize: '0.85rem', color: 'var(--accent-green)' }}>Live link of project <span style={{ color: '#ff5252' }}>*</span></label>
+                  <input type="url" required={projDeployed} className="glass-input" value={projLive} onChange={(e) => setProjLive(e.target.value)} placeholder="live link" />
                 </div>
               )}
 
@@ -3145,18 +3317,19 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                 options={[
                   { value: '10th', label: 'Secondary School (10th / SSC)' },
                   { value: '12th', label: 'Intermediate (12th / HSC)' },
-                  { value: 'Bachelor', label: "Bachelor's Degree" }
+                  { value: 'Bachelor', label: "Bachelor's Degree" },
+                  { value: 'Others', label: "Others (Diploma / PG / etc.)" }
                 ]}
               />
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
               <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                {eduType === 'Bachelor' ? 'University / College Name' : 'School Name'} <span style={{ color: '#ff5252' }}>*</span>
+                {eduType === '10th' ? 'High School Name' : eduType === '12th' ? 'Intermediate College Name' : eduType === 'Bachelor' ? 'University / College Name' : 'Institution Name'} <span style={{ color: '#ff5252' }}>*</span>
               </label>
               <input 
                 type="text" 
-                placeholder={eduType === 'Bachelor' ? "e.g. Stanford University" : "e.g. Model High School"} 
+                placeholder={eduType === '10th' ? 'High school name' : eduType === '12th' ? 'Intermediate college name' : eduType === 'Bachelor' ? 'University name' : 'Institution name'} 
                 required 
                 className="glass-input" 
                 value={eduSchool}
@@ -3175,8 +3348,22 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
               </div>
             </div>
 
-            {(eduType === '10th' || eduType === '12th') && (
+            {(eduType === '10th' || eduType === '12th' || eduType === 'Others') && (
               <>
+                {eduType === 'Others' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', marginBottom: '0.5rem' }}>
+                    <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Course / Degree Name <span style={{ color: '#ff5252' }}>*</span></label>
+                    <input 
+                      type="text" 
+                      placeholder="e.g. PG Diploma / Master of Arts" 
+                      required 
+                      className="glass-input" 
+                      value={eduCourse}
+                      onChange={(e) => setEduCourse(e.target.value)} 
+                    />
+                  </div>
+                )}
+
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
                     <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Full Marks <span style={{ color: '#ff5252' }}>*</span></label>
@@ -3245,6 +3432,31 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                         accept="image/*,application/pdf"
                         currentFile={edu12thMarksheet}
                         placeholder="Drag & drop 12th marksheet or click to upload"
+                        required={true}
+                      />
+                    </div>
+                  </>
+                )}
+
+                {eduType === 'Others' && (
+                  <>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                      <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Upload Certificate <span style={{ color: '#ff5252' }}>*</span></label>
+                      <DragDropUpload
+                        onFileSelect={setEduOthersCert}
+                        accept="image/*,application/pdf"
+                        currentFile={eduOthersCert}
+                        placeholder="Drag & drop certificate or click to upload"
+                        required={true}
+                      />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                      <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Upload Marksheet <span style={{ color: '#ff5252' }}>*</span></label>
+                      <DragDropUpload
+                        onFileSelect={setEduOthersMarksheet}
+                        accept="image/*,application/pdf"
+                        currentFile={eduOthersMarksheet}
+                        placeholder="Drag & drop marksheet or click to upload"
                         required={true}
                       />
                     </div>
@@ -3833,6 +4045,14 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                   const unreadCount = messages.filter(m => !m.is_read).length;
                   if (unreadCount === 0) return '';
                   return ` (${unreadCount})`;
+                })()}
+              </button>
+              <button onClick={() => { setActiveTab('permissions'); setMobileMenuOpen(false); }} className={`glass-btn-secondary ${activeTab === 'permissions' ? 'active-tab' : ''}`} style={{ justifyContent: 'flex-start', width: '100%', padding: '0.8rem 1rem' }}>
+                <ShieldCheck size={18} className="text-green" /> Document Requests
+                {(() => {
+                  const pendingCount = docRequests.filter(r => r.status === 'Pending').length;
+                  if (pendingCount === 0) return '';
+                  return ` (${pendingCount})`;
                 })()}
               </button>
             </div>

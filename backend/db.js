@@ -209,6 +209,20 @@ async function createTables() {
     ) ENGINE=InnoDB;
   `);
 
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS document_requests (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      viewer_name VARCHAR(255) NOT NULL,
+      viewer_email VARCHAR(255) NOT NULL,
+      purpose TEXT NULL,
+      document_id VARCHAR(255) NOT NULL,
+      document_name VARCHAR(255) NOT NULL,
+      status VARCHAR(50) DEFAULT 'Pending',
+      access_token VARCHAR(255) NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB;
+  `);
+
   try {
     await pool.query('ALTER TABLE messages ADD COLUMN is_read BOOLEAN DEFAULT FALSE;');
   } catch (err) {
@@ -246,7 +260,9 @@ async function createTables() {
     'ALTER TABLE education ADD COLUMN certificate_12th VARCHAR(255) NULL;',
     'ALTER TABLE education ADD COLUMN marksheet_12th VARCHAR(255) NULL;',
     'ALTER TABLE education ADD COLUMN gradesheet_bachelor VARCHAR(255) NULL;',
-    'ALTER TABLE education ADD COLUMN certificate_bachelor VARCHAR(255) NULL;'
+    'ALTER TABLE education ADD COLUMN certificate_bachelor VARCHAR(255) NULL;',
+    'ALTER TABLE education ADD COLUMN certificate_others VARCHAR(255) NULL;',
+    'ALTER TABLE education ADD COLUMN marksheet_others VARCHAR(255) NULL;'
   ];
   for (const colQuery of addEduColumns) {
     try {

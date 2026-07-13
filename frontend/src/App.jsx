@@ -8,7 +8,14 @@ import DashboardPage from './pages/DashboardPage';
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000/api';
 
 function App() {
-  const [currentPage, setCurrentPage] = useState('welcome');
+  const [currentPage, setCurrentPage] = useState(() => {
+    const saved = localStorage.getItem('currentPage');
+    const token = localStorage.getItem('ownerToken');
+    if (saved === 'dashboard' && !token) {
+      return 'login';
+    }
+    return saved || 'welcome';
+  });
   const [previousPage, setPreviousPage] = useState('welcome');
   const [authToken, setAuthToken] = useState(localStorage.getItem('ownerToken') || null);
   const [profileData, setProfileData] = useState(null);
@@ -45,6 +52,8 @@ function App() {
     setAuthToken(token);
     localStorage.setItem('ownerToken', token);
     setCurrentPage('dashboard');
+    localStorage.setItem('currentPage', 'dashboard');
+    sessionStorage.setItem('justLoggedIn', 'true');
     fetchProfile();
   };
 
@@ -52,14 +61,17 @@ function App() {
     setAuthToken(null);
     localStorage.removeItem('ownerToken');
     setCurrentPage('welcome');
+    localStorage.setItem('currentPage', 'welcome');
   };
 
   const navigateTo = (page) => {
     if (page === 'dashboard' && !authToken) {
       setCurrentPage('login');
+      localStorage.setItem('currentPage', 'login');
     } else {
       setPreviousPage(currentPage);
       setCurrentPage(page);
+      localStorage.setItem('currentPage', page);
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
