@@ -296,7 +296,7 @@ app.post('/api/messages', async (req, res) => {
     const ownerEmail = ownerRows[0]?.email;
     if (ownerEmail) {
       // Send email notification in the background
-      sendViewerMessageNotificationEmail(ownerEmail, sender_email, purpose, description)
+      sendMessageEmail(sender_email, purpose, description, ownerEmail)
         .then(result => {
           console.log(`Notification email result:`, result);
         })
