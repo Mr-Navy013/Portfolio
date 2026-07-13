@@ -649,6 +649,8 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
   const [messages, setMessages] = useState([]);
   const [courses, setCourses] = useState([]);
   const [docRequests, setDocRequests] = useState([]);
+  const [isReplying, setIsReplying] = useState(false);
+  const [replyText, setReplyText] = useState('');
 
   // Custom states
   const [skillLevel, setSkillLevel] = useState('basic'); // 'high' | 'medium' | 'basic'
@@ -1215,6 +1217,8 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
 
   const handleViewMessage = async (msg) => {
     setSelectedMessage(msg);
+    setIsReplying(false);
+    setReplyText('');
     setShowMsgModal(true);
     if (!msg.is_read) {
       try {
@@ -1229,6 +1233,35 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
         console.error("Error marking message as read:", err);
         setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, is_read: 1 } : m));
       }
+    }
+  };
+
+  const handleSendReply = async () => {
+    if (!replyText.trim()) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/messages/${selectedMessage.id}/reply`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify({ reply_content: replyText })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showStatus('Reply email sent successfully!');
+        setShowMsgModal(false);
+        setIsReplying(false);
+        setReplyText('');
+        fetchDashboardCollections();
+      } else {
+        showStatus(data.message || 'Failed to send reply.', true);
+      }
+    } catch (err) {
+      showStatus('Error sending reply.', true);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -3856,49 +3889,96 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                 style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer' }}
               >
                 <X size={20} className="text-secondary" />
-              </button>
+                    </button>
             </div>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-              <div>
-                <span style={{ color: 'var(--text-secondary)', display: 'block', fontSize: '0.8rem' }}>Sender Email</span>
-                <span style={{ fontWeight: 600, color: 'var(--accent-green)' }}>{selectedMessage.sender_email}</span>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div>
-                  <span style={{ color: 'var(--text-secondary)', display: 'block', fontSize: '0.8rem' }}>Purpose</span>
-                  <span style={{ textTransform: 'capitalize', fontWeight: 600 }}>{selectedMessage.purpose === 'hire' ? '💼 Hire' : '💬 Review/Feedback'}</span>
+            {!isReplying ? (
+              <>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+                  <div>
+                    <span style={{ color: 'var(--text-secondary)', display: 'block', fontSize: '0.8rem' }}>Sender Email</span>
+                    <span style={{ fontWeight: 600, color: 'var(--accent-green)' }}>{selectedMessage.sender_email}</span>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <div>
+                      <span style={{ color: 'var(--text-secondary)', display: 'block', fontSize: '0.8rem' }}>Purpose</span>
+                      <span style={{ textTransform: 'capitalize', fontWeight: 600 }}>{selectedMessage.purpose === 'hire' ? '💼 Hire' : '💬 Review/Feedback'}</span>
+                    </div>
+                    <div>
+                      <span style={{ color: 'var(--text-secondary)', display: 'block', fontSize: '0.8rem' }}>Date Received</span>
+                      <span>{new Date(selectedMessage.created_at).toLocaleString()}</span>
+                    </div>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--text-secondary)', display: 'block', fontSize: '0.8rem', marginBottom: '0.25rem' }}>Message</span>
+                    <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', padding: '1rem', borderRadius: '6px', whiteSpace: 'pre-wrap', lineHeight: '1.5' }}>
+                      {selectedMessage.description}
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <span style={{ color: 'var(--text-secondary)', display: 'block', fontSize: '0.8rem' }}>Date Received</span>
-                  <span>{new Date(selectedMessage.created_at).toLocaleString()}</span>
-                </div>
-              </div>
-              <div>
-                <span style={{ color: 'var(--text-secondary)', display: 'block', fontSize: '0.8rem', marginBottom: '0.25rem' }}>Message</span>
-                <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', padding: '1rem', borderRadius: '6px', whiteSpace: 'pre-wrap', lineHeight: '1.5' }}>
-                  {selectedMessage.description}
-                </div>
-              </div>
-            </div>
 
-            <div style={{ display: 'flex', gap: '1rem' }}>
-              <button 
-                type="button" 
-                onClick={() => setShowMsgModal(false)} 
-                className="glass-btn-secondary" 
-                style={{ flex: 1, justifyContent: 'center' }}
-              >
-                Close
-              </button>
-              <a 
-                href={`mailto:${selectedMessage.sender_email}?subject=Regarding your portfolio message`} 
-                className="glass-btn" 
-                style={{ flex: 1, justifyContent: 'center', textDecoration: 'none', display: 'flex', alignItems: 'center' }}
-              >
-                Reply via Email
-              </a>
-            </div>
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                  <button 
+                    type="button" 
+                    onClick={() => setShowMsgModal(false)} 
+                    className="glass-btn-secondary" 
+                    style={{ flex: 1, justifyContent: 'center' }}
+                  >
+                    Close
+                  </button>
+                  <button 
+                    type="button"
+                    onClick={() => setIsReplying(true)}
+                    className="glass-btn" 
+                    style={{ flex: 1, justifyContent: 'center' }}
+                  >
+                    Reply Directly
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+                  <div>
+                    <span style={{ color: 'var(--text-secondary)', display: 'block', fontSize: '0.8rem' }}>Replying to</span>
+                    <span style={{ fontWeight: 600, color: 'var(--accent-green)' }}>{selectedMessage.sender_email}</span>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.4rem' }}>
+                      Write your reply message <span style={{ color: '#ff5252' }}>*</span>
+                    </label>
+                    <textarea
+                      rows={5}
+                      required
+                      className="glass-input"
+                      placeholder="Type your response here..."
+                      value={replyText}
+                      onChange={e => setReplyText(e.target.value)}
+                      style={{ width: '100%', resize: 'none', background: 'rgba(255,255,255,0.02)', color: '#fff' }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                  <button 
+                    type="button" 
+                    onClick={() => setIsReplying(false)} 
+                    className="glass-btn-secondary" 
+                    style={{ flex: 1, justifyContent: 'center' }}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="button"
+                    onClick={handleSendReply}
+                    disabled={!replyText.trim() || loading}
+                    className="glass-btn" 
+                    style={{ flex: 1, justifyContent: 'center', opacity: (!replyText.trim() || loading) ? 0.5 : 1 }}
+                  >
+                    {loading ? 'Sending...' : 'Send Reply Email'}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

@@ -1126,6 +1126,56 @@ app.delete('/api/messages/:id', authenticateToken, async (req, res) => {
   }
 });
 
+// Reply to viewer message (Send email directly from dashboard)
+app.post('/api/messages/:id/reply', authenticateToken, async (req, res) => {
+  const { id } = req.params;
+  const { reply_content } = req.body;
+  if (!reply_content) {
+    return res.status(400).json({ message: 'Reply content is required.' });
+  }
+
+  try {
+    const [rows] = await query('SELECT * FROM messages WHERE id = ?', [id]);
+    if (rows.length === 0) {
+      return res.status(404).json({ message: 'Message not found.' });
+    }
+    const messageObj = rows[0];
+
+    // Send email to viewer
+    const subject = `Re: Your Portfolio message regarding "${messageObj.purpose}"`;
+    const text = `Hello,\n\nHere is the reply to your message regarding: "${messageObj.purpose}":\n\n${reply_content}\n\nThanks,\nNavycut Portfolio`;
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ccc; border-radius: 10px; background-color: #0d0d0d; color: #fff;">
+        <h2 style="color: #00ff88; text-align: center;">Navycut's Reply</h2>
+        <hr style="border: 0; height: 1px; background: #00ff88; margin: 20px 0;"/>
+        <p>Hello,</p>
+        <p>This is a reply from Navycut regarding your portfolio message:</p>
+        <div style="margin: 20px 0; padding: 15px; border-radius: 5px; background: rgba(255, 255, 255, 0.05); border-left: 4px solid #00ff88; font-style: italic;">
+          "${messageObj.description}"
+        </div>
+        <p><strong>Reply:</strong></p>
+        <div style="margin: 20px 0; padding: 15px; border-radius: 5px; background: rgba(0, 255, 136, 0.05); border-left: 4px solid #00ff88; white-space: pre-wrap;">
+          ${reply_content}
+        </div>
+        <br/>
+        <p>Best Regards,</p>
+        <p><strong>Navycut Dehury</strong></p>
+      </div>
+    `;
+
+    const emailRes = await dispatchEmail({ to: messageObj.sender_email, subject, text, html });
+    if (emailRes.success) {
+      // Mark as replied/read
+      await query('UPDATE messages SET is_read = TRUE WHERE id = ?', [id]);
+      res.json({ success: true, message: 'Reply sent successfully to viewer email!' });
+    } else {
+      res.status(500).json({ message: 'Failed to dispatch email.', error: emailRes.error });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // ==========================================
 // DOCUMENT ACCESS PERMISSIONS ENDPOINTS
 // ==========================================
