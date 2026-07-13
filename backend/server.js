@@ -88,6 +88,22 @@ function generateOTP() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
+// Robust SMTP Transporter Creator for Production/Cloud Environments
+const createSMTPTransporter = () => {
+  return nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true, // Use SSL
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS
+    },
+    connectionTimeout: 15000, // 15 seconds connection timeout
+    greetingTimeout: 15000,
+    socketTimeout: 20000
+  });
+};
+
 // Helper to send OTP (either via nodemailer or printed to console as a mock)
 async function sendOTPEmail(email, otp, purpose = 'Verification') {
   console.log(`[OTP NOTIFICATION] To: ${email} | Code: ${otp} | Purpose: ${purpose}`);
@@ -97,13 +113,7 @@ async function sendOTPEmail(email, otp, purpose = 'Verification') {
   }
 
   try {
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-      }
-    });
+    const transporter = createSMTPTransporter();
 
     transporter.sendMail({
       from: `"Navycut Portfolio" <${process.env.EMAIL_USER}>`,
@@ -136,12 +146,9 @@ async function sendOTPEmail(email, otp, purpose = 'Verification') {
   }
 }
 
-// Helper to send email notification to the owner when a viewer sends a message/review
-async function sendViewerMessageNotificationEmail(ownerEmail, sender_email, purpose, description) {
-  console.log(`\n======================================================`);
-  console.log(`[MESSAGE NOTIFICATION] To Owner: ${ownerEmail}`);
-  console.log(`[FROM] Viewer: ${sender_email}`);
-  console.log(`[PURPOSE] ${purpose}`);
+// Helper to notify owner about contact message
+async function sendMessageEmail(sender_email, purpose, description, ownerEmail) {
+  console.log(`[CONTACT NOTIFICATION] From: ${sender_email} | Purpose: ${purpose}`);
   console.log(`[DESCRIPTION] ${description}`);
   console.log(`======================================================\n`);
 
@@ -150,13 +157,7 @@ async function sendViewerMessageNotificationEmail(ownerEmail, sender_email, purp
   }
 
   try {
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-      }
-    });
+    const transporter = createSMTPTransporter();
 
     await transporter.sendMail({
       from: `"Navycut Portfolio Viewer" <${process.env.EMAIL_USER}>`,
@@ -1123,13 +1124,7 @@ app.post('/api/document-requests', async (req, res) => {
 
     // Nodemailer notification (non-awaited/background)
     if (process.env.EMAIL_USER && process.env.EMAIL_PASS && process.env.EMAIL_PASS !== 'mock') {
-      const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-          user: process.env.EMAIL_USER,
-          pass: process.env.EMAIL_PASS
-        }
-      });
+      const transporter = createSMTPTransporter();
       transporter.sendMail({
         from: `"Portfolio Alerts" <${process.env.EMAIL_USER}>`,
         to: ownerEmail,
@@ -1180,13 +1175,7 @@ app.post('/api/document-requests/:id/approve', authenticateToken, async (req, re
 
     // Send email to viewer
     if (process.env.EMAIL_USER && process.env.EMAIL_PASS && process.env.EMAIL_PASS !== 'mock') {
-      const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-          user: process.env.EMAIL_USER,
-          pass: process.env.EMAIL_PASS
-        }
-      });
+      const transporter = createSMTPTransporter();
       transporter.sendMail({
         from: `"Navycut Portfolio" <${process.env.EMAIL_USER}>`,
         to: request.viewer_email,
@@ -1229,13 +1218,7 @@ app.post('/api/document-requests/:id/decline', authenticateToken, async (req, re
 
     // Send email to viewer
     if (process.env.EMAIL_USER && process.env.EMAIL_PASS && process.env.EMAIL_PASS !== 'mock') {
-      const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-          user: process.env.EMAIL_USER,
-          pass: process.env.EMAIL_PASS
-        }
-      });
+      const transporter = createSMTPTransporter();
       transporter.sendMail({
         from: `"Navycut Portfolio" <${process.env.EMAIL_USER}>`,
         to: request.viewer_email,
