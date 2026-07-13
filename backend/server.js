@@ -89,9 +89,42 @@ function generateOTP() {
 }
 
 // Universal Email Dispatcher
-// Bypasses Render SMTP port blocking using Resend HTTP API in production, with SMTP fallback for local development
+// Bypasses Render SMTP port blocking using Resend HTTP API or EmailJS HTTP API in production, with SMTP fallback for local development
 async function dispatchEmail({ to, subject, text, html, replyTo }) {
-  // 1. Try Resend HTTP API if key is present (production/Render free tier bypass)
+  // 1. Try EmailJS HTTP API if keys are present (100% free bypass, sends to anyone via Gmail OAuth2)
+  if (process.env.EMAILJS_SERVICE_ID && process.env.EMAILJS_TEMPLATE_ID && process.env.EMAILJS_PUBLIC_KEY) {
+    try {
+      const res = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          service_id: process.env.EMAILJS_SERVICE_ID,
+          template_id: process.env.EMAILJS_TEMPLATE_ID,
+          user_id: process.env.EMAILJS_PUBLIC_KEY,
+          accessToken: process.env.EMAILJS_PRIVATE_KEY || undefined,
+          template_params: {
+            to_email: to,
+            subject: subject,
+            message_html: html || text,
+            reply_to: replyTo || ""
+          }
+        })
+      });
+      if (res.ok) {
+        console.log(`[EMAIL SUCCESS] Dispatched via EmailJS HTTP API to: ${to}`);
+        return { success: true, mode: 'emailjs' };
+      } else {
+        const textErr = await res.text();
+        console.error('[EMAILJS API FAILED]', textErr);
+      }
+    } catch (err) {
+      console.error('[EMAILJS FETCH FAILED]', err.message);
+    }
+  }
+
+  // 2. Try Resend HTTP API if key is present (production/Render free tier bypass)
   if (process.env.RESEND_API_KEY) {
     try {
       const res = await fetch('https://api.resend.com/emails', {
