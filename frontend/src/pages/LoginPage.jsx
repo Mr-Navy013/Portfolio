@@ -1,12 +1,37 @@
 import React, { useState } from 'react';
 import { Lock, User, Mail, ShieldCheck, ArrowLeft, KeyRound, CheckCircle, Eye, EyeOff } from 'lucide-react';
 import '../styles/login.css';
-import { getApiBase } from '../utils/api';
+import { getApiBase, setApiBase } from '../utils/api';
 
 const API_BASE = getApiBase();
 
 function LoginPage({ navigateTo, onLoginSuccess }) {
   const [view, setView] = useState('login'); // 'login' | 'forgot' | 'reset'
+  const [showApiSettings, setShowApiSettings] = useState(false);
+  const [customApiInput, setCustomApiInput] = useState(localStorage.getItem('custom_api_base') || getApiBase());
+
+  const handleSaveApi = () => {
+    if (!customApiInput) {
+      alert('API URL cannot be empty!');
+      return;
+    }
+    let cleaned = customApiInput.trim();
+    if (cleaned.endsWith('/')) {
+      cleaned = cleaned.slice(0, -1);
+    }
+    if (!cleaned.endsWith('/api')) {
+      cleaned = `${cleaned}/api`;
+    }
+    setApiBase(cleaned);
+    alert('Backend API URL configured successfully! Reloading...');
+    window.location.reload();
+  };
+
+  const handleResetApi = () => {
+    setApiBase('');
+    alert('Backend API URL reset to default! Reloading...');
+    window.location.reload();
+  };
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   
@@ -359,7 +384,49 @@ function LoginPage({ navigateTo, onLoginSuccess }) {
                 <ArrowLeft size={16} /> Return to Terminal
               </button>
 
-            </form>
+             </form>
+
+            {/* API settings button */}
+            <div style={{ textAlign: 'center', marginTop: '1.25rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1.25rem' }}>
+              <button
+                type="button"
+                onClick={() => setShowApiSettings(!showApiSettings)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-secondary)',
+                  cursor: 'pointer',
+                  fontSize: '0.8rem',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  opacity: 0.8,
+                  fontFamily: 'inherit'
+                }}
+              >
+                <ShieldCheck size={14} className="text-green" /> Backend Server Config
+              </button>
+
+              {showApiSettings && (
+                <div style={{ marginTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', textAlign: 'left', padding: '0.75rem', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '6px' }}>
+                  <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Current API URL: <code style={{ color: 'var(--accent-green)' }}>{API_BASE}</code></label>
+                  <input
+                    type="url"
+                    value={customApiInput}
+                    onChange={(e) => setCustomApiInput(e.target.value)}
+                    className="glass-input"
+                    placeholder="https://your-backend.up.railway.app/api"
+                    style={{ fontSize: '0.8rem', padding: '0.4rem 0.6rem', width: '100%', height: '36px' }}
+                  />
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button type="button" onClick={handleSaveApi} className="glass-btn" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', flex: 1, minHeight: 'unset', height: '32px', justifyContent: 'center' }}>Save</button>
+                    {localStorage.getItem('custom_api_base') && (
+                      <button type="button" onClick={handleResetApi} className="glass-btn-danger" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', height: '32px', justifyContent: 'center' }}>Reset</button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         )}
 

@@ -72,6 +72,7 @@ const upload = multer({
 // Helper to delete files from disk
 const deleteFileFromDisk = (fileUrl) => {
   if (!fileUrl) return;
+  if (!fileUrl.startsWith('/uploads/')) return; // Ignore Base64 or absolute URLs
   const fileName = fileUrl.replace('/uploads/', '');
   const filePath = path.join(__dirname, 'uploads', fileName);
   fs.unlink(filePath, (err) => {
@@ -646,9 +647,21 @@ app.post('/api/profile/upload-avatar', authenticateToken, upload.single('profile
     const [rows] = await query('SELECT profile_picture FROM owner_profile LIMIT 1');
     const oldAvatar = rows && rows[0] ? rows[0].profile_picture : null;
 
-    const profile_picture_url = `/uploads/${req.file.filename}`;
+    // Convert file to Base64 data URL
+    const filePath = req.file.path;
+    const fileBuffer = fs.readFileSync(filePath);
+    const base64Data = fileBuffer.toString('base64');
+    const profile_picture_url = `data:${req.file.mimetype};base64,${base64Data}`;
+
     await query('UPDATE owner_profile SET profile_picture = ? LIMIT 1', [profile_picture_url]);
     
+    // Delete the local uploaded file immediately as it's saved as base64 in database
+    try {
+      fs.unlinkSync(filePath);
+    } catch (unlinkErr) {
+      console.warn(`[TEMP FILE CLEANUP WARNING] Could not delete temp file: ${filePath}`, unlinkErr.message);
+    }
+
     if (oldAvatar) deleteFileFromDisk(oldAvatar);
 
     res.json({ success: true, profile_picture: profile_picture_url });

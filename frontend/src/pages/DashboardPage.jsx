@@ -8,7 +8,7 @@ import {
 import { Linkedin, Github, Instagram, Facebook } from '../components/BrandIcons';
 import '../styles/dashboard.css';
 import '../styles/welcome.css';
-import { getApiBase } from '../utils/api';
+import { getApiBase, setApiBase } from '../utils/api';
 
 const API_BASE = getApiBase();
 const BACKEND_BASE = API_BASE.replace('/api', '');
@@ -681,6 +681,35 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
   const [showNotifications, setShowNotifications] = useState(false);
   const [showAvatarPopup, setShowAvatarPopup] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
+
+  const [customApiInput, setCustomApiInput] = useState(localStorage.getItem('custom_api_base') || getApiBase());
+
+  const handleSaveCustomApi = () => {
+    if (!customApiInput) {
+      showStatus('API URL cannot be empty!', true);
+      return;
+    }
+    let cleaned = customApiInput.trim();
+    if (cleaned.endsWith('/')) {
+      cleaned = cleaned.slice(0, -1);
+    }
+    if (!cleaned.endsWith('/api')) {
+      cleaned = `${cleaned}/api`;
+    }
+    setApiBase(cleaned);
+    showStatus('Custom API URL updated! Reloading...', false);
+    setTimeout(() => {
+      window.location.reload();
+    }, 1500);
+  };
+
+  const handleResetCustomApi = () => {
+    setApiBase('');
+    showStatus('Custom API URL reset to default! Reloading...', false);
+    setTimeout(() => {
+      window.location.reload();
+    }, 1500);
+  };
 
   useEffect(() => {
     setAvatarError(false);
@@ -2092,7 +2121,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
             >
               {profile?.profile_picture && !avatarError ? (
                 <img 
-                  src={`${BACKEND_BASE}${profile.profile_picture}`} 
+                  src={profile.profile_picture.startsWith('data:') || profile.profile_picture.startsWith('http') ? profile.profile_picture : `${BACKEND_BASE}${profile.profile_picture}`} 
                   alt="owner" 
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   onError={() => setAvatarError(true)}
@@ -2637,6 +2666,45 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                   <Save size={18} /> Sync Account Profiles
                 </button>
               </form>
+
+              {/* Backend API Configuration */}
+              <div className="glass-panel" style={{ marginTop: '2rem', padding: '1.5rem', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px' }}>
+                <h3 style={{ fontSize: '1.1rem', color: '#fff', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <ShieldCheck size={18} className="text-green" /> Backend API Configuration
+                </h3>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
+                  Currently connected to: <code style={{ color: 'var(--accent-green)', padding: '0.2rem 0.4rem', background: 'rgba(0,0,0,0.3)', borderRadius: '4px' }}>{API_BASE}</code>
+                </p>
+                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <input
+                    type="url"
+                    className="glass-input"
+                    placeholder="Enter custom backend API URL (e.g. https://your-backend.up.railway.app/api)"
+                    value={customApiInput}
+                    onChange={(e) => setCustomApiInput(e.target.value)}
+                    style={{ flex: 1, minWidth: '200px' }}
+                  />
+                  <button
+                    onClick={handleSaveCustomApi}
+                    className="glass-btn"
+                    style={{ padding: '0.75rem 1.5rem' }}
+                  >
+                    Save URL
+                  </button>
+                  {localStorage.getItem('custom_api_base') && (
+                    <button
+                      onClick={handleResetCustomApi}
+                      className="glass-btn-danger"
+                      style={{ padding: '0.75rem 1.5rem' }}
+                    >
+                      Reset Default
+                    </button>
+                  )}
+                </div>
+                <small style={{ display: 'block', marginTop: '0.5rem', color: 'var(--text-secondary)' }}>
+                  * Changing the backend URL will reload the control panel to connect to the new server.
+                </small>
+              </div>
 
             </div>
           )}
@@ -4167,7 +4235,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
               >
                 {profile?.profile_picture && !avatarError ? (
                   <img
-                    src={`${BACKEND_BASE}${profile.profile_picture}`}
+                    src={profile.profile_picture.startsWith('data:') || profile.profile_picture.startsWith('http') ? profile.profile_picture : `${BACKEND_BASE}${profile.profile_picture}`}
                     alt="owner"
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     onError={() => setAvatarError(true)}
@@ -4375,7 +4443,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
           >
             {profile?.profile_picture ? (
               <img 
-                src={`${BACKEND_BASE}${profile.profile_picture}`} 
+                src={profile.profile_picture.startsWith('data:') || profile.profile_picture.startsWith('http') ? profile.profile_picture : `${BACKEND_BASE}${profile.profile_picture}`} 
                 alt="owner large" 
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               />

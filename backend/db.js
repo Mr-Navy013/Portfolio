@@ -310,6 +310,12 @@ async function createTables() {
     // Column already exists, ignore
   }
 
+  try {
+    await pool.query('ALTER TABLE owner_profile MODIFY COLUMN profile_picture LONGTEXT NULL;');
+  } catch (err) {
+    // Column update failed or already matches, ignore
+  }
+
   await pool.query(`
     CREATE TABLE IF NOT EXISTS otp_verifications (
       id INT AUTO_INCREMENT PRIMARY KEY,
