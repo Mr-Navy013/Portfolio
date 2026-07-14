@@ -19,7 +19,7 @@ export const getApiBase = () => {
   }
 
   // Production Render API base fallback
-  return 'https://portfolio-1-rcsv.onrender.com/api';
+  return 'https://portfolio-f4os.onrender.com/api';
 };
 
 export const setApiBase = (url) => {
