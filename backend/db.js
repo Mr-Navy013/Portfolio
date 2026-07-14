@@ -38,7 +38,8 @@ const defaultJsonData = {
   certificates: [],
   messages: [],
   otp_verifications: [],
-  courses: []
+  courses: [],
+  document_requests: []
 };
 
 // Initialize JSON database if it doesn't exist
@@ -62,7 +63,9 @@ async function initJsonDb() {
 // Read database from json file
 function readJsonDb() {
   try {
-    return JSON.parse(fs.readFileSync(jsonDbPath, 'utf8'));
+    const data = JSON.parse(fs.readFileSync(jsonDbPath, 'utf8'));
+    if (!data.document_requests) data.document_requests = [];
+    return data;
   } catch (err) {
     return defaultJsonData;
   }
@@ -769,6 +772,72 @@ async function handleJsonQuery(sql, params = []) {
   if (sqlClean.includes('DELETE FROM messages WHERE id = ?')) {
     const id = parseInt(params[0]);
     db.messages = db.messages.filter(m => m.id !== id);
+    writeJsonDb(db);
+    return [{ affectedRows: 1 }];
+  }
+
+  // SELECT FROM document_requests
+  if (sqlClean.includes('FROM document_requests') && sqlClean.includes('SELECT *')) {
+    if (sqlClean.includes('WHERE id = ?')) {
+      const req = db.document_requests.find(r => r.id === parseInt(params[0]));
+      return [req ? [req] : []];
+    }
+    if (sqlClean.includes('viewer_email = ?') && sqlClean.includes('access_token = ?')) {
+      const email = params[0];
+      const token = params[1];
+      const docId = params[2];
+      const filtered = db.document_requests.filter(r => r.viewer_email === email && r.access_token === token && r.document_id === docId && r.status === 'Approved');
+      return [filtered.sort((a,b) => b.id - a.id)];
+    }
+    return [[...db.document_requests].sort((a,b) => b.id - a.id)];
+  }
+
+  // INSERT INTO document_requests
+  if (sqlClean.includes('INSERT INTO document_requests')) {
+    const newReq = {
+      id: db.document_requests.length + 1,
+      viewer_name: params[0],
+      viewer_email: params[1],
+      purpose: params[2],
+      document_id: params[3],
+      document_name: params[4],
+      status: 'Pending',
+      access_token: null,
+      created_at: new Date().toISOString()
+    };
+    db.document_requests.push(newReq);
+    writeJsonDb(db);
+    return [{ insertId: newReq.id }];
+  }
+
+  // UPDATE document_requests SET status = "Approved"
+  if (sqlClean.includes('UPDATE document_requests SET status = "Approved"')) {
+    const token = params[0];
+    const id = parseInt(params[1]);
+    const req = db.document_requests.find(r => r.id === id);
+    if (req) {
+      req.status = 'Approved';
+      req.access_token = token;
+    }
+    writeJsonDb(db);
+    return [{ affectedRows: 1 }];
+  }
+
+  // UPDATE document_requests SET status = "Rejected"
+  if (sqlClean.includes('UPDATE document_requests SET status = "Rejected"')) {
+    const id = parseInt(params[0]);
+    const req = db.document_requests.find(r => r.id === id);
+    if (req) {
+      req.status = 'Rejected';
+    }
+    writeJsonDb(db);
+    return [{ affectedRows: 1 }];
+  }
+
+  // DELETE FROM document_requests WHERE id = ?
+  if (sqlClean.includes('DELETE FROM document_requests WHERE id = ?')) {
+    const id = parseInt(params[0]);
+    db.document_requests = db.document_requests.filter(r => r.id !== id);
     writeJsonDb(db);
     return [{ affectedRows: 1 }];
   }

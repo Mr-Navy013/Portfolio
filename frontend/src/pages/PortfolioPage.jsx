@@ -38,6 +38,8 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [showVerifyModal, setShowVerifyModal] = useState(false);
   const [showSecureDocModal, setShowSecureDocModal] = useState(false);
+  const [isWindowFocused, setIsWindowFocused] = useState(true);
+  const [isScreenshotAttempted, setIsScreenshotAttempted] = useState(false);
   const [selectedDocId, setSelectedDocId] = useState('');
   const [selectedDocName, setSelectedDocName] = useState('');
   const [viewerName, setViewerName] = useState('');
@@ -143,15 +145,42 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
   useEffect(() => { fetchData(); }, []);
 
   useEffect(() => {
-    if (!showSecureDocModal) return;
+    if (!showSecureDocModal) {
+      setIsWindowFocused(true);
+      setIsScreenshotAttempted(false);
+      return;
+    }
+
+    const handleFocus = () => {
+      setIsWindowFocused(true);
+    };
+
+    const handleBlur = () => {
+      setIsWindowFocused(false);
+      try {
+        navigator.clipboard.writeText('');
+      } catch (err) {}
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        setIsWindowFocused(false);
+      }
+    };
 
     const handleKeyDown = (e) => {
       // Clear clipboard on Print Screen key
-      if (e.key === 'PrintScreen') {
+      if (e.key === 'PrintScreen' || e.keyCode === 44) {
         e.preventDefault();
-        navigator.clipboard.writeText('');
+        setIsScreenshotAttempted(true);
+        try {
+          navigator.clipboard.writeText('');
+        } catch (err) {}
         setToast({ show: true, message: 'Screenshots are disabled for this confidential document.', type: 'error' });
-        setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 2000);
+        setTimeout(() => {
+          setIsScreenshotAttempted(false);
+          setToast({ show: false, message: '', type: 'success' });
+        }, 1500);
       }
       // F12
       if (e.key === 'F12') {
@@ -177,12 +206,23 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
       e.preventDefault();
     };
 
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('blur', handleBlur);
     window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyDown);
     window.addEventListener('contextmenu', handleContextMenu);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Initial check
+    setIsWindowFocused(document.hasFocus());
 
     return () => {
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('blur', handleBlur);
       window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyDown);
       window.removeEventListener('contextmenu', handleContextMenu);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [showSecureDocModal]);
 
@@ -1690,6 +1730,37 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
                 WebkitUserSelect: 'none'
               }}
             >
+              {(!isWindowFocused || isScreenshotAttempted) && (
+                <div 
+                  style={{
+                    position: 'absolute',
+                    top: 0, left: 0, right: 0, bottom: 0,
+                    background: '#040806',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    gap: '1.25rem',
+                    zIndex: 10000000,
+                    color: '#ff5252',
+                    padding: '2rem',
+                    textAlign: 'center',
+                    border: '1px solid rgba(255, 82, 82, 0.2)',
+                    borderRadius: '8px',
+                    backdropFilter: 'blur(10px)'
+                  }}
+                >
+                  <Lock size={44} style={{ color: '#ff5252' }} />
+                  <h4 style={{ margin: 0, color: '#fff', fontSize: '1.1rem', fontWeight: 'bold' }}>🔒 Confidential Content Hidden</h4>
+                  <p style={{ margin: 0, color: 'rgba(255,255,255,0.6)', fontSize: '0.82rem', maxWidth: '380px', lineHeight: '1.4' }}>
+                    Screenshot protection is active. The content has been hidden because the window lost focus or a screenshot shortcut was detected.
+                  </p>
+                  <span style={{ fontSize: '0.78rem', color: '#00ff88', fontWeight: 600, background: 'rgba(0,255,136,0.08)', padding: '0.3rem 0.75rem', borderRadius: '4px', border: '1px solid rgba(0,255,136,0.15)' }}>
+                    Click back inside the browser tab to resume viewing
+                  </span>
+                </div>
+              )}
+
               {secureDocUrl.toLowerCase().endsWith('.pdf') ? (
                 <iframe 
                   src={`${secureDocUrl}#toolbar=0&navpanes=0&scrollbar=0`} 

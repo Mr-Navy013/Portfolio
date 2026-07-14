@@ -810,6 +810,12 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
           message: 'Are you sure you want to permanently remove your resume file?',
           confirmText: 'Remove'
         };
+      case 'documentRequest':
+        return {
+          title: 'Delete Access Request?',
+          message: 'Are you sure you want to permanently delete this document access request? This action cannot be undone.',
+          confirmText: 'Delete'
+        };
       default:
         // project, education, skill, course, experience, certificate
         const formattedType = deleteTargetType ? deleteTargetType.charAt(0).toUpperCase() + deleteTargetType.slice(1) : '';
@@ -956,6 +962,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       else if (type === 'course') endpoint = `courses/${id}`;
       else if (type === 'experience') endpoint = `experience/${id}`;
       else if (type === 'certificate') endpoint = `certificates/${id}`;
+      else if (type === 'documentRequest') endpoint = `document-requests/${id}`;
 
       const res = await fetch(`${API_BASE}/${endpoint}`, {
         method: 'DELETE',
@@ -963,7 +970,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       });
       
       if (res.ok) {
-        showStatus(`${type.charAt(0).toUpperCase() + type.slice(1)} deleted successfully.`);
+        showStatus(`${type === 'documentRequest' ? 'Document request' : type.charAt(0).toUpperCase() + type.slice(1)} deleted successfully.`);
         // Optimistic local state filtering
         if (type === 'project') setProjects(prev => prev.filter(item => item.id !== id));
         else if (type === 'education') setEducation(prev => prev.filter(item => item.id !== id));
@@ -971,8 +978,9 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
         else if (type === 'course') setCourses(prev => prev.filter(item => item.id !== id));
         else if (type === 'experience') setExperience(prev => prev.filter(item => item.id !== id));
         else if (type === 'certificate') setCertificates(prev => prev.filter(item => item.id !== id));
+        else if (type === 'documentRequest') setDocRequests(prev => prev.filter(item => item.id !== id));
       } else {
-        showStatus(`Failed to delete ${type}.`, true);
+        showStatus(`Failed to delete ${type === 'documentRequest' ? 'document request' : type}.`, true);
       }
       fetchDashboardCollections();
     } catch (err) {
@@ -984,6 +992,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       else if (type === 'course') setCourses(prev => prev.filter(item => item.id !== id));
       else if (type === 'experience') setExperience(prev => prev.filter(item => item.id !== id));
       else if (type === 'certificate') setCertificates(prev => prev.filter(item => item.id !== id));
+      else if (type === 'documentRequest') setDocRequests(prev => prev.filter(item => item.id !== id));
     }
   };
 
@@ -1827,6 +1836,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
   };
 
   const handleDeleteCert = (id) => requestDelete(id, 'certificate');
+  const handleDeleteDocRequest = (id) => requestDelete(id, 'documentRequest');
 
   return (
     <div style={{ background: 'radial-gradient(ellipse at top left, #04351b 0%, #01140a 45%, #000000 100%)', minHeight: '100vh', color: '#fff', position: 'relative', overflowX: 'hidden' }}>
@@ -3236,10 +3246,21 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                           </div>
                         )}
 
-                        {req.status === 'Approved' && req.access_token && (
-                          <span style={{ fontSize: '0.8rem', color: 'var(--accent-green)', fontWeight: 600 }}>
-                            Access Code: <code style={{ letterSpacing: '1px', background: 'rgba(0,255,136,0.1)', padding: '0.1rem 0.3rem', borderRadius: '3px' }}>{req.access_token}</code>
-                          </span>
+                        {req.status !== 'Pending' && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                            {req.status === 'Approved' && req.access_token && (
+                              <span style={{ fontSize: '0.8rem', color: 'var(--accent-green)', fontWeight: 600 }}>
+                                Access Code: <code style={{ letterSpacing: '1px', background: 'rgba(0,255,136,0.1)', padding: '0.1rem 0.3rem', borderRadius: '3px' }}>{req.access_token}</code>
+                              </span>
+                            )}
+                            <button 
+                              onClick={() => handleDeleteDocRequest(req.id)}
+                              className="glass-btn-danger" 
+                              style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', gap: '0.25rem', display: 'flex', alignItems: 'center' }}
+                            >
+                              <Trash2 size={12} /> Delete
+                            </button>
+                          </div>
                         )}
                       </div>
                     </div>

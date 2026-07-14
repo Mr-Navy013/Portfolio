@@ -1340,7 +1340,18 @@ app.post('/api/document-requests/:id/decline', authenticateToken, async (req, re
   }
 });
 
-// 5. Viewer verifies Access Token and retrieves document URL
+// 5. Owner deletes access request (Authenticated)
+app.delete('/api/document-requests/:id', authenticateToken, async (req, res) => {
+  const { id } = req.params;
+  try {
+    await query('DELETE FROM document_requests WHERE id = ?', [id]);
+    res.json({ success: true, message: 'Access request deleted successfully.' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 6. Viewer verifies Access Token and retrieves document URL
 app.post('/api/document-requests/verify', async (req, res) => {
   const { email, token, document_id } = req.body;
   if (!email || !token || !document_id) {
