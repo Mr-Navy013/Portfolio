@@ -90,7 +90,10 @@ function LoginPage({ navigateTo, onLoginSuccess }) {
 
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
-    if (!username || !password) return;
+    const formUsername = (e.target.username?.value || username).trim();
+    const formPassword = e.target.password?.value || password;
+
+    if (!formUsername || !formPassword) return;
     setLoading(true);
     clearMessages();
 
@@ -98,7 +101,7 @@ function LoginPage({ navigateTo, onLoginSuccess }) {
       const res = await fetch(`${API_BASE}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify({ username: formUsername, password: formPassword })
       });
 
       const data = await res.json();
@@ -272,6 +275,7 @@ function LoginPage({ navigateTo, onLoginSuccess }) {
                 <div style={{ position: 'relative' }}>
                   <User size={18} className="text-green" style={{ position: 'absolute', left: '0.8rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.8 }} />
                   <input 
+                    name="username"
                     type="text" 
                     required
                     value={username}
@@ -297,6 +301,7 @@ function LoginPage({ navigateTo, onLoginSuccess }) {
                 <div style={{ position: 'relative' }}>
                   <Lock size={18} className="text-green" style={{ position: 'absolute', left: '0.8rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.8 }} />
                   <input 
+                    name="password"
                     type={showPassword ? "text" : "password"} 
                     required
                     value={password}

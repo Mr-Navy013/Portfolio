@@ -8,6 +8,7 @@ import { Linkedin, Github, Instagram, Facebook } from '../components/BrandIcons'
 import '../styles/portfolio.css';
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000/api';
+const BACKEND_BASE = API_BASE.replace('/api', '');
 
 const formatDateStr = (str) => {
   if (!str) return '';
@@ -639,82 +640,69 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
                 <p className="pf-timeline-sub">{edu.degree}{edu.field_of_study ? ` in ${edu.field_of_study}` : ''}</p>
                 {edu.description && <p className="pf-timeline-desc">{edu.description}</p>}
 
-                {/* Document Access Buttons */}
                 <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.8rem', flexWrap: 'wrap' }}>
                   {edu.degree === '10th' && edu.certificate_10th && (
-                    <button 
-                      onClick={() => handleOpenPermissionRequest(`edu_${edu.id}_cert10`, '10th Certificate')} 
-                      className="glass-btn" 
-                      style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', gap: '0.4rem', height: 'auto' }}
-                    >
-                      <Lock size={12} /> View 10th Certificate
-                    </button>
+                    edu.access_cert10 === 1 || edu.access_cert10 === 'true' || edu.access_cert10 === true ? (
+                      <a 
+                        href={`${BACKEND_BASE}${edu.certificate_10th}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="glass-btn" 
+                        style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', gap: '0.4rem', height: 'auto', display: 'flex', alignItems: 'center', textDecoration: 'none' }}
+                      >
+                        <Eye size={12} /> View 10th Certificate
+                      </a>
+                    ) : (
+                      <button 
+                        onClick={() => handleOpenPermissionRequest(`edu_${edu.id}_cert10`, '10th Certificate')} 
+                        className="glass-btn" 
+                        style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', gap: '0.4rem', height: 'auto' }}
+                      >
+                        <Lock size={12} /> View 10th Certificate
+                      </button>
+                    )
                   )}
-                  {edu.degree === '12th' && (
-                    <>
-                      {edu.certificate_12th && (
-                        <button 
-                          onClick={() => handleOpenPermissionRequest(`edu_${edu.id}_cert12`, '12th Certificate')} 
-                          className="glass-btn" 
-                          style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', gap: '0.4rem', height: 'auto' }}
-                        >
-                          <Lock size={12} /> View 12th Certificate
-                        </button>
-                      )}
-                      {edu.marksheet_12th && (
-                        <button 
-                          onClick={() => handleOpenPermissionRequest(`edu_${edu.id}_marks12`, '12th Marksheet')} 
-                          className="glass-btn" 
-                          style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', gap: '0.4rem', height: 'auto' }}
-                        >
-                          <Lock size={12} /> View 12th Marksheet
-                        </button>
-                      )}
-                    </>
+                  {edu.degree === '12th' && edu.certificate_12th && (
+                    edu.access_cert12 === 1 || edu.access_cert12 === 'true' || edu.access_cert12 === true ? (
+                      <a 
+                        href={`${BACKEND_BASE}${edu.certificate_12th}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="glass-btn" 
+                        style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', gap: '0.4rem', height: 'auto', display: 'flex', alignItems: 'center', textDecoration: 'none' }}
+                      >
+                        <Eye size={12} /> View 12th Certificate
+                      </a>
+                    ) : (
+                      <button 
+                        onClick={() => handleOpenPermissionRequest(`edu_${edu.id}_cert12`, '12th Certificate')} 
+                        className="glass-btn" 
+                        style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', gap: '0.4rem', height: 'auto' }}
+                      >
+                        <Lock size={12} /> View 12th Certificate
+                      </button>
+                    )
                   )}
-                  {edu.degree === 'Bachelor' && (
-                    <>
-                      {edu.certificate_bachelor && (
-                        <button 
-                          onClick={() => handleOpenPermissionRequest(`edu_${edu.id}_certbach`, 'Consolidated Degree Certificate')} 
-                          className="glass-btn" 
-                          style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', gap: '0.4rem', height: 'auto' }}
-                        >
-                          <Lock size={12} /> View Degree Certificate
-                        </button>
-                      )}
-                      {edu.gradesheet_bachelor && (
-                        <button 
-                          onClick={() => handleOpenPermissionRequest(`edu_${edu.id}_gradesbach`, 'Consolidated Marksheet')} 
-                          className="glass-btn" 
-                          style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', gap: '0.4rem', height: 'auto' }}
-                        >
-                          <Lock size={12} /> View Consolidated Marksheet
-                        </button>
-                      )}
-                    </>
-                  )}
-                  {edu.degree === 'Others' && (
-                    <>
-                      {edu.certificate_others && (
-                        <button 
-                          onClick={() => handleOpenPermissionRequest(`edu_${edu.id}_certothers`, `${edu.field_of_study || 'Others'} Certificate`)} 
-                          className="glass-btn" 
-                          style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', gap: '0.4rem', height: 'auto' }}
-                        >
-                          <Lock size={12} /> View Certificate
-                        </button>
-                      )}
-                      {edu.marksheet_others && (
-                        <button 
-                          onClick={() => handleOpenPermissionRequest(`edu_${edu.id}_marksothers`, `${edu.field_of_study || 'Others'} Marksheet`)} 
-                          className="glass-btn" 
-                          style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', gap: '0.4rem', height: 'auto' }}
-                        >
-                          <Lock size={12} /> View Marksheet
-                        </button>
-                      )}
-                    </>
+                  {edu.degree === 'Bachelor' && edu.certificate_bachelor && (
+                    edu.access_certbach === 1 || edu.access_certbach === 'true' || edu.access_certbach === true ? (
+                      <a 
+                        href={`${BACKEND_BASE}${edu.certificate_bachelor}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="glass-btn" 
+                        style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', gap: '0.4rem', height: 'auto', display: 'flex', alignItems: 'center', textDecoration: 'none' }}
+                      >
+                        <Eye size={12} /> View Degree Certificate
+                      </a>
+                    ) : (
+                      <button 
+                        onClick={() => handleOpenPermissionRequest(`edu_${edu.id}_certbach`, 'Consolidated Degree Certificate')} 
+                        className="glass-btn" 
+                        style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', gap: '0.4rem', height: 'auto' }}
+                      >
+                        <Lock size={12} /> View Degree Certificate
+                      </button>
+                    )
                   )}
                 </div>
               </div>
@@ -936,7 +924,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
                             <div className="pf-project-image-wrap">
                               {proj.thumbnail ? (
                                 <img
-                                  src={`http://localhost:5000${proj.thumbnail}`}
+                                  src={`${BACKEND_BASE}${proj.thumbnail}`}
                                   alt={proj.title}
                                   className="pf-project-thumb"
                                 />
@@ -1013,7 +1001,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
                   <div className="pf-project-image-wrap">
                     {proj.thumbnail ? (
                       <img
-                        src={`http://localhost:5000${proj.thumbnail}`}
+                        src={`${BACKEND_BASE}${proj.thumbnail}`}
                         alt={proj.title}
                         className="pf-project-thumb"
                       />
@@ -1111,14 +1099,27 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
                   <p className="pf-cert-meta">{cert.organization} · {formatDateStr(cert.issue_date)}</p>
                 </div>
                 {cert.credential_url && (
-                  <button 
-                    onClick={() => handleOpenPermissionRequest(`cert_${cert.id}`, cert.name)} 
-                    className="pf-cert-link" 
-                    title="Request Access to view"
-                    style={{ background: 'none', border: 'none', color: 'var(--accent-green)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                  >
-                    <Lock size={18} />
-                  </button>
+                  cert.access_cert === 1 || cert.access_cert === 'true' || cert.access_cert === true ? (
+                    <a 
+                      href={cert.credential_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="pf-cert-link" 
+                      title="View Certificate"
+                      style={{ background: 'none', border: 'none', color: 'var(--accent-green)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >
+                      <Eye size={18} />
+                    </a>
+                  ) : (
+                    <button 
+                      onClick={() => handleOpenPermissionRequest(`cert_${cert.id}`, cert.name)} 
+                      className="pf-cert-link" 
+                      title="Request Access to view"
+                      style={{ background: 'none', border: 'none', color: 'var(--accent-green)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >
+                      <Lock size={18} />
+                    </button>
+                  )
                 )}
               </div>
             ))}
@@ -1482,14 +1483,14 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
 
                     {/* Certificate */}
                     {selectedExperience.certificate_file && (
-                      <a href={`http://localhost:5000${selectedExperience.certificate_file}`} target="_blank" rel="noreferrer" className="glass-btn" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.85rem', borderColor: 'var(--accent-green)' }}>
+                      <a href={`${BACKEND_BASE}${selectedExperience.certificate_file}`} target="_blank" rel="noreferrer" className="glass-btn" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.85rem', borderColor: 'var(--accent-green)' }}>
                         <Award size={16} /> Certificate
                       </a>
                     )}
 
                     {/* LOR */}
                     {selectedExperience.lor_file && (
-                      <a href={`http://localhost:5000${selectedExperience.lor_file}`} target="_blank" rel="noreferrer" className="glass-btn" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.85rem', borderColor: '#ffa500' }}>
+                      <a href={`${BACKEND_BASE}${selectedExperience.lor_file}`} target="_blank" rel="noreferrer" className="glass-btn" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.85rem', borderColor: '#ffa500' }}>
                         <Award size={16} /> LOR Letter
                       </a>
                     )}

@@ -9,6 +9,7 @@ import { Linkedin, Github, Instagram, Facebook } from '../components/BrandIcons'
 import '../styles/dashboard.css';
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000/api';
+const BACKEND_BASE = API_BASE.replace('/api', '');
 
 const DragDropUpload = ({ onFileSelect, accept, currentFile, placeholder, required = false }) => {
   const [isDragging, setIsDragging] = useState(false);
@@ -726,6 +727,9 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
   const [eduBachCert, setEduBachCert] = useState(null);
   const [eduOthersCert, setEduOthersCert] = useState(null);
   const [eduOthersMarksheet, setEduOthersMarksheet] = useState(null);
+  const [eduAccess10th, setEduAccess10th] = useState(false);
+  const [eduAccess12th, setEduAccess12th] = useState(false);
+  const [eduAccessBach, setEduAccessBach] = useState(false);
 
   const [showSkillModal, setShowSkillModal] = useState(false);
   const [customSkillName, setCustomSkillName] = useState('');
@@ -757,6 +761,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
   const [certDate, setCertDate] = useState('');
   const [certUrl, setCertUrl] = useState('');
   const [certFile, setCertFile] = useState(null);
+  const [certAccess, setCertAccess] = useState(false);
 
   const [showExitModal, setShowExitModal] = useState(false);
   const [selectedMessage, setSelectedMessage] = useState(null);
@@ -1576,6 +1581,9 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       if (eduOthersCert) formData.append('certificate_others', eduOthersCert);
       if (eduOthersMarksheet) formData.append('marksheet_others', eduOthersMarksheet);
     }
+    formData.append('access_cert10', eduAccess10th ? '1' : '0');
+    formData.append('access_cert12', eduAccess12th ? '1' : '0');
+    formData.append('access_certbach', eduAccessBach ? '1' : '0');
 
     try {
       const res = await fetch(`${API_BASE}/education`, {
@@ -1604,6 +1612,9 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
         setEduBachCert(null);
         setEduOthersCert(null);
         setEduOthersMarksheet(null);
+        setEduAccess10th(false);
+        setEduAccess12th(false);
+        setEduAccessBach(false);
       } else {
         const err = await res.json();
         showStatus(err.message || 'Failed to save education.', true);
@@ -1786,6 +1797,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
     if (certFile) {
       formData.append('certificate_file', certFile);
     }
+    formData.append('access_cert', certAccess ? '1' : '0');
 
     try {
       const res = await fetch(`${API_BASE}/certificates`, {
@@ -1802,6 +1814,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
         setCertDate('');
         setCertUrl('');
         setCertFile(null);
+        setCertAccess(false);
       } else {
         const err = await res.json();
         showStatus(err.message || 'Failed to save certificate.', true);
@@ -2067,7 +2080,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
             >
               {profile?.profile_picture && !avatarError ? (
                 <img 
-                  src={`http://localhost:5000${profile.profile_picture}`} 
+                  src={`${BACKEND_BASE}${profile.profile_picture}`} 
                   alt="owner" 
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   onError={() => setAvatarError(true)}
@@ -2741,19 +2754,19 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
 
                     <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: '0.75rem' }}>
                       {edu.degree === '10th' && edu.certificate_10th && (
-                        <a href={`http://localhost:5000${edu.certificate_10th}`} target="_blank" rel="noreferrer" className="glass-btn-secondary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', textDecoration: 'none' }} download>
+                        <a href={`${BACKEND_BASE}${edu.certificate_10th}`} target="_blank" rel="noreferrer" className="glass-btn-secondary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', textDecoration: 'none' }} download>
                           <Download size={12} /> 10th Certificate
                         </a>
                       )}
                       {edu.degree === '12th' && (
                         <>
                           {edu.certificate_12th && (
-                            <a href={`http://localhost:5000${edu.certificate_12th}`} target="_blank" rel="noreferrer" className="glass-btn-secondary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', textDecoration: 'none' }} download>
+                            <a href={`${BACKEND_BASE}${edu.certificate_12th}`} target="_blank" rel="noreferrer" className="glass-btn-secondary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', textDecoration: 'none' }} download>
                               <Download size={12} /> 12th Certificate
                             </a>
                           )}
                           {edu.marksheet_12th && (
-                            <a href={`http://localhost:5000${edu.marksheet_12th}`} target="_blank" rel="noreferrer" className="glass-btn-secondary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', textDecoration: 'none' }} download>
+                            <a href={`${BACKEND_BASE}${edu.marksheet_12th}`} target="_blank" rel="noreferrer" className="glass-btn-secondary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', textDecoration: 'none' }} download>
                               <Download size={12} /> 12th Marksheet
                             </a>
                           )}
@@ -2762,12 +2775,12 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                       {edu.degree === 'Bachelor' && (
                         <>
                           {edu.gradesheet_bachelor && (
-                            <a href={`http://localhost:5000${edu.gradesheet_bachelor}`} target="_blank" rel="noreferrer" className="glass-btn-secondary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', textDecoration: 'none' }} download>
+                            <a href={`${BACKEND_BASE}${edu.gradesheet_bachelor}`} target="_blank" rel="noreferrer" className="glass-btn-secondary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', textDecoration: 'none' }} download>
                               <Download size={12} /> Semester Gradesheet
                             </a>
                           )}
                           {edu.certificate_bachelor && (
-                            <a href={`http://localhost:5000${edu.certificate_bachelor}`} target="_blank" rel="noreferrer" className="glass-btn-secondary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', textDecoration: 'none' }} download>
+                            <a href={`${BACKEND_BASE}${edu.certificate_bachelor}`} target="_blank" rel="noreferrer" className="glass-btn-secondary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', textDecoration: 'none' }} download>
                               <Download size={12} /> Degree Certificate
                             </a>
                           )}
@@ -2890,12 +2903,12 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                     {(exp.certificate_file || exp.lor_file) && (
                       <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: '0.75rem' }}>
                         {exp.certificate_file && (
-                          <a href={`http://localhost:5000${exp.certificate_file}`} target="_blank" rel="noreferrer" className="glass-btn-secondary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', textDecoration: 'none' }} download>
+                          <a href={`${BACKEND_BASE}${exp.certificate_file}`} target="_blank" rel="noreferrer" className="glass-btn-secondary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', textDecoration: 'none' }} download>
                             <Download size={12} /> Completion Certificate
                           </a>
                         )}
                         {exp.lor_file && (
-                          <a href={`http://localhost:5000${exp.lor_file}`} target="_blank" rel="noreferrer" className="glass-btn-secondary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', textDecoration: 'none' }} download>
+                          <a href={`${BACKEND_BASE}${exp.lor_file}`} target="_blank" rel="noreferrer" className="glass-btn-secondary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', textDecoration: 'none' }} download>
                             <Download size={12} /> Letter of Recommendation (LOR)
                           </a>
                         )}
@@ -2931,7 +2944,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                       {cert.certificate_file ? (
                         <>
                           <a 
-                            href={`http://localhost:5000${cert.certificate_file}`} 
+                            href={`${BACKEND_BASE}${cert.certificate_file}`} 
                             target="_blank" 
                             rel="noreferrer" 
                             className="glass-btn-secondary"
@@ -2940,7 +2953,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                             View
                           </a>
                           <a 
-                            href={`http://localhost:5000${cert.certificate_file}`} 
+                            href={`${BACKEND_BASE}${cert.certificate_file}`} 
                             className="glass-btn" 
                             style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', textDecoration: 'none' }}
                             download
@@ -3443,6 +3456,18 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                       placeholder="Drag & drop 10th certificate or click to upload"
                       required={true}
                     />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
+                      <input 
+                        type="checkbox" 
+                        id="eduAccess10th" 
+                        checked={eduAccess10th} 
+                        onChange={(e) => setEduAccess10th(e.target.checked)} 
+                        style={{ accentColor: 'var(--accent-green)', cursor: 'pointer' }}
+                      />
+                      <label htmlFor="eduAccess10th" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', cursor: 'pointer' }}>
+                        Allow viewers to view/screenshot directly (No password required)
+                      </label>
+                    </div>
                   </div>
                 )}
 
@@ -3457,6 +3482,18 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                         placeholder="Drag & drop 12th certificate or click to upload"
                         required={true}
                       />
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
+                        <input 
+                          type="checkbox" 
+                          id="eduAccess12th" 
+                          checked={eduAccess12th} 
+                          onChange={(e) => setEduAccess12th(e.target.checked)} 
+                          style={{ accentColor: 'var(--accent-green)', cursor: 'pointer' }}
+                        />
+                        <label htmlFor="eduAccess12th" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', cursor: 'pointer' }}>
+                          Allow viewers to view/screenshot directly (No password required)
+                        </label>
+                      </div>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
                       <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Upload 12th Marksheet <span style={{ color: '#ff5252' }}>*</span></label>
@@ -3564,6 +3601,18 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                     placeholder="Drag & drop degree certificate or click to upload"
                     required={true}
                   />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
+                    <input 
+                      type="checkbox" 
+                      id="eduAccessBach" 
+                      checked={eduAccessBach} 
+                      onChange={(e) => setEduAccessBach(e.target.checked)} 
+                      style={{ accentColor: 'var(--accent-green)', cursor: 'pointer' }}
+                    />
+                    <label htmlFor="eduAccessBach" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', cursor: 'pointer' }}>
+                      Allow viewers to view/screenshot directly (No password required)
+                    </label>
+                  </div>
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
@@ -3865,6 +3914,18 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                 currentFile={certFile}
                 placeholder="Drag & drop certificate file or click to upload"
               />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
+                <input 
+                  type="checkbox" 
+                  id="certAccess" 
+                  checked={certAccess} 
+                  onChange={(e) => setCertAccess(e.target.checked)} 
+                  style={{ accentColor: 'var(--accent-green)', cursor: 'pointer' }}
+                />
+                <label htmlFor="certAccess" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', cursor: 'pointer' }}>
+                  Allow viewers to view/screenshot directly (No password required)
+                </label>
+              </div>
             </div>
             <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
               <button type="button" onClick={() => setShowCertModal(false)} className="glass-btn-secondary" style={{ flex: 1, justifyContent: 'center' }}>Cancel</button>
@@ -4083,7 +4144,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
               >
                 {profile?.profile_picture && !avatarError ? (
                   <img
-                    src={`http://localhost:5000${profile.profile_picture}`}
+                    src={`${BACKEND_BASE}${profile.profile_picture}`}
                     alt="owner"
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     onError={() => setAvatarError(true)}
@@ -4291,7 +4352,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
           >
             {profile?.profile_picture ? (
               <img 
-                src={`http://localhost:5000${profile.profile_picture}`} 
+                src={`${BACKEND_BASE}${profile.profile_picture}`} 
                 alt="owner large" 
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               />

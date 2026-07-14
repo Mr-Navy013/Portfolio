@@ -262,7 +262,10 @@ async function createTables() {
     'ALTER TABLE education ADD COLUMN gradesheet_bachelor VARCHAR(255) NULL;',
     'ALTER TABLE education ADD COLUMN certificate_bachelor VARCHAR(255) NULL;',
     'ALTER TABLE education ADD COLUMN certificate_others VARCHAR(255) NULL;',
-    'ALTER TABLE education ADD COLUMN marksheet_others VARCHAR(255) NULL;'
+    'ALTER TABLE education ADD COLUMN marksheet_others VARCHAR(255) NULL;',
+    'ALTER TABLE education ADD COLUMN access_cert10 BOOLEAN DEFAULT FALSE;',
+    'ALTER TABLE education ADD COLUMN access_cert12 BOOLEAN DEFAULT FALSE;',
+    'ALTER TABLE education ADD COLUMN access_certbach BOOLEAN DEFAULT FALSE;'
   ];
   for (const colQuery of addEduColumns) {
     try {
@@ -294,6 +297,12 @@ async function createTables() {
 
   try {
     await pool.query('ALTER TABLE certificates ADD COLUMN certificate_file VARCHAR(255) NULL;');
+  } catch (err) {
+    // Column already exists, ignore
+  }
+
+  try {
+    await pool.query('ALTER TABLE certificates ADD COLUMN access_cert BOOLEAN DEFAULT FALSE;');
   } catch (err) {
     // Column already exists, ignore
   }
@@ -620,6 +629,11 @@ async function handleJsonQuery(sql, params = []) {
       newEdu.marksheet_12th = params[16];
       newEdu.gradesheet_bachelor = params[17];
       newEdu.certificate_bachelor = params[18];
+      newEdu.certificate_others = params[19];
+      newEdu.marksheet_others = params[20];
+      newEdu.access_cert10 = params[21] ? 1 : 0;
+      newEdu.access_cert12 = params[22] ? 1 : 0;
+      newEdu.access_certbach = params[23] ? 1 : 0;
     }
     db.education.push(newEdu);
     writeJsonDb(db);
@@ -702,6 +716,11 @@ async function handleJsonQuery(sql, params = []) {
     };
     if (params.length > 4) {
       newCert.certificate_file = params[4];
+    }
+    if (params.length > 5) {
+      newCert.access_cert = params[5] ? 1 : 0;
+    } else {
+      newCert.access_cert = 0;
     }
     db.certificates.push(newCert);
     writeJsonDb(db);

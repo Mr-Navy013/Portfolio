@@ -377,7 +377,8 @@ app.post('/api/messages', async (req, res) => {
 
 // Login Route
 app.post('/api/auth/login', async (req, res) => {
-  const { username, password } = req.body;
+  const { password } = req.body;
+  const username = req.body.username ? req.body.username.trim() : '';
   if (!username || !password) {
     return res.status(400).json({ message: 'Username and Password are required' });
   }
@@ -834,7 +835,8 @@ app.post('/api/education', authenticateToken, educationUploadFields, async (req,
   const { 
     school, degree, field_of_study, start_date, end_date, description,
     passing_year, full_marks, marks_obtained, percentage, course, branch,
-    semester_sgpa, cgpa
+    semester_sgpa, cgpa,
+    access_cert10, access_cert12, access_certbach
   } = req.body;
 
   if (!school || !degree || !start_date || !end_date) {
@@ -843,6 +845,10 @@ app.post('/api/education', authenticateToken, educationUploadFields, async (req,
 
   const fileUrl = (fieldname) => {
     return req.files && req.files[fieldname] ? `/uploads/${req.files[fieldname][0].filename}` : null;
+  };
+
+  const parseBoolParam = (val) => {
+    return val === '1' || val === 1 || val === 'true' || val === true ? 1 : 0;
   };
 
   const cert10th = fileUrl('certificate_10th');
@@ -859,8 +865,9 @@ app.post('/api/education', authenticateToken, educationUploadFields, async (req,
         school, degree, field_of_study, start_date, end_date, description,
         passing_year, full_marks, marks_obtained, percentage, course, branch,
         semester_sgpa, cgpa, certificate_10th, certificate_12th, marksheet_12th,
-        gradesheet_bachelor, certificate_bachelor, certificate_others, marksheet_others
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        gradesheet_bachelor, certificate_bachelor, certificate_others, marksheet_others,
+        access_cert10, access_cert12, access_certbach
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
       school, degree, field_of_study || null, start_date, end_date, description || null,
       passing_year || null, 
@@ -870,7 +877,10 @@ app.post('/api/education', authenticateToken, educationUploadFields, async (req,
       course || null, branch || null,
       semester_sgpa || null, 
       cgpa ? parseFloat(cgpa) : null,
-      cert10th, cert12th, marksheet12th, gradesheetBach, certBach, certOthers, marksheetOthers
+      cert10th, cert12th, marksheet12th, gradesheetBach, certBach, certOthers, marksheetOthers,
+      parseBoolParam(access_cert10),
+      parseBoolParam(access_cert12),
+      parseBoolParam(access_certbach)
     ]);
     res.status(201).json({ success: true, message: 'Education history added!' });
   } catch (error) {
@@ -1054,16 +1064,20 @@ app.delete('/api/experience/:id', authenticateToken, async (req, res) => {
 
 // Certificates CRUD
 app.post('/api/certificates', authenticateToken, upload.single('certificate_file'), async (req, res) => {
-  const { name, organization, issue_date, credential_url } = req.body;
+  const { name, organization, issue_date, credential_url, access_cert } = req.body;
   if (!name || !organization || !issue_date) {
     return res.status(400).json({ message: 'Name, Organization, and Date are required' });
   }
 
   const certFile = req.file ? `/uploads/${req.file.filename}` : null;
+  const parseBoolParam = (val) => {
+    return val === '1' || val === 1 || val === 'true' || val === true ? 1 : 0;
+  };
 
   try {
-    await query('INSERT INTO certificates (name, organization, issue_date, credential_url, certificate_file) VALUES (?, ?, ?, ?, ?)', [
-      name, organization, issue_date, credential_url || null, certFile
+    await query('INSERT INTO certificates (name, organization, issue_date, credential_url, certificate_file, access_cert) VALUES (?, ?, ?, ?, ?, ?)', [
+      name, organization, issue_date, credential_url || null, certFile,
+      parseBoolParam(access_cert)
     ]);
     res.status(201).json({ success: true, message: 'Certificate added!' });
   } catch (error) {
