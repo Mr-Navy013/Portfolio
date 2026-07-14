@@ -700,7 +700,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
     showStatus('Custom API URL updated! Reloading...', false);
     setTimeout(() => {
       window.location.reload();
-    }, 1500);
+    }, 1000);
   };
 
   const handleResetCustomApi = () => {
@@ -708,7 +708,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
     showStatus('Custom API URL reset to default! Reloading...', false);
     setTimeout(() => {
       window.location.reload();
-    }, 1500);
+    }, 1000);
   };
 
   useEffect(() => {
@@ -2712,7 +2712,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
           {/* TAB 2: PROJECTS PORTFOLIO CRUD */}
           {activeTab === 'projects' && (
             <div className="glass-panel" style={{ padding: '2rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>
                 <h2 style={{ fontSize: '1.5rem', fontWeight: 800 }}>Projects</h2>
                 <button onClick={() => handleOpenProjectForm()} className="glass-btn" style={{ padding: '0.4rem 1rem', fontSize: '0.85rem' }}>
                   <Plus size={16} /> New Project
@@ -2752,7 +2752,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
           {/* TAB 3: EDUCATION CRUD */}
           {activeTab === 'education' && (
             <div className="glass-panel" style={{ padding: '2rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>
                 <h2 style={{ fontSize: '1.5rem', fontWeight: 800 }}>Education</h2>
                 <button onClick={() => setShowEduModal(true)} className="glass-btn" style={{ padding: '0.4rem 1rem', fontSize: '0.85rem' }}>
                   <Plus size={16} /> Add Education
@@ -2876,7 +2876,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
           {/* TAB 4: SKILLS CRUD */}
           {activeTab === 'skills' && (
             <div className="glass-panel" style={{ padding: '2rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>
                 <h2 style={{ fontSize: '1.5rem', fontWeight: 800 }}>Skills</h2>
                 <button onClick={() => setShowSkillModal(true)} className="glass-btn" style={{ padding: '0.4rem 1rem', fontSize: '0.85rem' }}>
                   <Plus size={16} /> Add Skill
@@ -2902,7 +2902,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
           {/* TAB 5: EXPERIENCE CRUD */}
           {activeTab === 'experience' && (
             <div className="glass-panel" style={{ padding: '2rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>
                 <h2 style={{ fontSize: '1.5rem', fontWeight: 800 }}>Experience</h2>
                 <button onClick={() => setShowExpModal(true)} className="glass-btn" style={{ padding: '0.4rem 1rem', fontSize: '0.85rem' }}>
                   <Plus size={16} /> Add Experience
@@ -3003,7 +3003,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
           {/* TAB 6: CERTIFICATES CRUD */}
           {activeTab === 'certs' && (
             <div className="glass-panel" style={{ padding: '2rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>
                 <h2 style={{ fontSize: '1.5rem', fontWeight: 800 }}>Certificates</h2>
                 <button onClick={() => setShowCertModal(true)} className="glass-btn" style={{ padding: '0.4rem 1rem', fontSize: '0.85rem' }}>
                   <Plus size={16} /> Add Certificate
@@ -3197,7 +3197,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
           {/* TAB 8: COURSES CRUD */}
           {activeTab === 'courses' && (
             <div className="glass-panel" style={{ padding: '2rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>
                 <h2 style={{ fontSize: '1.5rem', fontWeight: 800, margin: 0 }}>
                   Manage Courses
                 </h2>

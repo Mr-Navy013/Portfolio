@@ -246,7 +246,7 @@ function LoginPage({ navigateTo, onLoginSuccess }) {
       setTimeout(() => {
         setView('login');
         clearMessages();
-      }, 2500);
+      }, 1000);
     } catch (err) {
       setErrorMsg(err.message || 'Error occurred during reset.');
     } finally {
