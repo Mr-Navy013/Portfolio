@@ -7,8 +7,10 @@ import {
 } from 'lucide-react';
 import { Linkedin, Github, Instagram, Facebook } from '../components/BrandIcons';
 import '../styles/dashboard.css';
+import '../styles/welcome.css';
+import { getApiBase } from '../utils/api';
 
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000/api';
+const API_BASE = getApiBase();
 const BACKEND_BASE = API_BASE.replace('/api', '');
 
 const DragDropUpload = ({ onFileSelect, accept, currentFile, placeholder, required = false }) => {

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Lock, User, Mail, ShieldCheck, ArrowLeft, KeyRound, CheckCircle, Eye, EyeOff } from 'lucide-react';
 import '../styles/login.css';
+import { getApiBase } from '../utils/api';
 
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000/api';
+const API_BASE = getApiBase();
 
 function LoginPage({ navigateTo, onLoginSuccess }) {
   const [view, setView] = useState('login'); // 'login' | 'forgot' | 'reset'
