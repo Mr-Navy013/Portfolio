@@ -18,6 +18,12 @@ const JWT_SECRET = process.env.JWT_SECRET || 'PortfolioNavyCutSecretKey2026!';
 app.use(cors({ origin: '*' }));
 app.use(express.json());
 
+// Request Logger
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  next();
+});
+
 // Ensure uploads folder exists
 const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) {
