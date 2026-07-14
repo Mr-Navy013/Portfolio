@@ -38,4 +38,9 @@ yarn-error.log*
 # Database files
 *.sql
 *.sqlite
+db.json
+backend/db.json
 backend/uploads/
+*.js.map
+*.log
+
