@@ -7,8 +7,6 @@ const API_BASE = getApiBase();
 
 function LoginPage({ navigateTo, onLoginSuccess }) {
   const [view, setView] = useState('login'); // 'login' | 'forgot' | 'reset'
-  const [showApiSettings, setShowApiSettings] = useState(false);
-  const [customApiInput, setCustomApiInput] = useState(localStorage.getItem('custom_api_base') || '');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   
@@ -360,62 +358,6 @@ function LoginPage({ navigateTo, onLoginSuccess }) {
               >
                 <ArrowLeft size={16} /> Return to Terminal
               </button>
-
-              <div style={{ textAlign: 'center', marginTop: '0.5rem' }}>
-                <button
-                  type="button"
-                  onClick={() => setShowApiSettings(!showApiSettings)}
-                  style={{ background: 'none', border: 'none', color: 'var(--accent-green)', cursor: 'pointer', fontSize: '0.78rem', textDecoration: 'underline' }}
-                >
-                  ⚙️ Backend Connection Settings
-                </button>
-              </div>
-
-              {showApiSettings && (
-                <div style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '0.75rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)', marginTop: '0.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  <label style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>Custom API Base URL:</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. http://192.168.1.15:5000/api"
-                    className="glass-input"
-                    value={customApiInput}
-                    onChange={(e) => setCustomApiInput(e.target.value)}
-                    style={{ fontSize: '0.75rem', padding: '0.35rem 0.6rem', width: '100%' }}
-                  />
-                  <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'center' }}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (customApiInput.trim()) {
-                          let cleaned = customApiInput.trim();
-                          if (cleaned.endsWith('/')) cleaned = cleaned.slice(0, -1);
-                          if (!cleaned.endsWith('/api')) cleaned = `${cleaned}/api`;
-                          localStorage.setItem('custom_api_base', cleaned);
-                        } else {
-                          localStorage.removeItem('custom_api_base');
-                        }
-                        window.location.reload();
-                      }}
-                      className="glass-btn"
-                      style={{ padding: '0.25rem 0.5rem', fontSize: '0.7rem' }}
-                    >
-                      Save & Reload
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        localStorage.removeItem('custom_api_base');
-                        setCustomApiInput('');
-                        window.location.reload();
-                      }}
-                      className="glass-btn-secondary"
-                      style={{ padding: '0.25rem 0.5rem', fontSize: '0.7rem', color: '#ff5252', borderColor: '#ff5252' }}
-                    >
-                      Reset Default
-                    </button>
-                  </div>
-                </div>
-              )}
 
             </form>
           </div>
