@@ -1729,9 +1729,6 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
               )}
             </div>
 
-            <div style={{ textAlign: 'center', fontSize: '0.78rem', color: 'rgba(255, 82, 82, 0.8)', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '0.75rem' }}>
-              <span>🔒 OS-Level Clipboard & Key captures blocked. Screenshot/Right-Click downloads are disabled for data security.</span>
-            </div>
           </div>
         </div>
       )}
