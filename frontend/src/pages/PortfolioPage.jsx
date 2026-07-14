@@ -638,7 +638,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
               <div className="pf-timeline-content">
                 <div className="pf-timeline-header">
                   <h3 className="pf-timeline-title">{edu.school}</h3>
-                  <span className="text-green pf-timeline-date">{formatDateStr(edu.start_date)} — {formatDateStr(edu.end_date)}</span>
+                  <span className="text-green pf-timeline-date">{formatDateStr(edu.end_date)}</span>
                 </div>
                 <p className="pf-timeline-sub">{edu.degree}{edu.field_of_study ? ` in ${edu.field_of_study}` : ''}</p>
                 {edu.description && <p className="pf-timeline-desc">{edu.description}</p>}
