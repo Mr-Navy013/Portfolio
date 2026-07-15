@@ -13,6 +13,113 @@ import { getApiBase, setApiBase } from '../utils/api';
 const API_BASE = getApiBase();
 const BACKEND_BASE = API_BASE.replace('/api', '');
 
+const compressImage = (file, maxWidth = 1200, maxHeight = 1200, quality = 0.7) => {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+        if (width > maxWidth || height > maxHeight) {
+          if (width > height) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          } else {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              const compressedFile = new File([blob], file.name || 'compressed_image.jpg', {
+                type: file.type || 'image/jpeg',
+                lastModified: Date.now()
+              });
+              resolve(compressedFile);
+            } else {
+              resolve(file);
+            }
+          },
+          file.type || 'image/jpeg',
+          quality
+        );
+      };
+      img.onerror = () => resolve(file);
+      img.src = event.target.result;
+    };
+    reader.onerror = () => resolve(file);
+    reader.readAsDataURL(file);
+  });
+};
+
+const compressImageIfNeeded = async (file) => {
+  if (!file) return null;
+  if (!file.type.startsWith('image/')) {
+    return file;
+  }
+  if (file.size <= 1.5 * 1024 * 1024) {
+    return file;
+  }
+  try {
+    return await compressImage(file);
+  } catch (err) {
+    console.warn('[Image Compression Error]', err);
+    return file;
+  }
+};
+
+const uploadWithProgress = (url, method, body, headers, onProgress) => {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open(method, url);
+    
+    if (headers) {
+      Object.entries(headers).forEach(([key, val]) => {
+        xhr.setRequestHeader(key, val);
+      });
+    }
+    
+    if (xhr.upload && onProgress) {
+      xhr.upload.addEventListener('progress', (e) => {
+        if (e.lengthComputable) {
+          const pct = Math.round((e.loaded / e.total) * 100);
+          onProgress(pct);
+        }
+      });
+    }
+    
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          resolve(JSON.parse(xhr.responseText));
+        } catch {
+          resolve({ success: true });
+        }
+      } else {
+        try {
+          const err = JSON.parse(xhr.responseText);
+          reject(new Error(err.message || `Upload failed with status ${xhr.status}`));
+        } catch {
+          reject(new Error(`Upload failed with status ${xhr.status}`));
+        }
+      }
+    };
+    
+    xhr.onerror = () => {
+      reject(new Error('Network error: Failed to fetch.'));
+    };
+    
+    xhr.send(body);
+  });
+};
+
 const DragDropUpload = ({ onFileSelect, accept, currentFile, placeholder, required = false }) => {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef(null);
@@ -744,6 +851,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
   const [eduType, setEduType] = useState('10th'); // '10th' | '12th' | 'Bachelor'
   const [eduBoard, setEduBoard] = useState('CBSE');
   const [customEduBoard, setCustomEduBoard] = useState('');
+  const [uploadProgress, setUploadProgress] = useState(null);
   const [eduPassingYear, setEduPassingYear] = useState('');
   const [eduFullMarks, setEduFullMarks] = useState('');
   const [eduMarksObtained, setEduMarksObtained] = useState('');
@@ -1417,55 +1525,63 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
 
   const handleUploadAvatar = async () => {
     if (!avatarFile) return;
-    const formData = new FormData();
-    formData.append('profile_picture', avatarFile);
     setLoading(true);
+    setUploadProgress(0);
 
     try {
-      const res = await fetch(`${API_BASE}/profile/upload-avatar`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${authToken}` },
-        body: formData
-      });
-      if (res.ok) {
-        showStatus('Avatar picture uploaded & activated.');
-        setAvatarFile(null);
-        refreshProfile();
-      } else {
-        const data = await res.json();
-        showStatus(data.message || 'Failed to upload profile picture.', true);
-      }
+      const compressed = await compressImageIfNeeded(avatarFile);
+      const formData = new FormData();
+      formData.append('profile_picture', compressed);
+
+      const data = await uploadWithProgress(
+        `${API_BASE}/profile/upload-avatar`,
+        'POST',
+        formData,
+        { 'Authorization': `Bearer ${authToken}` },
+        (pct) => setUploadProgress(pct)
+      );
+
+      showStatus('Avatar picture uploaded & activated.');
+      setAvatarFile(null);
+      refreshProfile();
     } catch (err) {
+      console.error(err);
       showStatus(`Error uploading avatar: ${err.message || 'Network error occurred.'}`, true);
     } finally {
       setLoading(false);
+      setUploadProgress(null);
     }
   };
 
   const handleUploadResume = async () => {
     if (!resumeFile) return;
+    if (resumeFile.size > 10 * 1024 * 1024) {
+      showStatus('Resume file size is too large! Please choose a file smaller than 10MB.', true);
+      return;
+    }
+    setLoading(true);
+    setUploadProgress(0);
     const formData = new FormData();
     formData.append('resume', resumeFile);
-    setLoading(true);
 
     try {
-      const res = await fetch(`${API_BASE}/profile/upload-resume`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${authToken}` },
-        body: formData
-      });
-      if (res.ok) {
-        showStatus('CV/Resume PDF file parsed and updated.');
-        setResumeFile(null);
-        refreshProfile();
-      } else {
-        const data = await res.json();
-        showStatus(data.message || 'File must be a PDF or Word document!', true);
-      }
+      const data = await uploadWithProgress(
+        `${API_BASE}/profile/upload-resume`,
+        'POST',
+        formData,
+        { 'Authorization': `Bearer ${authToken}` },
+        (pct) => setUploadProgress(pct)
+      );
+
+      showStatus('CV/Resume PDF file parsed and updated.');
+      setResumeFile(null);
+      refreshProfile();
     } catch (err) {
+      console.error(err);
       showStatus(`Error uploading resume: ${err.message || 'Network error occurred.'}`, true);
     } finally {
       setLoading(false);
+      setUploadProgress(null);
     }
   };
 
@@ -1512,45 +1628,41 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
     }
 
     setLoading(true);
+    setUploadProgress(0);
     const formData = new FormData();
     formData.append('title', projTitle);
     formData.append('summary', projSummary);
     formData.append('repo_link', projRepo);
     formData.append('live_link', projLive);
     formData.append('is_deployed', projDeployed);
-    if (projThumbnail) {
-      formData.append('thumbnail', projThumbnail);
-    }
 
     try {
-      let res;
-      if (editingProject) {
-        res = await fetch(`${API_BASE}/projects/${editingProject.id}`, {
-          method: 'PUT',
-          headers: { 'Authorization': `Bearer ${authToken}` },
-          body: formData
-        });
-      } else {
-        res = await fetch(`${API_BASE}/projects`, {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${authToken}` },
-          body: formData
-        });
+      if (projThumbnail) {
+        const compressed = await compressImageIfNeeded(projThumbnail);
+        formData.append('thumbnail', compressed);
       }
 
-      if (res.ok) {
-        showStatus('Project entry successfully updated in databases!');
-        setShowProjModal(false);
-        fetchDashboardCollections();
-      } else {
-        const data = await res.json();
-        showStatus(data.message || 'Failed to save project.', true);
-      }
+      const url = editingProject ? `${API_BASE}/projects/${editingProject.id}` : `${API_BASE}/projects`;
+      const method = editingProject ? 'PUT' : 'POST';
+
+      const data = await uploadWithProgress(
+        url,
+        method,
+        formData,
+        { 'Authorization': `Bearer ${authToken}` },
+        (pct) => setUploadProgress(pct)
+      );
+
+      showStatus('Project entry successfully updated in databases!');
+      setShowProjModal(false);
+      fetchDashboardCollections();
     } catch (err) {
-      showStatus('Simulated project save success!');
+      console.error(err);
+      showStatus(`Error saving project: ${err.message || 'Network error occurred.'}`, true);
       setShowProjModal(false);
     } finally {
       setLoading(false);
+      setUploadProgress(null);
     }
   };
 
@@ -1562,6 +1674,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
   const handleAddEducation = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setUploadProgress(0);
     const formData = new FormData();
 
     formData.append('school', eduSchool);
@@ -1581,7 +1694,10 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       formData.append('board', selectedBoard);
       const desc = `Completed 10th standard from ${selectedBoard} Board at ${eduSchool} in the year ${eduPassingYear} with a score of ${eduMarksObtained}/${eduFullMarks} (${pct}%).`;
       formData.append('description', desc);
-      if (edu10thCert) formData.append('certificate_10th', edu10thCert);
+      if (edu10thCert) {
+        const compressed = await compressImageIfNeeded(edu10thCert);
+        formData.append('certificate_10th', compressed);
+      }
     } else if (eduType === '12th') {
       formData.append('field_of_study', 'Intermediate (12th)');
       formData.append('start_date', eduPassingYear);
@@ -1594,8 +1710,14 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       formData.append('board', selectedBoard);
       const desc = `Completed 12th standard (Intermediate) from ${selectedBoard} Board at ${eduSchool} in the year ${eduPassingYear} with a score of ${eduMarksObtained}/${eduFullMarks} (${pct}%).`;
       formData.append('description', desc);
-      if (edu12thCert) formData.append('certificate_12th', edu12thCert);
-      if (edu12thMarksheet) formData.append('marksheet_12th', edu12thMarksheet);
+      if (edu12thCert) {
+        const compressed = await compressImageIfNeeded(edu12thCert);
+        formData.append('certificate_12th', compressed);
+      }
+      if (edu12thMarksheet) {
+        const compressed = await compressImageIfNeeded(edu12thMarksheet);
+        formData.append('marksheet_12th', compressed);
+      }
     } else if (eduType === 'Bachelor') {
       formData.append('field_of_study', `${eduCourse} in ${eduBranch}`);
       const startYear = parseInt(eduPassingYear) ? (parseInt(eduPassingYear) - eduBachelorDuration).toString() : '';
@@ -1617,8 +1739,14 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       const desc = `Successfully completed ${eduCourse} in ${eduBranch} from ${eduSchool}, graduating in the year ${eduPassingYear} with a CGPA of ${calculatedCgpa}.`;
       formData.append('description', desc);
       
-      if (eduBachGradesheet) formData.append('gradesheet_bachelor', eduBachGradesheet);
-      if (eduBachCert) formData.append('certificate_bachelor', eduBachCert);
+      if (eduBachGradesheet) {
+        const compressed = await compressImageIfNeeded(eduBachGradesheet);
+        formData.append('gradesheet_bachelor', compressed);
+      }
+      if (eduBachCert) {
+        const compressed = await compressImageIfNeeded(eduBachCert);
+        formData.append('certificate_bachelor', compressed);
+      }
     } else if (eduType === 'Others') {
       formData.append('field_of_study', eduCourse || 'Others');
       formData.append('start_date', eduPassingYear);
@@ -1630,55 +1758,58 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       formData.append('percentage', pct);
       const desc = `Completed ${eduCourse || 'education details'} at ${eduSchool} in the year ${eduPassingYear} with a score of ${eduMarksObtained}/${eduFullMarks} (${pct}%).`;
       formData.append('description', desc);
-      if (eduOthersCert) formData.append('certificate_others', eduOthersCert);
-      if (eduOthersMarksheet) formData.append('marksheet_others', eduOthersMarksheet);
+      if (eduOthersCert) {
+        const compressed = await compressImageIfNeeded(eduOthersCert);
+        formData.append('certificate_others', compressed);
+      }
+      if (eduOthersMarksheet) {
+        const compressed = await compressImageIfNeeded(eduOthersMarksheet);
+        formData.append('marksheet_others', compressed);
+      }
     }
     formData.append('access_cert10', eduAccess10th ? '1' : '0');
     formData.append('access_cert12', eduAccess12th ? '1' : '0');
     formData.append('access_certbach', eduAccessBach ? '1' : '0');
 
     try {
-      const res = await fetch(`${API_BASE}/education`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${authToken}`
-        },
-        body: formData
-      });
-      if (res.ok) {
-        setShowEduModal(false);
-        fetchDashboardCollections();
-        showStatus('Academic record updated successfully!');
-        
-        setEduSchool('');
-        setEduPassingYear('');
-        setEduFullMarks('');
-        setEduMarksObtained('');
-        setEduCourse('');
-        setEduBranch('');
-        setEduSemSgpas({ sem1: '', sem2: '', sem3: '', sem4: '', sem5: '', sem6: '', sem7: '', sem8: '' });
-        setEdu10thCert(null);
-        setEdu12thCert(null);
-        setEdu12thMarksheet(null);
-        setEduBachGradesheet(null);
-        setEduBachCert(null);
-        setEduOthersCert(null);
-        setEduOthersMarksheet(null);
-        setEduAccess10th(false);
-        setEduAccess12th(false);
-        setEduAccessBach(false);
-        setEduBoard('CBSE');
-        setCustomEduBoard('');
-      } else {
-        const err = await res.json();
-        showStatus(err.message || 'Failed to save education.', true);
-      }
+      const data = await uploadWithProgress(
+        `${API_BASE}/education`,
+        'POST',
+        formData,
+        { 'Authorization': `Bearer ${authToken}` },
+        (pct) => setUploadProgress(pct)
+      );
+
+      setShowEduModal(false);
+      fetchDashboardCollections();
+      showStatus('Academic record updated successfully!');
+      
+      setEduSchool('');
+      setEduPassingYear('');
+      setEduFullMarks('');
+      setEduMarksObtained('');
+      setEduCourse('');
+      setEduBranch('');
+      setEduSemSgpas({ sem1: '', sem2: '', sem3: '', sem4: '', sem5: '', sem6: '', sem7: '', sem8: '' });
+      setEdu10thCert(null);
+      setEdu12thCert(null);
+      setEdu12thMarksheet(null);
+      setEduBachGradesheet(null);
+      setEduBachCert(null);
+      setEduOthersCert(null);
+      setEduOthersMarksheet(null);
+      setEduAccess10th(false);
+      setEduAccess12th(false);
+      setEduAccessBach(false);
+      setEduBoard('CBSE');
+      setCustomEduBoard('');
     } catch (err) {
       console.error(err);
       showStatus(`Error saving education: ${err.message || 'Network error occurred.'}`, true);
       setShowEduModal(false);
     } finally {
       setLoading(false);
+      setUploadProgress(null);
     }
   };
 
@@ -1843,40 +1974,44 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       return;
     }
     setLoading(true);
+    setUploadProgress(0);
     const formData = new FormData();
     formData.append('name', certName);
     formData.append('organization', certOrg);
     formData.append('issue_date', certDate);
     formData.append('credential_url', certUrl || '');
-    if (certFile) {
-      formData.append('certificate_file', certFile);
-    }
     formData.append('access_cert', certAccess ? '1' : '0');
 
     try {
-      const res = await fetch(`${API_BASE}/certificates`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${authToken}` },
-        body: formData
-      });
-      if (res.ok) {
-        setShowCertModal(false);
-        fetchDashboardCollections();
-        showStatus('Certificate successfully added.');
-        setCertName('');
-        setCertOrg('');
-        setCertDate('');
-        setCertUrl('');
-        setCertFile(null);
-        setCertAccess(false);
-      } else {
-        const err = await res.json();
-        showStatus(err.message || 'Failed to save certificate.', true);
+      if (certFile) {
+        const compressed = await compressImageIfNeeded(certFile);
+        formData.append('certificate_file', compressed);
       }
-    } catch (e) {
+
+      const data = await uploadWithProgress(
+        `${API_BASE}/certificates`,
+        'POST',
+        formData,
+        { 'Authorization': `Bearer ${authToken}` },
+        (pct) => setUploadProgress(pct)
+      );
+
+      setShowCertModal(false);
+      fetchDashboardCollections();
+      showStatus('Certificate successfully added.');
+      setCertName('');
+      setCertOrg('');
+      setCertDate('');
+      setCertUrl('');
+      setCertFile(null);
+      setCertAccess(false);
+    } catch (err) {
+      console.error(err);
+      showStatus(`Error saving certificate: ${err.message || 'Network error occurred.'}`, true);
       setShowCertModal(false);
     } finally {
       setLoading(false);
+      setUploadProgress(null);
     }
   };
 
@@ -2301,11 +2436,11 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                     <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
                       <button 
                         onClick={handleUploadAvatar} 
-                        disabled={!avatarFile} 
+                        disabled={!avatarFile || loading} 
                         className="glass-btn" 
                         style={{ padding: '0.4rem 1.25rem', fontSize: '0.85rem' }}
                       >
-                        Publish Photo
+                        {loading && avatarFile ? (uploadProgress !== null ? `Uploading (${uploadProgress}%)` : 'Uploading...') : 'Publish Photo'}
                       </button>
                       {profile?.profile_picture && (
                         <button 
@@ -2333,11 +2468,11 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                     <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
                       <button 
                         onClick={handleUploadResume} 
-                        disabled={!resumeFile} 
+                        disabled={!resumeFile || loading} 
                         className="glass-btn" 
                         style={{ padding: '0.4rem 1.25rem', fontSize: '0.85rem' }}
                       >
-                        Save PDF File
+                        {loading && resumeFile ? (uploadProgress !== null ? `Uploading (${uploadProgress}%)` : 'Uploading...') : 'Save PDF File'}
                       </button>
                       {profile?.resume_url && (
                         <button 
@@ -3440,8 +3575,10 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
               </div>
 
               <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
-                <button type="button" onClick={() => setShowProjModal(false)} className="glass-btn-secondary" style={{ flex: 1, justifyContent: 'center' }}>Cancel</button>
-                <button type="submit" className="glass-btn" style={{ flex: 1, justifyContent: 'center' }}>Confirm & Save</button>
+                <button type="button" onClick={() => setShowProjModal(false)} className="glass-btn-secondary" style={{ flex: 1, justifyContent: 'center' }} disabled={loading}>Cancel</button>
+                <button type="submit" className="glass-btn" style={{ flex: 1, justifyContent: 'center' }} disabled={loading}>
+                  {loading ? (uploadProgress !== null ? `Uploading (${uploadProgress}%)` : 'Saving...') : 'Confirm & Save'}
+                </button>
               </div>
 
             </form>
@@ -3472,8 +3609,8 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                 value={eduType}
                 onChange={(e) => setEduType(e.target.value)}
                 options={[
-                  { value: '10th', label: 'Secondary School (10th / SSC)' },
-                  { value: '12th', label: 'Intermediate (12th / HSC)' },
+                  { value: '10th', label: 'Secondary School (10th)' },
+                  { value: '12th', label: 'Intermediate (12th)' },
                   { value: 'Bachelor', label: "Bachelor's Degree" },
                   { value: 'Others', label: "Others (Diploma / PG / etc.)" }
                 ]}
@@ -3769,8 +3906,10 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
             )}
 
             <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
-              <button type="button" onClick={() => setShowEduModal(false)} className="glass-btn-secondary" style={{ flex: 1, justifyContent: 'center' }}>Cancel</button>
-              <button type="submit" className="glass-btn" style={{ flex: 1, justifyContent: 'center' }}>Save</button>
+              <button type="button" onClick={() => setShowEduModal(false)} className="glass-btn-secondary" style={{ flex: 1, justifyContent: 'center' }} disabled={loading}>Cancel</button>
+              <button type="submit" className="glass-btn" style={{ flex: 1, justifyContent: 'center' }} disabled={loading}>
+                {loading ? (uploadProgress !== null ? `Uploading (${uploadProgress}%)` : 'Saving...') : 'Save'}
+              </button>
             </div>
           </form>
         </div>
@@ -4068,8 +4207,10 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
               </div>
             </div>
             <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-              <button type="button" onClick={() => setShowCertModal(false)} className="glass-btn-secondary" style={{ flex: 1, justifyContent: 'center' }}>Cancel</button>
-              <button type="submit" className="glass-btn" style={{ flex: 1, justifyContent: 'center' }}>Save</button>
+              <button type="button" onClick={() => setShowCertModal(false)} className="glass-btn-secondary" style={{ flex: 1, justifyContent: 'center' }} disabled={loading}>Cancel</button>
+              <button type="submit" className="glass-btn" style={{ flex: 1, justifyContent: 'center' }} disabled={loading}>
+                {loading ? (uploadProgress !== null ? `Uploading (${uploadProgress}%)` : 'Saving...') : 'Save'}
+              </button>
             </div>
           </form>
         </div>

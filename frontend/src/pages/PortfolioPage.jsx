@@ -636,9 +636,9 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
                 <GraduationCap size={26} />
               </div>
               <div className="pf-timeline-content">
-                <div className="pf-timeline-header">
+                <div className="pf-timeline-header" style={{ display: 'block', marginBottom: '0.4rem' }}>
                   <h3 className="pf-timeline-title">{edu.school}</h3>
-                  <span className="text-green pf-timeline-date">{formatDateStr(edu.end_date)}</span>
+                  <div className="text-green pf-timeline-date" style={{ marginTop: '0.2rem', fontSize: '0.85rem' }}>{formatDateStr(edu.end_date)}</div>
                 </div>
                 <p className="pf-timeline-sub">{edu.degree}{edu.field_of_study ? ` in ${edu.field_of_study}` : ''}</p>
                 {edu.description && <p className="pf-timeline-desc">{edu.description}</p>}
