@@ -61,18 +61,25 @@ const compressImage = (file, maxWidth = 1200, maxHeight = 1200, quality = 0.7) =
 
 const compressImageIfNeeded = async (file) => {
   if (!file) return null;
-  if (!file.type.startsWith('image/')) {
-    return file;
+  
+  const name = file.name || '';
+  const ext = name.substring(name.lastIndexOf('.')).toLowerCase();
+  const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.bmp'];
+  const isImageExt = imageExtensions.includes(ext);
+  const isImageMime = file.type && file.type.startsWith('image/');
+  
+  // If it's an image by mimetype or extension, always process it.
+  // This converts remote cloud streams (like Google Drive application/octet-stream)
+  // into local, standard image/jpeg Blobs that upload instantly without errors.
+  if (isImageMime || isImageExt) {
+    try {
+      return await compressImage(file);
+    } catch (err) {
+      console.warn('[Image Compression Error]', err);
+      return file;
+    }
   }
-  if (file.size <= 1.5 * 1024 * 1024) {
-    return file;
-  }
-  try {
-    return await compressImage(file);
-  } catch (err) {
-    console.warn('[Image Compression Error]', err);
-    return file;
-  }
+  return file;
 };
 
 const uploadWithProgress = (url, method, body, headers, onProgress) => {
