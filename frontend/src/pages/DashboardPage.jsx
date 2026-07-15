@@ -82,6 +82,30 @@ const compressImageIfNeeded = async (file) => {
   return file;
 };
 
+const checkFileReadable = (file) => {
+  return new Promise((resolve) => {
+    if (!file) {
+      resolve(true);
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => resolve(true);
+    reader.onerror = () => resolve(false);
+    const slice = file.slice(0, Math.min(1024, file.size));
+    reader.readAsArrayBuffer(slice);
+  });
+};
+
+const verifyFilesReadable = async (files) => {
+  for (const file of files) {
+    if (file) {
+      const readable = await checkFileReadable(file);
+      if (!readable) return false;
+    }
+  }
+  return true;
+};
+
 const uploadWithProgress = (url, method, body, headers, onProgress) => {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
@@ -1560,6 +1584,13 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
 
   const handleUploadAvatar = async () => {
     if (!avatarFile) return;
+
+    const isReadable = await checkFileReadable(avatarFile);
+    if (!isReadable) {
+      showStatus("Google Drive/Cloud file is not accessible. Please turn off 'Transfer files only over Wi-Fi' in your Google Drive app settings, or download the file to your device local storage first.", true);
+      return;
+    }
+
     setLoading(true);
     setUploadProgress(0);
 
@@ -1594,6 +1625,13 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       showStatus('Resume file size is too large! Please choose a file smaller than 10MB.', true);
       return;
     }
+
+    const isReadable = await checkFileReadable(resumeFile);
+    if (!isReadable) {
+      showStatus("Google Drive/Cloud file is not accessible. Please turn off 'Transfer files only over Wi-Fi' in your Google Drive app settings, or download the file to your device local storage first.", true);
+      return;
+    }
+
     setLoading(true);
     setUploadProgress(0);
     const formData = new FormData();
@@ -1662,6 +1700,14 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       return;
     }
 
+    if (projThumbnail) {
+      const isReadable = await checkFileReadable(projThumbnail);
+      if (!isReadable) {
+        showStatus("Google Drive/Cloud file is not accessible. Please turn off 'Transfer files only over Wi-Fi' in your Google Drive app settings, or download the file to your device local storage first.", true);
+        return;
+      }
+    }
+
     setLoading(true);
     setUploadProgress(0);
     const formData = new FormData();
@@ -1708,6 +1754,23 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
      ========================================== */
   const handleAddEducation = async (e) => {
     e.preventDefault();
+
+    const filesToVerify = [
+      edu10thCert,
+      edu12thCert,
+      edu12thMarksheet,
+      eduBachGradesheet,
+      eduBachCert,
+      eduOthersCert,
+      eduOthersMarksheet
+    ].filter(Boolean);
+
+    const allReadable = await verifyFilesReadable(filesToVerify);
+    if (!allReadable) {
+      showStatus("One or more files from Google Drive / Cloud are not accessible. Please disable 'Transfer files only over Wi-Fi' in your Google Drive app settings, or download the files locally to your device local storage first.", true);
+      return;
+    }
+
     setLoading(true);
     setUploadProgress(0);
     const formData = new FormData();
@@ -1919,7 +1982,16 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
 
   const handleAddExperience = async (e) => {
     e.preventDefault();
+
+    const filesToVerify = [expCertificateFile, expLorFile].filter(Boolean);
+    const allReadable = await verifyFilesReadable(filesToVerify);
+    if (!allReadable) {
+      showStatus("One or more files from Google Drive / Cloud are not accessible. Please turn off 'Transfer files only over Wi-Fi' in your Google Drive app settings, or download the files locally to your device local storage first.", true);
+      return;
+    }
+
     setLoading(true);
+    setUploadProgress(0);
     const formData = new FormData();
 
     if (expType === 'project') {
@@ -1946,8 +2018,14 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       formData.append('program_name', expProgramName);
       formData.append('description', expDesc || (expProgramName ? `Interned at ${expOrgName} under ${expProgramName} as ${expRole}.` : `Interned at ${expOrgName} as ${expRole}.`));
       formData.append('skills_learned', expSkillsLearned);
-      if (expCertificateFile) formData.append('certificate_file', expCertificateFile);
-      if (expLorFile) formData.append('lor_file', expLorFile);
+      if (expCertificateFile) {
+        const compressed = await compressImageIfNeeded(expCertificateFile);
+        formData.append('certificate_file', compressed);
+      }
+      if (expLorFile) {
+        const compressed = await compressImageIfNeeded(expLorFile);
+        formData.append('lor_file', compressed);
+      }
     } else if (expType === 'program') {
       formData.append('company', expProgramName);
       formData.append('role', 'Participant');
@@ -1958,45 +2036,45 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       formData.append('program_name', expProgramName);
       formData.append('description', expDesc || `Participated in program ${expProgramName} on ${expStart}.`);
       formData.append('skills_learned', expSkillsLearned);
-      if (expCertificateFile) formData.append('certificate_file', expCertificateFile);
+      if (expCertificateFile) {
+        const compressed = await compressImageIfNeeded(expCertificateFile);
+        formData.append('certificate_file', compressed);
+      }
     }
 
     try {
-      const res = await fetch(`${API_BASE}/experience`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${authToken}`
-        },
-        body: formData
-      });
-      if (res.ok) {
-        setShowExpModal(false);
-        fetchDashboardCollections();
-        showStatus('Experience entry registered successfully!');
-        
-        setExpProjectName('');
-        setExpProjectInstructor('');
-        setExpRepoLink('');
-        setExpDeployLink('');
-        setExpProgramName('');
-        setExpOrgName('');
-        setExpRole('');
-        setExpStart('');
-        setExpEnd('');
-        setExpDesc('');
-        setExpSkillsLearned('');
-        setExpCertificateFile(null);
-        setExpLorFile(null);
-      } else {
-        const err = await res.json();
-        showStatus(err.message || 'Failed to save experience.', true);
-      }
+      const data = await uploadWithProgress(
+        `${API_BASE}/experience`,
+        'POST',
+        formData,
+        { 'Authorization': `Bearer ${authToken}` },
+        (pct) => setUploadProgress(pct)
+      );
+
+      setShowExpModal(false);
+      fetchDashboardCollections();
+      showStatus('Experience entry registered successfully!');
+      
+      setExpProjectName('');
+      setExpProjectInstructor('');
+      setExpRepoLink('');
+      setExpDeployLink('');
+      setExpProgramName('');
+      setExpOrgName('');
+      setExpRole('');
+      setExpStart('');
+      setExpEnd('');
+      setExpDesc('');
+      setExpSkillsLearned('');
+      setExpCertificateFile(null);
+      setExpLorFile(null);
     } catch (err) {
       console.error(err);
-      showStatus('Simulation: Experience saved offline.', true);
+      showStatus(`Error saving experience: ${err.message || 'Network error occurred.'}`, true);
       setShowExpModal(false);
     } finally {
       setLoading(false);
+      setUploadProgress(null);
     }
   };
 
@@ -2008,6 +2086,15 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       showStatus('Certificate Name, Org, and Date are required!', true);
       return;
     }
+
+    if (certFile) {
+      const isReadable = await checkFileReadable(certFile);
+      if (!isReadable) {
+        showStatus("Google Drive/Cloud file is not accessible. Please turn off 'Transfer files only over Wi-Fi' in your Google Drive app settings, or download the file to your device local storage first.", true);
+        return;
+      }
+    }
+
     setLoading(true);
     setUploadProgress(0);
     const formData = new FormData();
@@ -4181,8 +4268,10 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
             </div>
 
             <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-              <button type="button" onClick={() => setShowExpModal(false)} className="glass-btn-secondary" style={{ flex: 1, justifyContent: 'center' }}>Cancel</button>
-              <button type="submit" className="glass-btn" style={{ flex: 1, justifyContent: 'center' }}>Save</button>
+              <button type="button" onClick={() => setShowExpModal(false)} className="glass-btn-secondary" style={{ flex: 1, justifyContent: 'center' }} disabled={loading}>Cancel</button>
+              <button type="submit" className="glass-btn" style={{ flex: 1, justifyContent: 'center' }} disabled={loading}>
+                {loading ? (uploadProgress !== null ? `Uploading (${uploadProgress}%)` : 'Saving...') : 'Save'}
+              </button>
             </div>
           </form>
         </div>
