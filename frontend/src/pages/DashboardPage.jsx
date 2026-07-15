@@ -1587,7 +1587,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
 
     const isReadable = await checkFileReadable(avatarFile);
     if (!isReadable) {
-      showStatus("Google Drive/Cloud file is not accessible. Please turn off 'Transfer files only over Wi-Fi' in your Google Drive app settings, or download the file to your device local storage first.", true);
+      showStatus("File inaccessible! Download from Drive to phone memory first.", true);
       return;
     }
 
@@ -1628,7 +1628,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
 
     const isReadable = await checkFileReadable(resumeFile);
     if (!isReadable) {
-      showStatus("Google Drive/Cloud file is not accessible. Please turn off 'Transfer files only over Wi-Fi' in your Google Drive app settings, or download the file to your device local storage first.", true);
+      showStatus("File inaccessible! Download from Drive to phone memory first.", true);
       return;
     }
 
@@ -1703,7 +1703,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
     if (projThumbnail) {
       const isReadable = await checkFileReadable(projThumbnail);
       if (!isReadable) {
-        showStatus("Google Drive/Cloud file is not accessible. Please turn off 'Transfer files only over Wi-Fi' in your Google Drive app settings, or download the file to your device local storage first.", true);
+        showStatus("File inaccessible! Download from Drive to phone memory first.", true);
         return;
       }
     }
@@ -1767,7 +1767,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
 
     const allReadable = await verifyFilesReadable(filesToVerify);
     if (!allReadable) {
-      showStatus("One or more files from Google Drive / Cloud are not accessible. Please disable 'Transfer files only over Wi-Fi' in your Google Drive app settings, or download the files locally to your device local storage first.", true);
+      showStatus("File inaccessible! Download from Drive to phone memory first.", true);
       return;
     }
 
@@ -1986,7 +1986,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
     const filesToVerify = [expCertificateFile, expLorFile].filter(Boolean);
     const allReadable = await verifyFilesReadable(filesToVerify);
     if (!allReadable) {
-      showStatus("One or more files from Google Drive / Cloud are not accessible. Please turn off 'Transfer files only over Wi-Fi' in your Google Drive app settings, or download the files locally to your device local storage first.", true);
+      showStatus("File inaccessible! Download from Drive to phone memory first.", true);
       return;
     }
 
@@ -2090,7 +2090,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
     if (certFile) {
       const isReadable = await checkFileReadable(certFile);
       if (!isReadable) {
-        showStatus("Google Drive/Cloud file is not accessible. Please turn off 'Transfer files only over Wi-Fi' in your Google Drive app settings, or download the file to your device local storage first.", true);
+        showStatus("File inaccessible! Download from Drive to phone memory first.", true);
         return;
       }
     }
