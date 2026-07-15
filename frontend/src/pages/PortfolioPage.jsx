@@ -527,7 +527,6 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
                 )}
               </div>
               <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: '#fff' }}>{name}</h4>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Portfolio Visitor</span>
             </div>
 
             <nav className="pf-mobile-nav" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
