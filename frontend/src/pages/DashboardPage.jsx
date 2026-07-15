@@ -968,6 +968,24 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
   const [showMsgModal, setShowMsgModal] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+      const preventDefault = (e) => {
+        if (!e.target.closest('.slide-in-left')) {
+          e.preventDefault();
+        }
+      };
+      document.addEventListener('touchmove', preventDefault, { passive: false });
+      return () => {
+        document.body.style.overflow = 'unset';
+        document.removeEventListener('touchmove', preventDefault);
+      };
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+  }, [mobileMenuOpen]);
+
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState(null);
   const [deleteTargetType, setDeleteTargetType] = useState('');
