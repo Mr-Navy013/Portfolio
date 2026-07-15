@@ -1587,7 +1587,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
 
     const isReadable = await checkFileReadable(avatarFile);
     if (!isReadable) {
-      showStatus("File inaccessible! Download from Drive to phone memory first.", true);
+      showStatus("Drive blocked Wi-Fi sync! Turn off 'Wi-Fi only' in Drive settings or download locally.", true);
       return;
     }
 
@@ -1628,7 +1628,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
 
     const isReadable = await checkFileReadable(resumeFile);
     if (!isReadable) {
-      showStatus("File inaccessible! Download from Drive to phone memory first.", true);
+      showStatus("Drive blocked Wi-Fi sync! Turn off 'Wi-Fi only' in Drive settings or download locally.", true);
       return;
     }
 
@@ -1703,7 +1703,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
     if (projThumbnail) {
       const isReadable = await checkFileReadable(projThumbnail);
       if (!isReadable) {
-        showStatus("File inaccessible! Download from Drive to phone memory first.", true);
+        showStatus("Drive blocked Wi-Fi sync! Turn off 'Wi-Fi only' in Drive settings or download locally.", true);
         return;
       }
     }
@@ -1767,7 +1767,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
 
     const allReadable = await verifyFilesReadable(filesToVerify);
     if (!allReadable) {
-      showStatus("File inaccessible! Download from Drive to phone memory first.", true);
+      showStatus("Drive blocked Wi-Fi sync! Turn off 'Wi-Fi only' in Drive settings or download locally.", true);
       return;
     }
 
@@ -1986,7 +1986,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
     const filesToVerify = [expCertificateFile, expLorFile].filter(Boolean);
     const allReadable = await verifyFilesReadable(filesToVerify);
     if (!allReadable) {
-      showStatus("File inaccessible! Download from Drive to phone memory first.", true);
+      showStatus("Drive blocked Wi-Fi sync! Turn off 'Wi-Fi only' in Drive settings or download locally.", true);
       return;
     }
 
@@ -2090,7 +2090,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
     if (certFile) {
       const isReadable = await checkFileReadable(certFile);
       if (!isReadable) {
-        showStatus("File inaccessible! Download from Drive to phone memory first.", true);
+        showStatus("Drive blocked Wi-Fi sync! Turn off 'Wi-Fi only' in Drive settings or download locally.", true);
         return;
       }
     }
