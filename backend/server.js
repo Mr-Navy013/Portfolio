@@ -48,25 +48,47 @@ const upload = multer({
     const certFields = [
       'certificate_10th', 'certificate_12th', 'marksheet_12th',
       'gradesheet_bachelor', 'certificate_bachelor', 'certificate_file',
-      'lor_file'
+      'lor_file', 'certificate_others', 'marksheet_others'
     ];
+    const ext = path.extname(file.originalname || '').toLowerCase();
+    const mime = (file.mimetype || '').toLowerCase();
+    
+    // Check if it's a generic or empty mime type, common on mobile uploads from Google Drive
+    const isGenericMime = mime === 'application/octet-stream' || mime === '' || !mime;
+    
+    // Valid Image Extensions
+    const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.bmp'];
+    // Valid Document Extensions
+    const docExtensions = ['.pdf', '.doc', '.docx'];
+    
+    const hasImageExt = imageExtensions.includes(ext);
+    const hasDocExt = docExtensions.includes(ext);
+    
+    // Determine if file is image or doc
+    const isImage = mime.startsWith('image/') || hasImageExt || (isGenericMime && (!ext || hasImageExt));
+    const isDoc = mime === 'application/pdf' || 
+                  mime === 'application/msword' || 
+                  mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+                  hasDocExt || 
+                  (isGenericMime && (!ext || hasDocExt));
+
     if (file.fieldname === 'resume') {
       // PDF or docs for resume
-      if (file.mimetype === 'application/pdf' || file.mimetype === 'application/msword' || file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+      if (isDoc) {
         cb(null, true);
       } else {
         cb(new Error('Only PDF or Word documents are allowed for Resume!'), false);
       }
     } else if (certFields.includes(file.fieldname)) {
       // PDF, docs, or Images for certificate files
-      if (file.mimetype.startsWith('image/') || file.mimetype === 'application/pdf' || file.mimetype === 'application/msword' || file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+      if (isImage || isDoc || (isGenericMime && !ext)) {
         cb(null, true);
       } else {
         cb(new Error('Only Images, PDFs, or Word documents are allowed for certificates/marksheet files!'), false);
       }
     } else {
       // Images for profile picture or project thumbnails
-      if (file.mimetype.startsWith('image/')) {
+      if (isImage || (isGenericMime && !ext)) {
         cb(null, true);
       } else {
         cb(new Error('Only image files are allowed!'), false);
@@ -413,26 +435,7 @@ app.post('/api/auth/login', async (req, res) => {
       }
     }
 
-    // 1st time login or email not verified
-    if (owner.first_login || !owner.email_verified) {
-      const otp = generateOTP();
-      const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-
-      // Save OTP
-      await query('INSERT INTO otp_verifications (email, otp, expires_at) VALUES (?, ?, ?)', [
-        owner.email, otp, expiresAt
-      ]);
-
-      // Send OTP
-      const emailResult = await sendOTPEmail(owner.email, otp, 'First Time Login Email Verification');
-
-      return res.json({
-        requiresOtp: true,
-        email: owner.email,
-        otp: (emailResult.mode === 'mock' || emailResult.mode === 'mock_fallback') ? otp : undefined,
-        message: 'First time login detected. Verification code sent to your email.'
-      });
-    }
+    // OTP bypassed to allow instant login for the owner (removed first_login and email_verified check)
 
     // Regular successful login
     const token = jwt.sign({ id: owner.id, username: owner.username }, JWT_SECRET, { expiresIn: '24h' });
@@ -855,7 +858,7 @@ app.post('/api/education', authenticateToken, educationUploadFields, async (req,
     school, degree, field_of_study, start_date, end_date, description,
     passing_year, full_marks, marks_obtained, percentage, course, branch,
     semester_sgpa, cgpa,
-    access_cert10, access_cert12, access_certbach
+    access_cert10, access_cert12, access_certbach, board
   } = req.body;
 
   if (!school || !degree || !start_date || !end_date) {
@@ -885,8 +888,8 @@ app.post('/api/education', authenticateToken, educationUploadFields, async (req,
         passing_year, full_marks, marks_obtained, percentage, course, branch,
         semester_sgpa, cgpa, certificate_10th, certificate_12th, marksheet_12th,
         gradesheet_bachelor, certificate_bachelor, certificate_others, marksheet_others,
-        access_cert10, access_cert12, access_certbach
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        access_cert10, access_cert12, access_certbach, board
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
       school, degree, field_of_study || null, start_date, end_date, description || null,
       passing_year || null, 
@@ -899,7 +902,8 @@ app.post('/api/education', authenticateToken, educationUploadFields, async (req,
       cert10th, cert12th, marksheet12th, gradesheetBach, certBach, certOthers, marksheetOthers,
       parseBoolParam(access_cert10),
       parseBoolParam(access_cert12),
-      parseBoolParam(access_certbach)
+      parseBoolParam(access_certbach),
+      board || null
     ]);
     res.status(201).json({ success: true, message: 'Education history added!' });
   } catch (error) {

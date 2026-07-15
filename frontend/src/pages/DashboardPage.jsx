@@ -742,6 +742,8 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
 
   // Custom level state
   const [eduType, setEduType] = useState('10th'); // '10th' | '12th' | 'Bachelor'
+  const [eduBoard, setEduBoard] = useState('CBSE');
+  const [customEduBoard, setCustomEduBoard] = useState('');
   const [eduPassingYear, setEduPassingYear] = useState('');
   const [eduFullMarks, setEduFullMarks] = useState('');
   const [eduMarksObtained, setEduMarksObtained] = useState('');
@@ -1430,10 +1432,11 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
         setAvatarFile(null);
         refreshProfile();
       } else {
-        showStatus('Failed to upload profile picture.', true);
+        const data = await res.json();
+        showStatus(data.message || 'Failed to upload profile picture.', true);
       }
     } catch (err) {
-      showStatus('Profile avatar saved offline!', true);
+      showStatus(`Error uploading avatar: ${err.message || 'Network error occurred.'}`, true);
     } finally {
       setLoading(false);
     }
@@ -1456,10 +1459,11 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
         setResumeFile(null);
         refreshProfile();
       } else {
-        showStatus('File must be a PDF or Word document!', true);
+        const data = await res.json();
+        showStatus(data.message || 'File must be a PDF or Word document!', true);
       }
     } catch (err) {
-      showStatus('Resume file recorded offline!');
+      showStatus(`Error uploading resume: ${err.message || 'Network error occurred.'}`, true);
     } finally {
       setLoading(false);
     }
@@ -1563,6 +1567,8 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
     formData.append('school', eduSchool);
     formData.append('degree', eduType);
 
+    const selectedBoard = eduBoard === 'Other' ? customEduBoard : eduBoard;
+
     if (eduType === '10th') {
       formData.append('field_of_study', 'Secondary School (10th)');
       formData.append('start_date', eduPassingYear);
@@ -1572,7 +1578,9 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       formData.append('marks_obtained', eduMarksObtained);
       const pct = eduFullMarks && eduMarksObtained ? ((parseFloat(eduMarksObtained) / parseFloat(eduFullMarks)) * 100).toFixed(2) : '0';
       formData.append('percentage', pct);
-      formData.append('description', `SSC 10th complete at ${eduSchool}. Full Marks: ${eduFullMarks}, Obtained: ${eduMarksObtained}, Percentage: ${pct}%`);
+      formData.append('board', selectedBoard);
+      const desc = `Completed 10th standard from ${selectedBoard} Board at ${eduSchool} in the year ${eduPassingYear} with a score of ${eduMarksObtained}/${eduFullMarks} (${pct}%).`;
+      formData.append('description', desc);
       if (edu10thCert) formData.append('certificate_10th', edu10thCert);
     } else if (eduType === '12th') {
       formData.append('field_of_study', 'Intermediate (12th)');
@@ -1583,7 +1591,9 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       formData.append('marks_obtained', eduMarksObtained);
       const pct = eduFullMarks && eduMarksObtained ? ((parseFloat(eduMarksObtained) / parseFloat(eduFullMarks)) * 100).toFixed(2) : '0';
       formData.append('percentage', pct);
-      formData.append('description', `Intermediate 12th complete at ${eduSchool}. Full Marks: ${eduFullMarks}, Obtained: ${eduMarksObtained}, Percentage: ${pct}%`);
+      formData.append('board', selectedBoard);
+      const desc = `Completed 12th standard (Intermediate) from ${selectedBoard} Board at ${eduSchool} in the year ${eduPassingYear} with a score of ${eduMarksObtained}/${eduFullMarks} (${pct}%).`;
+      formData.append('description', desc);
       if (edu12thCert) formData.append('certificate_12th', edu12thCert);
       if (edu12thMarksheet) formData.append('marksheet_12th', edu12thMarksheet);
     } else if (eduType === 'Bachelor') {
@@ -1604,7 +1614,8 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       const calculatedCgpa = sgpas.length > 0 ? (sgpas.reduce((a,b) => a+b, 0) / sgpas.length).toFixed(2) : '0';
       formData.append('cgpa', calculatedCgpa);
       formData.append('semester_sgpa', JSON.stringify(eduSemSgpas));
-      formData.append('description', `Bachelor's degree in ${eduCourse} (${eduBranch}) at ${eduSchool}. Passout: ${eduPassingYear}, CGPA: ${calculatedCgpa}`);
+      const desc = `Successfully completed ${eduCourse} in ${eduBranch} from ${eduSchool}, graduating in the year ${eduPassingYear} with a CGPA of ${calculatedCgpa}.`;
+      formData.append('description', desc);
       
       if (eduBachGradesheet) formData.append('gradesheet_bachelor', eduBachGradesheet);
       if (eduBachCert) formData.append('certificate_bachelor', eduBachCert);
@@ -1617,7 +1628,8 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       formData.append('marks_obtained', eduMarksObtained);
       const pct = eduFullMarks && eduMarksObtained ? ((parseFloat(eduMarksObtained) / parseFloat(eduFullMarks)) * 100).toFixed(2) : '0';
       formData.append('percentage', pct);
-      formData.append('description', `Education details complete at ${eduSchool}. Full Marks: ${eduFullMarks}, Obtained: ${eduMarksObtained}, Percentage: ${pct}%`);
+      const desc = `Completed ${eduCourse || 'education details'} at ${eduSchool} in the year ${eduPassingYear} with a score of ${eduMarksObtained}/${eduFullMarks} (${pct}%).`;
+      formData.append('description', desc);
       if (eduOthersCert) formData.append('certificate_others', eduOthersCert);
       if (eduOthersMarksheet) formData.append('marksheet_others', eduOthersMarksheet);
     }
@@ -1655,13 +1667,15 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
         setEduAccess10th(false);
         setEduAccess12th(false);
         setEduAccessBach(false);
+        setEduBoard('CBSE');
+        setCustomEduBoard('');
       } else {
         const err = await res.json();
         showStatus(err.message || 'Failed to save education.', true);
       }
     } catch (err) {
       console.error(err);
-      showStatus('Offline Simulation: Education entry saved.', true);
+      showStatus(`Error saving education: ${err.message || 'Network error occurred.'}`, true);
       setShowEduModal(false);
     } finally {
       setLoading(false);
@@ -2797,6 +2811,12 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                       
                       {(edu.degree === '10th' || edu.degree === '12th') && (
                         <>
+                          {edu.board && (
+                            <div>
+                              <span style={{ color: 'var(--text-secondary)', display: 'block', fontSize: '0.75rem' }}>Board</span>
+                              <span>{edu.board}</span>
+                            </div>
+                          )}
                           <div>
                             <span style={{ color: 'var(--text-secondary)', display: 'block', fontSize: '0.75rem' }}>Marks Obtained / Full Marks</span>
                             <span>{edu.marks_obtained} / {edu.full_marks}</span>
@@ -3484,6 +3504,35 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                 />
               </div>
             </div>
+
+            {(eduType === '10th' || eduType === '12th') && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', marginBottom: '0.5rem' }}>
+                <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Board <span style={{ color: '#ff5252' }}>*</span></label>
+                <CustomDropdown
+                  value={eduBoard}
+                  onChange={(e) => setEduBoard(e.target.value)}
+                  options={[
+                    { value: 'CBSE', label: 'CBSE (Central Board of Secondary Education)' },
+                    { value: 'ICSE', label: 'ICSE / ISC (Indian Certificate of Secondary Education)' },
+                    { value: 'BSE', label: 'BSE (Board of Secondary Education)' },
+                    { value: 'HSC', label: 'HSC (Higher Secondary Certificate)' },
+                    { value: 'CHSE', label: 'CHSE (Council of Higher Secondary Education)' },
+                    { value: 'Other', label: 'Other Board' }
+                  ]}
+                />
+                {eduBoard === 'Other' && (
+                  <input 
+                    type="text" 
+                    placeholder="Enter Custom Board (e.g. state board name)" 
+                    required 
+                    className="glass-input" 
+                    style={{ marginTop: '0.5rem' }}
+                    value={customEduBoard}
+                    onChange={(e) => setCustomEduBoard(e.target.value)} 
+                  />
+                )}
+              </div>
+            )}
 
             {(eduType === '10th' || eduType === '12th' || eduType === 'Others') && (
               <>
