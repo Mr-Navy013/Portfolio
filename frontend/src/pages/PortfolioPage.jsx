@@ -462,74 +462,127 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
       </nav>
 
       {/* ── Mobile Sidebar ── */}
-      <div
-        className={`pf-mobile-overlay${mobileMenuOpen ? ' open' : ''}`}
-        onClick={() => setMobileMenuOpen(false)}
-      />
-      <div className={`pf-mobile-sidebar${mobileMenuOpen ? ' open' : ''}`}>
-        <div className="pf-mobile-sidebar-header">
-          <span className="pf-mobile-sidebar-title">MENU</span>
-          <button className="pf-mobile-close-btn" onClick={() => setMobileMenuOpen(false)}>
-            <X size={22} />
-          </button>
-        </div>
-
-        {/* Profile Avatar Section at top of mobile menu */}
-        <div style={{ textAlign: 'center', paddingBottom: '1.25rem', borderBottom: '1px solid rgba(0, 255, 136, 0.1)', marginBottom: '0.5rem' }}>
-          <div
-            style={{
-              width: '72px',
-              height: '72px',
-              borderRadius: '50%',
-              overflow: 'hidden',
-              margin: '0 auto 0.6rem',
-              border: '2px solid var(--accent-green)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: 'rgba(255,255,255,0.02)'
+      {mobileMenuOpen && (
+        <div 
+          onClick={() => setMobileMenuOpen(false)}
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.3)', zIndex: 1000 }}
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="glass-panel slide-in-left" 
+            style={{ 
+              position: 'fixed', 
+              top: 0, 
+              left: 0, 
+              width: '280px', 
+              height: '100vh', 
+              background: 'rgba(10, 15, 12, 0.98)', 
+              borderRight: '1px solid rgba(0, 255, 136, 0.15)', 
+              zIndex: 1001, 
+              padding: '2rem 1.5rem 4.5rem 1.5rem', 
+              display: 'flex', 
+              flexDirection: 'column', 
+              gap: '0.5rem', 
+              boxShadow: '12px 0 40px rgba(0, 0, 0, 0.6)', 
+              overflowY: 'auto',
+              boxSizing: 'border-box',
+              overscrollBehavior: 'contain'
             }}
           >
-            {avatar ? (
-              <img
-                src={avatar}
-                alt="Avatar"
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              />
-            ) : (
-              <User size={30} className="text-green" style={{ opacity: 0.8 }} />
-            )}
-          </div>
-          <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: '#fff' }}>{name}</h4>
-        </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', paddingBottom: '1rem', borderBottom: '1px solid rgba(0, 255, 136, 0.1)' }}>
+              <span style={{ fontWeight: 800, color: '#00ff88', fontSize: '0.85rem', letterSpacing: '3px' }}>MENU</span>
+              <button 
+                type="button"
+                onClick={() => setMobileMenuOpen(false)} 
+                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#00ff88', cursor: 'pointer', borderRadius: '8px', padding: '0.3rem', display: 'flex', alignItems: 'center' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
 
-        <nav className="pf-mobile-nav">
-          {navLinks.map(l => (
-            <a
-              key={l.href}
-              href={l.href}
-              className="pf-mobile-nav-link"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              {l.label}
-            </a>
-          ))}
-        </nav>
-        <div className="pf-mobile-sidebar-actions">
-          <button
-            onClick={() => { setMobileMenuOpen(false); setShowHireModal(true); }}
-            className="glass-btn pf-mobile-action-btn"
-          >
-            <Send size={16} /> Hire Me
-          </button>
-          <button
-            onClick={() => navigateTo(cameFrom === 'dashboard' ? 'dashboard' : 'welcome')}
-            className="glass-btn-secondary pf-mobile-action-btn"
-          >
-            {cameFrom === 'dashboard' ? '← Back' : '← Back to Home'}
-          </button>
+            {/* Profile Avatar Section at top of mobile menu */}
+            <div style={{ textAlign: 'center', paddingBottom: '1.25rem', borderBottom: '1px solid rgba(0, 255, 136, 0.1)', marginBottom: '0.5rem' }}>
+              <div
+                style={{
+                  width: '72px',
+                  height: '72px',
+                  borderRadius: '50%',
+                  overflow: 'hidden',
+                  margin: '0 auto 0.6rem',
+                  border: '2px solid var(--accent-green)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: 'rgba(255,255,255,0.02)'
+                }}
+              >
+                {avatar ? (
+                  <img
+                    src={avatar}
+                    alt="Avatar"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                ) : (
+                  <User size={30} className="text-green" style={{ opacity: 0.8 }} />
+                )}
+              </div>
+              <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: '#fff' }}>{name}</h4>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Portfolio Visitor</span>
+            </div>
+
+            <nav className="pf-mobile-nav" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
+              {navLinks.map(l => (
+                <a
+                  key={l.href}
+                  href={l.href}
+                  className="glass-btn-secondary"
+                  style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '0.8rem', 
+                    color: '#fff', 
+                    textDecoration: 'none', 
+                    padding: '0.8rem 1rem', 
+                    borderRadius: '12px',
+                    width: '100%',
+                    boxSizing: 'border-box',
+                    transition: 'all 0.3s ease',
+                    justifyContent: 'flex-start'
+                  }}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {l.href === '#about' && <User size={18} className="text-green" />}
+                  {l.href === '#skills' && <CheckCircle size={18} className="text-green" />}
+                  {l.href === '#education' && <GraduationCap size={18} className="text-green" />}
+                  {l.href === '#courses' && <GraduationCap size={18} className="text-green" />}
+                  {l.href === '#projects' && <Code size={18} className="text-green" />}
+                  {l.href === '#experience' && <Briefcase size={18} className="text-green" />}
+                  {l.href === '#certs' && <Award size={18} className="text-green" />}
+                  {l.href === '#contact' && <Mail size={18} className="text-green" />}
+                  {l.label}
+                </a>
+              ))}
+            </nav>
+
+            <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <button
+                onClick={() => { setMobileMenuOpen(false); setShowHireModal(true); }}
+                className="glass-btn"
+                style={{ width: '100%', justifyContent: 'center', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+              >
+                <Send size={16} /> Hire Me
+              </button>
+              <button
+                onClick={() => navigateTo(cameFrom === 'dashboard' ? 'dashboard' : 'welcome')}
+                className="glass-btn-secondary"
+                style={{ width: '100%', justifyContent: 'center', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+              >
+                {cameFrom === 'dashboard' ? '← Back' : '← Back to Home'}
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* ── HERO / ABOUT ── */}
       <section id="about" className="section-wrapper pf-hero-section">
