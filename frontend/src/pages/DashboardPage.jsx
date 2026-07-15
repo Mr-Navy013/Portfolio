@@ -149,53 +149,81 @@ const DragDropUpload = ({ onFileSelect, accept, currentFile, placeholder, requir
   };
 
   return (
-    <div
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-      onClick={handleClick}
-      style={{
-        border: isDragging ? '2px solid var(--accent-green)' : '1px dashed var(--glass-border)',
-        borderRadius: '12px',
-        padding: '1.5rem',
-        textAlign: 'center',
-        background: isDragging ? 'rgba(0, 255, 136, 0.08)' : 'rgba(255, 255, 255, 0.02)',
-        cursor: 'pointer',
-        transition: 'var(--transition-smooth)',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: '0.5rem',
-        boxShadow: isDragging ? '0 0 15px rgba(0, 255, 136, 0.2)' : 'none',
-        marginTop: '0.25rem',
-        marginBottom: '0.25rem'
-      }}
-      className="drag-drop-zone"
-    >
-      <input
-        type="file"
-        ref={fileInputRef}
-        accept={accept}
-        style={{ display: 'none' }}
-        onChange={(e) => {
-          if (e.target.files && e.target.files.length > 0) {
-            onFileSelect(e.target.files[0]);
-          }
+    <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+      <div
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        onClick={handleClick}
+        style={{
+          border: isDragging ? '2px solid var(--accent-green)' : '1px dashed var(--glass-border)',
+          borderRadius: '12px',
+          padding: '1.5rem',
+          textAlign: 'center',
+          background: isDragging ? 'rgba(0, 255, 136, 0.08)' : 'rgba(255, 255, 255, 0.02)',
+          cursor: 'pointer',
+          transition: 'var(--transition-smooth)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '0.5rem',
+          boxShadow: isDragging ? '0 0 15px rgba(0, 255, 136, 0.2)' : 'none',
+          marginTop: '0.25rem',
+          marginBottom: '0.25rem'
         }}
-        required={required && !currentFile}
-      />
-      <Upload size={24} style={{ color: isDragging ? 'var(--accent-green)' : 'rgba(255,255,255,0.4)', transition: 'color 0.2s' }} />
-      <span style={{ fontSize: '0.85rem', color: '#fff', fontWeight: 500 }}>
-        {currentFile ? (
-          <span style={{ color: 'var(--accent-green)', fontWeight: 600 }}>Selected: {currentFile.name || (typeof currentFile === 'string' ? currentFile.substring(currentFile.lastIndexOf('/') + 1) : 'File selected')}</span>
-        ) : (
-          placeholder || 'Drag & drop file here or click to upload'
-        )}
-      </span>
-      {accept && (
-        <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
-          Accepted formats: {accept.replace(/\*/g, '')}
+        className="drag-drop-zone"
+      >
+        <input
+          type="file"
+          ref={fileInputRef}
+          accept={accept}
+          style={{ display: 'none' }}
+          onChange={(e) => {
+            if (e.target.files && e.target.files.length > 0) {
+              onFileSelect(e.target.files[0]);
+            }
+          }}
+          required={required && !currentFile}
+        />
+        <Upload size={24} style={{ color: isDragging ? 'var(--accent-green)' : 'rgba(255,255,255,0.4)', transition: 'color 0.2s' }} />
+        <span style={{ fontSize: '0.85rem', color: '#fff', fontWeight: 500 }}>
+          {currentFile ? (
+            <span style={{ color: 'var(--accent-green)', fontWeight: 600 }}>Selected: {currentFile.name || (typeof currentFile === 'string' ? currentFile.substring(currentFile.lastIndexOf('/') + 1) : 'File selected')}</span>
+          ) : (
+            placeholder || 'Drag & drop file here or click to upload'
+          )}
         </span>
+        <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
+          {accept?.includes('pdf')
+            ? 'Accepted: PDF/Docs/Images | Max size: 10MB (Images compressed automatically)'
+            : 'Accepted: Images | Max size: 15MB (Compressed automatically)'}
+        </span>
+      </div>
+
+      {currentFile && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onFileSelect(null);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+          }}
+          style={{
+            alignSelf: 'center',
+            background: 'none',
+            border: 'none',
+            color: '#ff5252',
+            fontSize: '0.75rem',
+            cursor: 'pointer',
+            marginTop: '0.25rem',
+            textDecoration: 'underline',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.25rem'
+          }}
+        >
+          Remove Selected File
+        </button>
       )}
     </div>
   );
