@@ -4542,12 +4542,14 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
               background: 'rgba(10, 15, 12, 0.98)', 
               borderRight: '1px solid rgba(0, 255, 136, 0.15)', 
               zIndex: 1001, 
-              padding: '2rem 1.5rem', 
+              padding: '2rem 1.5rem 4.5rem 1.5rem', 
               display: 'flex', 
               flexDirection: 'column', 
               gap: '0.5rem', 
               boxShadow: '12px 0 40px rgba(0, 0, 0, 0.6)', 
-              overflowY: 'auto' 
+              overflowY: 'auto',
+              boxSizing: 'border-box',
+              overscrollBehavior: 'contain'
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', paddingBottom: '1rem', borderBottom: '1px solid rgba(0, 255, 136, 0.1)' }}>
