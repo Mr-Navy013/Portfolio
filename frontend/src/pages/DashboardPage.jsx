@@ -1612,7 +1612,11 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       refreshProfile();
     } catch (err) {
       console.error(err);
-      showStatus(`Error uploading avatar: ${err.message || 'Network error occurred.'}`, true);
+      const isNetworkErr = err.message?.includes('Failed to fetch') || err.message?.includes('Network error');
+      const msg = isNetworkErr 
+        ? "Drive blocked Wi-Fi sync! Turn off 'Wi-Fi only' in Drive settings or download locally."
+        : `Error uploading avatar: ${err.message || 'Network error occurred.'}`;
+      showStatus(msg, true);
     } finally {
       setLoading(false);
       setUploadProgress(null);
@@ -1651,7 +1655,11 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       refreshProfile();
     } catch (err) {
       console.error(err);
-      showStatus(`Error uploading resume: ${err.message || 'Network error occurred.'}`, true);
+      const isNetworkErr = err.message?.includes('Failed to fetch') || err.message?.includes('Network error');
+      const msg = isNetworkErr 
+        ? "Drive blocked Wi-Fi sync! Turn off 'Wi-Fi only' in Drive settings or download locally."
+        : `Error uploading resume: ${err.message || 'Network error occurred.'}`;
+      showStatus(msg, true);
     } finally {
       setLoading(false);
       setUploadProgress(null);
@@ -1739,7 +1747,11 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       fetchDashboardCollections();
     } catch (err) {
       console.error(err);
-      showStatus(`Error saving project: ${err.message || 'Network error occurred.'}`, true);
+      const isNetworkErr = err.message?.includes('Failed to fetch') || err.message?.includes('Network error');
+      const msg = isNetworkErr 
+        ? "Drive blocked Wi-Fi sync! Turn off 'Wi-Fi only' in Drive settings or download locally."
+        : `Error saving project: ${err.message || 'Network error occurred.'}`;
+      showStatus(msg, true);
       setShowProjModal(false);
     } finally {
       setLoading(false);
@@ -1903,7 +1915,11 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       setCustomEduBoard('');
     } catch (err) {
       console.error(err);
-      showStatus(`Error saving education: ${err.message || 'Network error occurred.'}`, true);
+      const isNetworkErr = err.message?.includes('Failed to fetch') || err.message?.includes('Network error');
+      const msg = isNetworkErr 
+        ? "Drive blocked Wi-Fi sync! Turn off 'Wi-Fi only' in Drive settings or download locally."
+        : `Error saving education: ${err.message || 'Network error occurred.'}`;
+      showStatus(msg, true);
       setShowEduModal(false);
     } finally {
       setLoading(false);
@@ -2070,7 +2086,11 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       setExpLorFile(null);
     } catch (err) {
       console.error(err);
-      showStatus(`Error saving experience: ${err.message || 'Network error occurred.'}`, true);
+      const isNetworkErr = err.message?.includes('Failed to fetch') || err.message?.includes('Network error');
+      const msg = isNetworkErr 
+        ? "Drive blocked Wi-Fi sync! Turn off 'Wi-Fi only' in Drive settings or download locally."
+        : `Error saving experience: ${err.message || 'Network error occurred.'}`;
+      showStatus(msg, true);
       setShowExpModal(false);
     } finally {
       setLoading(false);
@@ -2129,7 +2149,11 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       setCertAccess(false);
     } catch (err) {
       console.error(err);
-      showStatus(`Error saving certificate: ${err.message || 'Network error occurred.'}`, true);
+      const isNetworkErr = err.message?.includes('Failed to fetch') || err.message?.includes('Network error');
+      const msg = isNetworkErr 
+        ? "Drive blocked Wi-Fi sync! Turn off 'Wi-Fi only' in Drive settings or download locally."
+        : `Error saving certificate: ${err.message || 'Network error occurred.'}`;
+      showStatus(msg, true);
       setShowCertModal(false);
     } finally {
       setLoading(false);

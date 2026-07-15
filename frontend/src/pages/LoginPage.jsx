@@ -49,6 +49,9 @@ function LoginPage({ navigateTo, onLoginSuccess }) {
   // Resend Timer state
   const [resendTimer, setResendTimer] = useState(0);
   const timerRef = React.useRef(null);
+  
+  const [loginCountdown, setLoginCountdown] = useState(null);
+  const successfulTokenRef = React.useRef(null);
 
   const startResendTimer = () => {
     setResendTimer(5);
@@ -123,6 +126,25 @@ function LoginPage({ navigateTo, onLoginSuccess }) {
     setLoading(true);
     clearMessages();
 
+    // Start a 3-second countdown
+    let countdownVal = 3;
+    setLoginCountdown(countdownVal);
+    successfulTokenRef.current = null;
+
+    const timer = setInterval(() => {
+      countdownVal -= 1;
+      setLoginCountdown(countdownVal);
+      if (countdownVal <= 0) {
+        clearInterval(timer);
+        // If we already successfully got the token, proceed to dashboard
+        if (successfulTokenRef.current) {
+          setLoading(false);
+          setLoginCountdown(null);
+          onLoginSuccess(successfulTokenRef.current);
+        }
+      }
+    }, 1000);
+
     try {
       const res = await fetch(`${API_BASE}/auth/login`, {
         method: 'POST',
@@ -136,7 +158,10 @@ function LoginPage({ navigateTo, onLoginSuccess }) {
       }
 
       if (data.requiresOtp) {
-        // First time login detected, needs OTP verification!
+        // OTP path: cancel the countdown immediately and show OTP Modal
+        clearInterval(timer);
+        setLoginCountdown(null);
+        setLoading(false);
         setOtpEmail(data.email);
         setShowOtpModal(true);
         if (data.otp) {
@@ -145,13 +170,20 @@ function LoginPage({ navigateTo, onLoginSuccess }) {
           setInfoMsg(data.message);
         }
       } else {
-        // Successful login
-        onLoginSuccess(data.token);
+        // Successful login: save the token
+        successfulTokenRef.current = data.token;
+        // If the countdown is already finished (0), proceed instantly!
+        if (countdownVal <= 0) {
+          setLoading(false);
+          setLoginCountdown(null);
+          onLoginSuccess(data.token);
+        }
       }
     } catch (err) {
-      setErrorMsg(err.message || 'Could not authenticate. Check MySQL Server connection.');
-    } finally {
+      clearInterval(timer);
+      setLoginCountdown(null);
       setLoading(false);
+      setErrorMsg(err.message || 'Could not authenticate. Check MySQL Server connection.');
     }
   };
 
@@ -372,7 +404,7 @@ function LoginPage({ navigateTo, onLoginSuccess }) {
                 className="glass-btn" 
                 style={{ width: '100%', justifyContent: 'center', padding: '0.9rem', fontSize: '1rem', marginTop: '0.5rem' }}
               >
-                {loading ? 'Authenticating...' : 'Request Access'}
+                {loading ? (loginCountdown !== null ? `Access in ${loginCountdown} seconds...` : 'Authenticating...') : 'Request Access'}
               </button>
 
               <button 
