@@ -31,7 +31,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
     if (mobileMenuOpen) {
       document.body.style.overflow = 'hidden';
       const preventDefault = (e) => {
-        if (!e.target.closest('.pf-mobile-sidebar')) {
+        if (!e.target.closest('.slide-in-left')) {
           e.preventDefault();
         }
       };
