@@ -26,6 +26,25 @@ const formatDateStr = (str) => {
 
 function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+      const preventDefault = (e) => {
+        if (!e.target.closest('.pf-mobile-sidebar')) {
+          e.preventDefault();
+        }
+      };
+      document.addEventListener('touchmove', preventDefault, { passive: false });
+      return () => {
+        document.body.style.overflow = 'unset';
+        document.removeEventListener('touchmove', preventDefault);
+      };
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+  }, [mobileMenuOpen]);
+
   const [showHireModal, setShowHireModal] = useState(false);
   const [projects, setProjects] = useState([]);
   const [education, setEducation] = useState([]);
