@@ -46,6 +46,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
   }, [mobileMenuOpen]);
 
   const [showHireModal, setShowHireModal] = useState(false);
+  const [loadingData, setLoadingData] = useState(true);
   const [projects, setProjects] = useState([]);
   const [education, setEducation] = useState([]);
   const [skills, setSkills] = useState([]);
@@ -210,6 +211,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
 
   const fetchData = async () => {
     try {
+      setLoadingData(true);
       const t = Date.now();
       const [pRes, eRes, sRes, expRes, cRes, courseRes] = await Promise.all([
         fetch(`${API_BASE}/projects?t=${t}`),
@@ -252,6 +254,8 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
         { id: 1, name: 'Full-Stack Web Development Course', description: 'Learned HTML, CSS, JavaScript, React, Node.js, Express, and Database design with hands-on projects.' },
         { id: 2, name: 'Database Management Systems', description: 'Acquired in-depth knowledge on MySQL, relational DB design, normalization, complex joins, indexing and SQLite queries.' }
       ]);
+    } finally {
+      setLoadingData(false);
     }
   };
   const handleOpenPermissionRequest = (docId, docName) => {
@@ -417,6 +421,33 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
     { href: '#certificates', label: 'Certifications' },
     { href: '#contact', label: 'Contact' }
   ];
+
+  if (loadingData) {
+    return (
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '100vw',
+        height: '100vh',
+        backgroundColor: '#020202',
+        color: '#ffffff',
+        fontFamily: 'Outfit, sans-serif'
+      }}>
+        <div className="premium-loader"></div>
+        <div className="pulse-text" style={{
+          marginTop: '1.5rem',
+          fontSize: '1rem',
+          fontWeight: '500',
+          color: '#a0aec0',
+          letterSpacing: '1px'
+        }}>
+          Connecting to Navycut's Portfolio...
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="portfolio-page">

@@ -20,33 +20,46 @@ function App() {
   const [previousPage, setPreviousPage] = useState('welcome');
   const [authToken, setAuthToken] = useState(localStorage.getItem('ownerToken') || null);
   const [profileData, setProfileData] = useState(null);
+  const [loadingProfile, setLoadingProfile] = useState(true);
 
-  const fetchProfile = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/profile`);
-      if (res.ok) {
-        const data = await res.json();
-        setProfileData(data);
-      }
-    } catch (err) {
-      // Backend not running yet — use default data
-      setProfileData({
-        username: 'Navycut',
-        email: 'navycutdehury@gmail.com',
-        phone: '+91 9999999999',
-        linkedin: '',
-        github: '',
-        instagram: '',
-        facebook: '',
-        bio: 'Welcome to my space! I create modular, fast-loading, state-of-the-art full-stack applications.',
-        profile_picture: null,
-        resume_url: null
-      });
+  const fetchProfile = async (showLoader = false, retries = 3, delay = 1500) => {
+    if (showLoader) {
+      setLoadingProfile(true);
     }
+    for (let i = 0; i < retries; i++) {
+      try {
+        const res = await fetch(`${API_BASE}/profile`);
+        if (res.ok) {
+          const data = await res.json();
+          setProfileData(data);
+          setLoadingProfile(false);
+          return;
+        }
+      } catch (err) {
+        console.warn(`Profile fetch failed. Retry ${i + 1}/${retries}...`);
+        if (i < retries - 1) {
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      }
+    }
+    // Backend not running/unreachable after retries — use fallback data
+    setProfileData({
+      username: 'Navycut',
+      email: 'navycutdehury@gmail.com',
+      phone: '+91 9999999999',
+      linkedin: '',
+      github: '',
+      instagram: '',
+      facebook: '',
+      bio: 'Welcome to my space! I create modular, fast-loading, state-of-the-art full-stack applications.',
+      profile_picture: null,
+      resume_url: null
+    });
+    setLoadingProfile(false);
   };
 
   useEffect(() => {
-    fetchProfile();
+    fetchProfile(true);
   }, []);
 
   const handleLoginSuccess = (token) => {
@@ -55,7 +68,7 @@ function App() {
     setCurrentPage('dashboard');
     localStorage.setItem('currentPage', 'dashboard');
     sessionStorage.setItem('justLoggedIn', 'true');
-    fetchProfile();
+    fetchProfile(false);
   };
 
   const handleLogout = () => {
@@ -77,6 +90,33 @@ function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  if (loadingProfile) {
+    return (
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '100vw',
+        height: '100vh',
+        backgroundColor: '#020202',
+        color: '#ffffff',
+        fontFamily: 'Outfit, sans-serif'
+      }}>
+        <div className="premium-loader"></div>
+        <div className="pulse-text" style={{
+          marginTop: '1.5rem',
+          fontSize: '1rem',
+          fontWeight: '500',
+          color: '#a0aec0',
+          letterSpacing: '1px'
+        }}>
+          Connecting to Navycut's Portfolio...
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ width: '100%', minHeight: '100vh', backgroundColor: '#020202' }}>
       {currentPage === 'welcome' && (
@@ -86,7 +126,7 @@ function App() {
         <PortfolioPage
           navigateTo={navigateTo}
           profile={profileData}
-          refreshProfile={fetchProfile}
+          refreshProfile={() => fetchProfile(false)}
           cameFrom={previousPage}
         />
       )}
@@ -99,7 +139,7 @@ function App() {
           authToken={authToken}
           onLogout={handleLogout}
           profile={profileData}
-          refreshProfile={fetchProfile}
+          refreshProfile={() => fetchProfile(false)}
         />
       )}
     </div>

@@ -322,4 +322,29 @@ select:-webkit-autofill:focus {
   animation: float 11s ease-in-out infinite 3s;
 }
 
+/* Premium Loader Animation */
+.premium-loader {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 3px solid var(--accent-green-dim);
+  border-top-color: var(--accent-green);
+  animation: spin 1s cubic-bezier(0.55, 0.055, 0.675, 0.19) infinite;
+  box-shadow: 0 0 15px var(--accent-green-glow);
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.pulse-text {
+  animation: pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.5; transform: scale(0.98); }
+  50% { opacity: 1; transform: scale(1.02); }
+}
+
 
