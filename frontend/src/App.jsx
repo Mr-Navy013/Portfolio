@@ -110,6 +110,14 @@ function App() {
     };
   }, []);
 
+  // Keep-alive ping every 9 min — prevents Render free-tier 15-min sleep
+  useEffect(() => {
+    const ping = () => fetch(`${API_BASE}/health`).catch(() => {});
+    ping(); // ping immediately on load
+    const id = setInterval(ping, 9 * 60 * 1000); // every 9 minutes
+    return () => clearInterval(id);
+  }, []);
+
   const handleLoginSuccess = (token) => {
     setAuthToken(token);
     localStorage.setItem('ownerToken', token);

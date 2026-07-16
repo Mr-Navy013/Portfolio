@@ -31,6 +31,10 @@ if (!fs.existsSync(uploadsDir)) {
 }
 app.use('/uploads', express.static(uploadsDir));
 
+// ── Health check (used by UptimeRobot + frontend keep-alive to prevent Render sleep) ──
+app.get('/health', (req, res) => res.json({ status: 'ok', ts: Date.now() }));
+app.get('/api/health', (req, res) => res.json({ status: 'ok', ts: Date.now() }));
+
 // Resolve file extension from mimetype if missing in filename
 const getExtensionFromMimeType = (mimetype, filename) => {
   const currentExt = path.extname(filename || '').toLowerCase();
