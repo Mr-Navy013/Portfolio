@@ -402,7 +402,9 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
   const github = profile?.github || '';
   const instagram = profile?.instagram || '';
   const facebook = profile?.facebook || '';
-  const resumeUrl = profile?.resume_url ? `${BACKEND_BASE}${profile.resume_url}` : null;
+  const isResumePublic = profile?.is_resume_public !== 0 && profile?.is_resume_public !== false;
+  const resumeUrl = (profile?.resume_url && isResumePublic) ? `${BACKEND_BASE}${profile.resume_url}` : null;
+  const resumeExistsButPrivate = profile?.resume_url && !isResumePublic;
 
   const navLinks = [
     { href: '#about', label: 'About' },
@@ -633,7 +635,10 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
                 <button
                   className="glass-btn-secondary pf-cta-btn"
                   onClick={() => {
-                    setToast({ show: true, message: 'Resume not uploaded yet by the owner.', type: 'warning' });
+                    const msg = resumeExistsButPrivate
+                      ? 'Resume is currently private.'
+                      : 'Resume not uploaded yet by the owner.';
+                    setToast({ show: true, message: msg, type: 'warning' });
                     setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 2000);
                   }}
                 >

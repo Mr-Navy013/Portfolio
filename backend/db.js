@@ -25,6 +25,7 @@ const defaultJsonData = {
       github: '',
       bio: 'Welcome to my portfolio! I am a passionate developer skilled in building robust full-stack applications.',
       resume_url: null,
+      is_resume_public: 1,
       email_verified: 0,
       phone_verified: 0,
       first_login: 1,
@@ -65,6 +66,9 @@ function readJsonDb() {
   try {
     const data = JSON.parse(fs.readFileSync(jsonDbPath, 'utf8'));
     if (!data.document_requests) data.document_requests = [];
+    if (data.owner_profile && data.owner_profile[0] && data.owner_profile[0].is_resume_public === undefined) {
+      data.owner_profile[0].is_resume_public = 1;
+    }
     return data;
   } catch (err) {
     return defaultJsonData;
@@ -124,6 +128,7 @@ async function createTables() {
       github VARCHAR(255) NOT NULL,
       bio TEXT NULL,
       resume_url VARCHAR(255) NULL,
+      is_resume_public BOOLEAN DEFAULT TRUE,
       email_verified BOOLEAN DEFAULT FALSE,
       phone_verified BOOLEAN DEFAULT FALSE,
       first_login BOOLEAN DEFAULT TRUE,
@@ -168,6 +173,12 @@ async function createTables() {
 
   try {
     await pool.query('ALTER TABLE skills ADD COLUMN knowledge_level VARCHAR(50) DEFAULT \'basic\';');
+  } catch (err) {
+    // Already exists
+  }
+
+  try {
+    await pool.query('ALTER TABLE owner_profile ADD COLUMN is_resume_public BOOLEAN DEFAULT TRUE;');
   } catch (err) {
     // Already exists
   }
@@ -531,6 +542,14 @@ async function handleJsonQuery(sql, params = []) {
   if (sqlClean.includes('UPDATE owner_profile SET resume_url = ?')) {
     const user = db.owner_profile[0];
     if (user) user.resume_url = params[0];
+    writeJsonDb(db);
+    return [{ affectedRows: 1 }];
+  }
+
+  // UPDATE owner_profile SET is_resume_public = ?
+  if (sqlClean.includes('UPDATE owner_profile SET is_resume_public = ?')) {
+    const user = db.owner_profile[0];
+    if (user) user.is_resume_public = params[0];
     writeJsonDb(db);
     return [{ affectedRows: 1 }];
   }

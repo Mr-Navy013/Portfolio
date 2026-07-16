@@ -911,6 +911,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
   const [eduBoard, setEduBoard] = useState('CBSE');
   const [customEduBoard, setCustomEduBoard] = useState('');
   const [uploadProgress, setUploadProgress] = useState(null);
+  const [uploadingType, setUploadingType] = useState(null); // 'avatar' | 'resume' | null
   const [eduPassingYear, setEduPassingYear] = useState('');
   const [eduFullMarks, setEduFullMarks] = useState('');
   const [eduMarksObtained, setEduMarksObtained] = useState('');
@@ -1610,6 +1611,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
     }
 
     setLoading(true);
+    setUploadingType('avatar');
     setUploadProgress(0);
 
     try {
@@ -1637,6 +1639,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       showStatus(msg, true);
     } finally {
       setLoading(false);
+      setUploadingType(null);
       setUploadProgress(null);
     }
   };
@@ -1655,6 +1658,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
     }
 
     setLoading(true);
+    setUploadingType('resume');
     setUploadProgress(0);
     const formData = new FormData();
     formData.append('resume', resumeFile);
@@ -1680,6 +1684,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       showStatus(msg, true);
     } finally {
       setLoading(false);
+      setUploadingType(null);
       setUploadProgress(null);
     }
   };
@@ -1690,6 +1695,40 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
 
   const handleRemoveResume = () => {
     requestDelete(null, 'resume');
+  };
+
+  const handleToggleResumeVisibility = async () => {
+    if (!profile?.resume_url) return;
+    const currentStatus = profile.is_resume_public !== 0 && profile.is_resume_public !== false;
+    const nextStatus = !currentStatus;
+
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/profile/resume/toggle-visibility`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify({ is_public: nextStatus })
+      });
+
+      if (res.ok) {
+        showStatus(`Resume successfully ${nextStatus ? 'published' : 'unpublished'}.`);
+        refreshProfile();
+      } else {
+        const err = await res.json();
+        showStatus(err.message || 'Failed to toggle resume visibility.', true);
+      }
+    } catch (err) {
+      console.error(err);
+      showStatus(`Toggled resume visibility to ${nextStatus ? 'public' : 'private'} offline.`);
+      if (profile) {
+        profile.is_resume_public = nextStatus ? 1 : 0;
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   /* ==========================================
@@ -2604,7 +2643,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                         className="glass-btn" 
                         style={{ padding: '0.4rem 1.25rem', fontSize: '0.85rem' }}
                       >
-                        {loading && avatarFile ? (uploadProgress !== null ? `Uploading (${uploadProgress}%)` : 'Uploading...') : 'Publish Photo'}
+                        {uploadingType === 'avatar' ? (uploadProgress !== null ? `Uploading (${uploadProgress}%)` : 'Uploading...') : 'Publish Photo'}
                       </button>
                       {profile?.profile_picture && (
                         <button 
@@ -2629,6 +2668,11 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                       currentFile={resumeFile}
                       placeholder="Drag & drop resume PDF or click to select"
                     />
+                    {profile?.resume_url && (
+                      <div style={{ fontSize: '0.85rem', color: (profile.is_resume_public !== 0 && profile.is_resume_public !== false) ? 'var(--accent-green)' : '#ffaa00', marginBottom: '0.5rem' }}>
+                        Status: {(profile.is_resume_public !== 0 && profile.is_resume_public !== false) ? 'Public (Visible to viewers)' : 'Private (Only you can see)'}
+                      </div>
+                    )}
                     <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
                       <button 
                         onClick={handleUploadResume} 
@@ -2636,16 +2680,31 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                         className="glass-btn" 
                         style={{ padding: '0.4rem 1.25rem', fontSize: '0.85rem' }}
                       >
-                        {loading && resumeFile ? (uploadProgress !== null ? `Uploading (${uploadProgress}%)` : 'Uploading...') : 'Save PDF File'}
+                        {uploadingType === 'resume' ? (uploadProgress !== null ? `Uploading (${uploadProgress}%)` : 'Uploading...') : 'Save PDF File'}
                       </button>
                       {profile?.resume_url && (
-                        <button 
-                          onClick={handleRemoveResume} 
-                          className="glass-btn-danger" 
-                          style={{ padding: '0.4rem 1.25rem', fontSize: '0.85rem' }}
-                        >
-                          Remove CV
-                        </button>
+                        <>
+                          <button 
+                            onClick={handleToggleResumeVisibility} 
+                            disabled={loading} 
+                            className="glass-btn" 
+                            style={{ 
+                              padding: '0.4rem 1.25rem', 
+                              fontSize: '0.85rem',
+                              borderColor: (profile.is_resume_public !== 0 && profile.is_resume_public !== false) ? '#ffaa00' : 'var(--accent-green)',
+                              color: (profile.is_resume_public !== 0 && profile.is_resume_public !== false) ? '#ffaa00' : 'var(--accent-green)'
+                            }}
+                          >
+                            {(profile.is_resume_public !== 0 && profile.is_resume_public !== false) ? 'Unpublish CV' : 'Publish CV'}
+                          </button>
+                          <button 
+                            onClick={handleRemoveResume} 
+                            className="glass-btn-danger" 
+                            style={{ padding: '0.4rem 1.25rem', fontSize: '0.85rem' }}
+                          >
+                            Remove CV
+                          </button>
+                        </>
                       )}
                     </div>
                   </div>
