@@ -275,25 +275,25 @@ async function createTables() {
   }
 
   const addEduColumns = [
-    'ALTER TABLE education ADD COLUMN passing_year VARCHAR(50) NULL;',
-    'ALTER TABLE education ADD COLUMN full_marks DOUBLE NULL;',
-    'ALTER TABLE education ADD COLUMN marks_obtained DOUBLE NULL;',
-    'ALTER TABLE education ADD COLUMN percentage DOUBLE NULL;',
-    'ALTER TABLE education ADD COLUMN course VARCHAR(255) NULL;',
-    'ALTER TABLE education ADD COLUMN branch VARCHAR(255) NULL;',
-    'ALTER TABLE education ADD COLUMN semester_sgpa TEXT NULL;',
-    'ALTER TABLE education ADD COLUMN cgpa DOUBLE NULL;',
-    'ALTER TABLE education ADD COLUMN certificate_10th VARCHAR(255) NULL;',
-    'ALTER TABLE education ADD COLUMN certificate_12th VARCHAR(255) NULL;',
-    'ALTER TABLE education ADD COLUMN marksheet_12th VARCHAR(255) NULL;',
-    'ALTER TABLE education ADD COLUMN gradesheet_bachelor VARCHAR(255) NULL;',
-    'ALTER TABLE education ADD COLUMN certificate_bachelor VARCHAR(255) NULL;',
-    'ALTER TABLE education ADD COLUMN certificate_others VARCHAR(255) NULL;',
-    'ALTER TABLE education ADD COLUMN marksheet_others VARCHAR(255) NULL;',
-    'ALTER TABLE education ADD COLUMN access_cert10 BOOLEAN DEFAULT FALSE;',
-    'ALTER TABLE education ADD COLUMN access_cert12 BOOLEAN DEFAULT FALSE;',
-    'ALTER TABLE education ADD COLUMN access_certbach BOOLEAN DEFAULT FALSE;',
-    'ALTER TABLE education ADD COLUMN board VARCHAR(255) NULL;'
+    'ALTER TABLE education ADD COLUMN passing_year VARCHAR(50) NULL',
+    'ALTER TABLE education ADD COLUMN full_marks DOUBLE NULL',
+    'ALTER TABLE education ADD COLUMN marks_obtained DOUBLE NULL',
+    'ALTER TABLE education ADD COLUMN percentage DOUBLE NULL',
+    'ALTER TABLE education ADD COLUMN course VARCHAR(255) NULL',
+    'ALTER TABLE education ADD COLUMN branch VARCHAR(255) NULL',
+    'ALTER TABLE education ADD COLUMN semester_sgpa TEXT NULL',
+    'ALTER TABLE education ADD COLUMN cgpa DOUBLE NULL',
+    'ALTER TABLE education ADD COLUMN certificate_10th VARCHAR(255) NULL',
+    'ALTER TABLE education ADD COLUMN certificate_12th VARCHAR(255) NULL',
+    'ALTER TABLE education ADD COLUMN marksheet_12th VARCHAR(255) NULL',
+    'ALTER TABLE education ADD COLUMN gradesheet_bachelor VARCHAR(255) NULL',
+    'ALTER TABLE education ADD COLUMN certificate_bachelor VARCHAR(255) NULL',
+    'ALTER TABLE education ADD COLUMN certificate_others VARCHAR(255) NULL',
+    'ALTER TABLE education ADD COLUMN marksheet_others VARCHAR(255) NULL',
+    'ALTER TABLE education ADD COLUMN access_cert10 BOOLEAN DEFAULT FALSE',
+    'ALTER TABLE education ADD COLUMN access_cert12 BOOLEAN DEFAULT FALSE',
+    'ALTER TABLE education ADD COLUMN access_certbach BOOLEAN DEFAULT FALSE',
+    'ALTER TABLE education ADD COLUMN board VARCHAR(255) NULL'
   ];
   for (const colQuery of addEduColumns) {
     try {
@@ -304,16 +304,16 @@ async function createTables() {
   }
 
   const addExpColumns = [
-    'ALTER TABLE experience ADD COLUMN exp_type VARCHAR(50) NULL;',
-    'ALTER TABLE experience ADD COLUMN project_name VARCHAR(255) NULL;',
-    'ALTER TABLE experience ADD COLUMN project_instructor VARCHAR(255) NULL;',
-    'ALTER TABLE experience ADD COLUMN repo_link VARCHAR(255) NULL;',
-    'ALTER TABLE experience ADD COLUMN deploy_link VARCHAR(255) NULL;',
-    'ALTER TABLE experience ADD COLUMN program_name VARCHAR(255) NULL;',
-    'ALTER TABLE experience ADD COLUMN org_name VARCHAR(255) NULL;',
-    'ALTER TABLE experience ADD COLUMN certificate_file VARCHAR(255) NULL;',
-    'ALTER TABLE experience ADD COLUMN lor_file VARCHAR(255) NULL;',
-    'ALTER TABLE experience ADD COLUMN skills_learned TEXT NULL;'
+    'ALTER TABLE experience ADD COLUMN exp_type VARCHAR(50) NULL',
+    'ALTER TABLE experience ADD COLUMN project_name VARCHAR(255) NULL',
+    'ALTER TABLE experience ADD COLUMN project_instructor VARCHAR(255) NULL',
+    'ALTER TABLE experience ADD COLUMN repo_link VARCHAR(255) NULL',
+    'ALTER TABLE experience ADD COLUMN deploy_link VARCHAR(255) NULL',
+    'ALTER TABLE experience ADD COLUMN program_name VARCHAR(255) NULL',
+    'ALTER TABLE experience ADD COLUMN org_name VARCHAR(255) NULL',
+    'ALTER TABLE experience ADD COLUMN certificate_file VARCHAR(255) NULL',
+    'ALTER TABLE experience ADD COLUMN lor_file VARCHAR(255) NULL',
+    'ALTER TABLE experience ADD COLUMN skills_learned TEXT NULL'
   ];
   for (const colQuery of addExpColumns) {
     try {
@@ -324,19 +324,19 @@ async function createTables() {
   }
 
   try {
-    await pool.query('ALTER TABLE certificates ADD COLUMN certificate_file VARCHAR(255) NULL;');
+    await pool.query('ALTER TABLE certificates ADD COLUMN certificate_file VARCHAR(255) NULL');
   } catch (err) {
     // Column already exists, ignore
   }
 
   try {
-    await pool.query('ALTER TABLE certificates ADD COLUMN access_cert BOOLEAN DEFAULT FALSE;');
+    await pool.query('ALTER TABLE certificates ADD COLUMN access_cert BOOLEAN DEFAULT FALSE');
   } catch (err) {
     // Column already exists, ignore
   }
 
   try {
-    await pool.query('ALTER TABLE owner_profile MODIFY COLUMN profile_picture LONGTEXT NULL;');
+    await pool.query('ALTER TABLE owner_profile MODIFY COLUMN profile_picture LONGTEXT NULL');
   } catch (err) {
     // Column update failed or already matches, ignore
   }

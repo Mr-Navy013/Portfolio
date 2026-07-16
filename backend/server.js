@@ -1078,7 +1078,7 @@ app.put('/api/education/:id', authenticateToken, educationUploadFields, async (r
 
     res.json({ success: true, message: 'Education history updated!' });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error.message, query: q, params: params });
   }
 });
 
@@ -1295,7 +1295,7 @@ app.put('/api/experience/:id', authenticateToken, experienceUploadFields, async 
 
     res.json({ success: true, message: 'Experience updated!' });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error.message, query: q, params: params });
   }
 });
 
@@ -1393,7 +1393,7 @@ app.put('/api/certificates/:id', authenticateToken, upload.single('certificate_f
 
     res.json({ success: true, message: 'Certificate updated!' });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error.message, query: q, params: params });
   }
 });
 
