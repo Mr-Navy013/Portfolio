@@ -90,9 +90,17 @@ const checkFileReadable = (file) => {
     }
     const reader = new FileReader();
     reader.onload = () => resolve(true);
-    reader.onerror = () => resolve(false);
-    const slice = file.slice(0, Math.min(1024, file.size));
-    reader.readAsArrayBuffer(slice);
+    reader.onerror = (e) => {
+      console.warn("FileReader check failed (cloud file sandbox restriction), proceeding with upload anyway:", e);
+      resolve(true);
+    };
+    try {
+      const slice = file.slice(0, Math.min(1024, file.size));
+      reader.readAsArrayBuffer(slice);
+    } catch (err) {
+      console.warn("FileReader slice failed, proceeding with upload anyway:", err);
+      resolve(true);
+    }
   });
 };
 
