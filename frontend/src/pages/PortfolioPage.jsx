@@ -45,14 +45,22 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
     }
   }, [mobileMenuOpen]);
 
+  // SWR: load data instantly from localStorage cache, then update from server in background
+  const getCached = (key, fallback) => {
+    try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch { return fallback; }
+  };
+
   const [showHireModal, setShowHireModal] = useState(false);
-  const [loadingData, setLoadingData] = useState(true);
-  const [projects, setProjects] = useState([]);
-  const [education, setEducation] = useState([]);
-  const [skills, setSkills] = useState([]);
-  const [experience, setExperience] = useState([]);
-  const [certificates, setCertificates] = useState([]);
-  const [courses, setCourses] = useState([]);
+  const [loadingData, setLoadingData] = useState(() => {
+    // If we have cached data, don't show the loading spinner
+    try { return !localStorage.getItem('cache_projects'); } catch { return true; }
+  });
+  const [projects, setProjects] = useState(() => getCached('cache_projects', []));
+  const [education, setEducation] = useState(() => getCached('cache_education', []));
+  const [skills, setSkills] = useState(() => getCached('cache_skills', []));
+  const [experience, setExperience] = useState(() => getCached('cache_experience', []));
+  const [certificates, setCertificates] = useState(() => getCached('cache_certificates', []));
+  const [courses, setCourses] = useState(() => getCached('cache_courses', []));
   const [selectedExperience, setSelectedExperience] = useState(null);
 
   // Document Access Permission and Viewer states
@@ -222,12 +230,12 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
         fetch(`${API_BASE}/certificates?t=${t}`,  { signal: AbortSignal.timeout(6000) }),
         fetch(`${API_BASE}/courses?t=${t}`,       { signal: AbortSignal.timeout(6000) })
       ]);
-      if (pRes.ok)      setProjects(await pRes.json());
-      if (eRes.ok)      setEducation(await eRes.json());
-      if (sRes.ok)      setSkills(await sRes.json());
-      if (expRes.ok)    setExperience(await expRes.json());
-      if (cRes.ok)      setCertificates(await cRes.json());
-      if (courseRes.ok) setCourses(await courseRes.json());
+      if (pRes.ok)      { const d = await pRes.json(); setProjects(d); try { localStorage.setItem('cache_projects', JSON.stringify(d)); } catch {} }
+      if (eRes.ok)      { const d = await eRes.json(); setEducation(d); try { localStorage.setItem('cache_education', JSON.stringify(d)); } catch {} }
+      if (sRes.ok)      { const d = await sRes.json(); setSkills(d); try { localStorage.setItem('cache_skills', JSON.stringify(d)); } catch {} }
+      if (expRes.ok)    { const d = await expRes.json(); setExperience(d); try { localStorage.setItem('cache_experience', JSON.stringify(d)); } catch {} }
+      if (cRes.ok)      { const d = await cRes.json(); setCertificates(d); try { localStorage.setItem('cache_certificates', JSON.stringify(d)); } catch {} }
+      if (courseRes.ok) { const d = await courseRes.json(); setCourses(d); try { localStorage.setItem('cache_courses', JSON.stringify(d)); } catch {} }
       setLoadingData(false);
       // Clear any retry polling on success
       if (sectionPollRef.current) { clearInterval(sectionPollRef.current); sectionPollRef.current = null; }

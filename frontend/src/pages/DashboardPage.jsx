@@ -165,7 +165,17 @@ const verifyFilesReadable = async (files) => {
 const uploadWithProgress = (url, method, body, headers, onProgress) => {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    xhr.open(method, url);
+
+    // POST method tunneling: forward PUT/DELETE over POST to bypass restrictive mobile ISPs
+    let actualMethod = method;
+    let actualUrl = url;
+    if (method === 'PUT' || method === 'DELETE') {
+      actualMethod = 'POST';
+      const separator = actualUrl.includes('?') ? '&' : '?';
+      actualUrl = `${actualUrl}${separator}_method=${method}`;
+    }
+
+    xhr.open(actualMethod, actualUrl);
     
     if (headers) {
       Object.entries(headers).forEach(([key, val]) => {
@@ -205,6 +215,18 @@ const uploadWithProgress = (url, method, body, headers, onProgress) => {
     
     xhr.send(body);
   });
+};
+
+// Resilient fetch for JSON-only requests: tunnels PUT/DELETE over POST to bypass restrictive mobile ISPs
+const resilientFetch = (url, options = {}) => {
+  let { method = 'GET', ...rest } = options;
+  let actualUrl = url;
+  if (method === 'PUT' || method === 'DELETE') {
+    const separator = actualUrl.includes('?') ? '&' : '?';
+    actualUrl = `${actualUrl}${separator}_method=${method}`;
+    method = 'POST';
+  }
+  return fetch(actualUrl, { method, ...rest });
 };
 
 const DragDropUpload = ({ onFileSelect, accept, currentFile, placeholder, required = false }) => {
@@ -1121,7 +1143,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
         if (selectedMsgIds.length === 0) return;
         setLoading(true);
         try {
-          const res = await fetch(`${API_BASE}/messages`, {
+          const res = await resilientFetch(`${API_BASE}/messages`, {
             method: 'DELETE',
             headers: {
               'Content-Type': 'application/json',
@@ -1148,7 +1170,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       if (type === 'email') {
         setLoading(true);
         try {
-          const res = await fetch(`${API_BASE}/profile/email`, {
+          const res = await resilientFetch(`${API_BASE}/profile/email`, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${authToken}` }
           });
@@ -1173,7 +1195,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       if (type === 'phone') {
         setLoading(true);
         try {
-          const res = await fetch(`${API_BASE}/profile/phone`, {
+          const res = await resilientFetch(`${API_BASE}/profile/phone`, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${authToken}` }
           });
@@ -1198,7 +1220,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       if (type === 'avatar') {
         setLoading(true);
         try {
-          const res = await fetch(`${API_BASE}/profile/avatar`, {
+          const res = await resilientFetch(`${API_BASE}/profile/avatar`, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${authToken}` }
           });
@@ -1219,7 +1241,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       if (type === 'resume') {
         setLoading(true);
         try {
-          const res = await fetch(`${API_BASE}/profile/resume`, {
+          const res = await resilientFetch(`${API_BASE}/profile/resume`, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${authToken}` }
           });
@@ -1246,7 +1268,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       else if (type === 'certificate') endpoint = `certificates/${id}`;
       else if (type === 'documentRequest') endpoint = `document-requests/${id}`;
 
-      const res = await fetch(`${API_BASE}/${endpoint}`, {
+      const res = await resilientFetch(`${API_BASE}/${endpoint}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${authToken}` }
       });
@@ -1518,7 +1540,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
     setShowMsgModal(true);
     if (!msg.is_read) {
       try {
-        const res = await fetch(`${API_BASE}/messages/${msg.id}/read`, {
+        const res = await resilientFetch(`${API_BASE}/messages/${msg.id}/read`, {
           method: 'PUT',
           headers: { 'Authorization': `Bearer ${authToken}` }
         });
@@ -1563,7 +1585,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
 
   const handleMarkAllMessagesAsRead = async () => {
     try {
-      const res = await fetch(`${API_BASE}/messages/read-all`, {
+      const res = await resilientFetch(`${API_BASE}/messages/read-all`, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${authToken}` }
       });
@@ -1590,7 +1612,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
     const finalAvailability = availability === 'Custom' ? customAvailability : availability;
 
     try {
-      const res = await fetch(`${API_BASE}/profile`, {
+      const res = await resilientFetch(`${API_BASE}/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -1631,7 +1653,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
     }
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/profile`, {
+      const res = await resilientFetch(`${API_BASE}/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -1766,7 +1788,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
 
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/profile/resume/toggle-visibility`, {
+      const res = await resilientFetch(`${API_BASE}/profile/resume/toggle-visibility`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -1800,7 +1822,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
 
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/profile/avatar/toggle-visibility`, {
+      const res = await resilientFetch(`${API_BASE}/profile/avatar/toggle-visibility`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

@@ -17,8 +17,14 @@ function App() {
   });
   const [previousPage, setPreviousPage] = useState('welcome');
   const [authToken, setAuthToken] = useState(localStorage.getItem('ownerToken') || null);
-  const [profileData, setProfileData] = useState(null);
-  const [loadingProfile, setLoadingProfile] = useState(true);
+
+  // SWR: load profile from cache instantly — no spinner on return visits
+  const getCachedProfile = () => {
+    try { const v = localStorage.getItem('cache_profile'); return v ? JSON.parse(v) : null; } catch { return null; }
+  };
+  const cachedProfile = getCachedProfile();
+  const [profileData, setProfileData] = useState(cachedProfile || null);
+  const [loadingProfile, setLoadingProfile] = useState(!cachedProfile); // false = skip loading screen if cached
   const [warmingUp, setWarmingUp] = useState(false); // shows "warming up" message after first fail
 
   const retryTimerRef = useRef(null);
@@ -36,6 +42,8 @@ function App() {
       if (res.ok) {
         const data = await res.json();
         setProfileData(data);
+        // Cache profile for SWR on next visit
+        try { localStorage.setItem('cache_profile', JSON.stringify(data)); } catch {}
         gotRealData.current = true;
         setLoadingProfile(false);
         setWarmingUp(false);

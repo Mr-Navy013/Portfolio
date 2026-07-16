@@ -16,6 +16,19 @@ const JWT_SECRET = process.env.JWT_SECRET || 'PortfolioNavyCutSecretKey2026!';
 
 // Middleware
 app.use(cors({ origin: '*' }));
+
+// Method Override Middleware to support PUT/DELETE fallbacks over POST (resilience for restrictive mobile networks)
+app.use((req, res, next) => {
+  if (req.method === 'POST') {
+    const override = req.headers['x-http-method-override'] || req.query._method;
+    if (override) {
+      req.method = override.toUpperCase();
+      console.log(`[Method Override] Changed request method to ${req.method} for ${req.url}`);
+    }
+  }
+  next();
+});
+
 app.use(express.json());
 
 // Request Logger

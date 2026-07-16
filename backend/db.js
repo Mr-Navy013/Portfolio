@@ -369,7 +369,7 @@ async function createTables() {
 // SQL Query emulator for JSON fallback
 async function handleJsonQuery(sql, params = []) {
   const db = readJsonDb();
-  const sqlClean = sql.trim().replace(/\s+/g, ' ');
+  const sqlClean = sql.trim().replace(/\s+/g, ' ').replace(/`/g, '');
 
   // 1. SELECT owner_profile LIMIT 1
   if (sqlClean.includes('owner_profile LIMIT 1')) {
