@@ -31,6 +31,25 @@ if (!fs.existsSync(uploadsDir)) {
 }
 app.use('/uploads', express.static(uploadsDir));
 
+// Resolve file extension from mimetype if missing in filename
+const getExtensionFromMimeType = (mimetype, filename) => {
+  const currentExt = path.extname(filename || '').toLowerCase();
+  if (currentExt) return currentExt;
+
+  const mime = (mimetype || '').toLowerCase();
+  if (mime === 'application/pdf') return '.pdf';
+  if (mime === 'image/jpeg' || mime === 'image/jpg') return '.jpg';
+  if (mime === 'image/png') return '.png';
+  if (mime === 'image/gif') return '.gif';
+  if (mime === 'image/webp') return '.webp';
+  if (mime === 'image/svg+xml') return '.svg';
+  if (mime === 'text/plain') return '.txt';
+  if (mime === 'application/msword') return '.doc';
+  if (mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') return '.docx';
+
+  return '';
+};
+
 // Config Multer for storage
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -38,7 +57,8 @@ const storage = multer.diskStorage({
   },
   filename: function (req, file, cb) {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    const ext = getExtensionFromMimeType(file.mimetype, file.originalname);
+    cb(null, file.fieldname + '-' + uniqueSuffix + ext);
   }
 });
 

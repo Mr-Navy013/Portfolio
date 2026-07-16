@@ -104,7 +104,7 @@ const checkFileReadable = (file) => {
   });
 };
 
-const getSafeInMemoryFile = (file) => {
+const getSafeInMemoryFile = (file, defaultMime = '') => {
   return new Promise((resolve, reject) => {
     if (!file) {
       resolve(null);
@@ -113,8 +113,33 @@ const getSafeInMemoryFile = (file) => {
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
-        const blob = new Blob([event.target.result], { type: file.type });
-        const safeFile = new File([blob], file.name || 'file', { type: file.type });
+        let fileType = file.type;
+        // If the mimetype is generic or empty, override it with defaultMime
+        if (!fileType || fileType === 'application/octet-stream' || fileType === '') {
+          if (defaultMime) fileType = defaultMime;
+        }
+
+        let fileName = file.name || 'file';
+        const lastDot = fileName.lastIndexOf('.');
+        const hasExt = lastDot !== -1 && (fileName.length - lastDot <= 5) && lastDot > 0;
+        
+        // If filename does not have a valid extension, append the correct one based on mimetype
+        if (!hasExt) {
+          if (fileType === 'application/pdf') {
+            fileName += '.pdf';
+          } else if (fileType === 'image/jpeg' || fileType === 'image/jpg') {
+            fileName += '.jpg';
+          } else if (fileType === 'image/png') {
+            fileName += '.png';
+          } else if (fileType === 'image/gif') {
+            fileName += '.gif';
+          } else if (fileType === 'image/webp') {
+            fileName += '.webp';
+          }
+        }
+
+        const blob = new Blob([event.target.result], { type: fileType });
+        const safeFile = new File([blob], fileName, { type: fileType });
         resolve(safeFile);
       } catch (err) {
         resolve(file);
@@ -1640,7 +1665,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
     setUploadProgress(0);
 
     try {
-      const bufferedFile = await getSafeInMemoryFile(avatarFile);
+      const bufferedFile = await getSafeInMemoryFile(avatarFile, 'image/jpeg');
       const compressed = await compressImageIfNeeded(bufferedFile);
       const formData = new FormData();
       formData.append('profile_picture', compressed);
@@ -1686,7 +1711,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
     setUploadProgress(0);
 
     try {
-      const bufferedFile = await getSafeInMemoryFile(resumeFile);
+      const bufferedFile = await getSafeInMemoryFile(resumeFile, 'application/pdf');
       const formData = new FormData();
       formData.append('resume', bufferedFile);
 
@@ -1840,7 +1865,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
 
     try {
       if (projThumbnail) {
-        const bufferedFile = await getSafeInMemoryFile(projThumbnail);
+        const bufferedFile = await getSafeInMemoryFile(projThumbnail, 'image/jpeg');
         const compressed = await compressImageIfNeeded(bufferedFile);
         formData.append('thumbnail', compressed);
       }
@@ -1899,13 +1924,13 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       let safeGradesheetBach = null, safeCertBach = null;
       let safeCertOthers = null, safeMarksheetOthers = null;
 
-      if (edu10thCert) safeCert10 = await getSafeInMemoryFile(edu10thCert);
-      if (edu12thCert) safeCert12 = await getSafeInMemoryFile(edu12thCert);
-      if (edu12thMarksheet) safeMarksheet12 = await getSafeInMemoryFile(edu12thMarksheet);
-      if (eduBachGradesheet) safeGradesheetBach = await getSafeInMemoryFile(eduBachGradesheet);
-      if (eduBachCert) safeCertBach = await getSafeInMemoryFile(eduBachCert);
-      if (eduOthersCert) safeCertOthers = await getSafeInMemoryFile(eduOthersCert);
-      if (eduOthersMarksheet) safeMarksheetOthers = await getSafeInMemoryFile(eduOthersMarksheet);
+      if (edu10thCert) safeCert10 = await getSafeInMemoryFile(edu10thCert, 'application/pdf');
+      if (edu12thCert) safeCert12 = await getSafeInMemoryFile(edu12thCert, 'application/pdf');
+      if (edu12thMarksheet) safeMarksheet12 = await getSafeInMemoryFile(edu12thMarksheet, 'application/pdf');
+      if (eduBachGradesheet) safeGradesheetBach = await getSafeInMemoryFile(eduBachGradesheet, 'application/pdf');
+      if (eduBachCert) safeCertBach = await getSafeInMemoryFile(eduBachCert, 'application/pdf');
+      if (eduOthersCert) safeCertOthers = await getSafeInMemoryFile(eduOthersCert, 'application/pdf');
+      if (eduOthersMarksheet) safeMarksheetOthers = await getSafeInMemoryFile(eduOthersMarksheet, 'application/pdf');
 
       if (eduType === '10th') {
         formData.append('field_of_study', 'Secondary School (SSC)');
@@ -2124,8 +2149,8 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
     try {
       let safeCert = null;
       let safeLor = null;
-      if (expCertificateFile) safeCert = await getSafeInMemoryFile(expCertificateFile);
-      if (expLorFile) safeLor = await getSafeInMemoryFile(expLorFile);
+      if (expCertificateFile) safeCert = await getSafeInMemoryFile(expCertificateFile, 'application/pdf');
+      if (expLorFile) safeLor = await getSafeInMemoryFile(expLorFile, 'application/pdf');
 
       if (expType === 'project') {
         formData.append('company', 'Group Project');
@@ -2238,7 +2263,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
 
     try {
       if (certFile) {
-        const bufferedFile = await getSafeInMemoryFile(certFile);
+        const bufferedFile = await getSafeInMemoryFile(certFile, 'application/pdf');
         const compressed = await compressImageIfNeeded(bufferedFile);
         formData.append('certificate_file', compressed);
       }
