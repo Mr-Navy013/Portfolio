@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Menu, X, Mail, Phone,
   ExternalLink, Code, GraduationCap, Briefcase, Award, Send,
@@ -209,63 +209,46 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
     };
   }, [showSecureDocModal]);
 
-  const fetchData = async () => {
+  const sectionPollRef = useRef(null);
+
+  const fetchData = useCallback(async () => {
     try {
       const t = Date.now();
       const [pRes, eRes, sRes, expRes, cRes, courseRes] = await Promise.all([
-        fetch(`${API_BASE}/projects?t=${t}`, { signal: AbortSignal.timeout(8000) }),
-        fetch(`${API_BASE}/education?t=${t}`, { signal: AbortSignal.timeout(8000) }),
-        fetch(`${API_BASE}/skills?t=${t}`, { signal: AbortSignal.timeout(8000) }),
-        fetch(`${API_BASE}/experience?t=${t}`, { signal: AbortSignal.timeout(8000) }),
-        fetch(`${API_BASE}/certificates?t=${t}`, { signal: AbortSignal.timeout(8000) }),
-        fetch(`${API_BASE}/courses?t=${t}`, { signal: AbortSignal.timeout(8000) })
+        fetch(`${API_BASE}/projects?t=${t}`,      { signal: AbortSignal.timeout(6000) }),
+        fetch(`${API_BASE}/education?t=${t}`,     { signal: AbortSignal.timeout(6000) }),
+        fetch(`${API_BASE}/skills?t=${t}`,        { signal: AbortSignal.timeout(6000) }),
+        fetch(`${API_BASE}/experience?t=${t}`,    { signal: AbortSignal.timeout(6000) }),
+        fetch(`${API_BASE}/certificates?t=${t}`,  { signal: AbortSignal.timeout(6000) }),
+        fetch(`${API_BASE}/courses?t=${t}`,       { signal: AbortSignal.timeout(6000) })
       ]);
-      if (pRes.ok) setProjects(await pRes.json());
-      if (eRes.ok) setEducation(await eRes.json());
-      if (sRes.ok) setSkills(await sRes.json());
-      if (expRes.ok) setExperience(await expRes.json());
-      if (cRes.ok) setCertificates(await cRes.json());
+      if (pRes.ok)      setProjects(await pRes.json());
+      if (eRes.ok)      setEducation(await eRes.json());
+      if (sRes.ok)      setSkills(await sRes.json());
+      if (expRes.ok)    setExperience(await expRes.json());
+      if (cRes.ok)      setCertificates(await cRes.json());
       if (courseRes.ok) setCourses(await courseRes.json());
       setLoadingData(false);
+      // Clear any retry polling on success
+      if (sectionPollRef.current) { clearInterval(sectionPollRef.current); sectionPollRef.current = null; }
       return true;
-    } catch (err) {
-      setProjects([
-        { id: 1, title: 'Glassmorphic Portfolio System', summary: 'An ultra-fast 3D interactive developer portfolio with owner admin dashboard, JWT auth, OTP verification, and MySQL/JSON dual database.', repo_link: 'https://github.com/navycut', live_link: 'http://localhost:5174', is_deployed: true, thumbnail: null },
-        { id: 2, title: 'Grievance Management System', summary: 'Full-stack complaint management system built for academic institutions with role-based access, notifications, and status tracking.', repo_link: 'https://github.com/navycut', live_link: null, is_deployed: false, thumbnail: null }
-      ]);
-      setSkills([
-        { id: 1, name: 'React.js & Next.js', category: 'Frontend', knowledge_level: 'high' },
-        { id: 2, name: 'Node.js & Express', category: 'Backend', knowledge_level: 'high' },
-        { id: 3, name: 'MySQL & Sequelize', category: 'Database', knowledge_level: 'medium' },
-        { id: 4, name: 'CSS3 & Glassmorphism UI', category: 'Frontend', knowledge_level: 'high' },
-        { id: 5, name: 'MongoDB & Mongoose', category: 'Database', knowledge_level: 'medium' },
-        { id: 6, name: 'JWT & Security', category: 'Backend', knowledge_level: 'basic' }
-      ]);
-      setEducation([
-        { id: 1, school: 'Odisha University of Technology & Research', degree: 'B.Tech', field_of_study: 'Computer Science & Engineering', start_date: '2022', end_date: '2026', description: 'Focused on database architecture, system design, and full-stack web development.' }
-      ]);
-      setExperience([
-        { id: 1, company: 'CodeAlpha', role: 'Full Stack Developer Intern', start_date: 'Jan 2025', end_date: 'Mar 2025', description: 'Built responsive dashboards and REST APIs for client-facing web applications.' }
-      ]);
-      setCertificates([
-        { id: 1, name: 'Full Stack Web Development', organization: 'Coursera', issue_date: '2024', credential_url: null },
-        { id: 2, name: 'React & Node.js Advanced', organization: 'Udemy', issue_date: '2024', credential_url: null }
-      ]);
-      setCourses([
-        { id: 1, name: 'Full-Stack Web Development Course', description: 'Learned HTML, CSS, JavaScript, React, Node.js, Express, and Database design with hands-on projects.' },
-        { id: 2, name: 'Database Management Systems', description: 'Acquired in-depth knowledge on MySQL, relational DB design, normalization, complex joins, indexing and SQLite queries.' }
-      ]);
-      // Backend unreachable — start background polling every 7s
-      const poll = setInterval(async () => {
-        const ok = await fetchData();
-        if (ok) clearInterval(poll);
-      }, 7000);
-      // Stop polling after 2 minutes
-      setTimeout(() => clearInterval(poll), 120000);
+    } catch (_) {
+      // Backend unreachable — keep loadingData=true, retry every 3s
+      if (!sectionPollRef.current) {
+        sectionPollRef.current = setInterval(async () => {
+          const ok = await fetchData();
+          if (ok && sectionPollRef.current) { clearInterval(sectionPollRef.current); sectionPollRef.current = null; }
+        }, 3000);
+        // Stop polling after 2 min (show empty sections as last resort)
+        setTimeout(() => {
+          if (sectionPollRef.current) { clearInterval(sectionPollRef.current); sectionPollRef.current = null; }
+          setLoadingData(false);
+        }, 120000);
+      }
+      return false;
     }
-    setLoadingData(false);
-    return false;
-  };
+  }, []);
+
   const handleOpenPermissionRequest = (docId, docName) => {
     setSelectedDocId(docId);
     setSelectedDocName(docName);
@@ -710,6 +693,10 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
               </div>
             ))}
           </div>
+        ) : loadingData ? (
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '2.5rem' }}>
+            <div className="premium-loader" style={{ width: '36px', height: '36px' }} />
+          </div>
         ) : (
           <div className="glass-card pf-empty-state">No skills data yet.</div>
         )}
@@ -803,7 +790,11 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
                 </div>
               </div>
             </div>
-          )) : <div className="glass-card pf-empty-state">No education data yet.</div>}
+          )) : loadingData ? (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '2.5rem' }}>
+              <div className="premium-loader" style={{ width: '36px', height: '36px' }} />
+            </div>
+          ) : <div className="glass-card pf-empty-state">No education data yet.</div>}
         </div>
       </section>
 
@@ -818,6 +809,10 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
                 <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>{course.description}</p>
               </div>
             ))}
+          </div>
+        ) : loadingData ? (
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '2.5rem' }}>
+            <div className="premium-loader" style={{ width: '36px', height: '36px' }} />
           </div>
         ) : (
           <div className="glass-card pf-empty-state">No courses added yet.</div>
@@ -1130,6 +1125,10 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
               ))}
             </div>
           )
+        ) : loadingData ? (
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '2.5rem' }}>
+            <div className="premium-loader" style={{ width: '36px', height: '36px' }} />
+          </div>
         ) : (
           <div className="glass-card pf-empty-state">No projects uploaded yet.</div>
         )}
@@ -1176,7 +1175,11 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
                 </div>
               </div>
             </div>
-          )) : <div className="glass-card pf-empty-state">No experience data yet.</div>}
+          )) : loadingData ? (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '2.5rem' }}>
+              <div className="premium-loader" style={{ width: '36px', height: '36px' }} />
+            </div>
+          ) : <div className="glass-card pf-empty-state">No experience data yet.</div>}
         </div>
       </section>
 
@@ -1219,6 +1222,10 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
                 )}
               </div>
             ))}
+          </div>
+        ) : loadingData ? (
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '2.5rem' }}>
+            <div className="premium-loader" style={{ width: '36px', height: '36px' }} />
           </div>
         ) : (
           <div className="glass-card pf-empty-state">No certifications added yet.</div>

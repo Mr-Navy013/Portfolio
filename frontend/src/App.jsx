@@ -8,20 +8,6 @@ import { getApiBase } from './utils/api';
 
 const API_BASE = getApiBase();
 
-// Fallback data — shown only if backend is completely unreachable
-const FALLBACK_PROFILE = {
-  username: 'Navycut',
-  email: 'navycutdehury@gmail.com',
-  phone: '+91 9999999999',
-  linkedin: '',
-  github: '',
-  instagram: '',
-  facebook: '',
-  bio: 'Welcome to my space! I create modular, fast-loading, state-of-the-art full-stack applications.',
-  profile_picture: null,
-  resume_url: null
-};
-
 function App() {
   const [currentPage, setCurrentPage] = useState(() => {
     const saved = localStorage.getItem('currentPage');
@@ -33,88 +19,70 @@ function App() {
   const [authToken, setAuthToken] = useState(localStorage.getItem('ownerToken') || null);
   const [profileData, setProfileData] = useState(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
+  const [warmingUp, setWarmingUp] = useState(false); // shows "warming up" message after first fail
 
-  // Ref to track background polling interval so we can cancel it
-  const bgPollRef = useRef(null);
-  const fetchedRealData = useRef(false);
+  const retryTimerRef = useRef(null);
+  const fallbackTimerRef = useRef(null);
+  const gotRealData = useRef(false);
 
-  // Single fetch attempt — returns true on success
-  const tryFetchProfile = useCallback(async () => {
+  const clearTimers = () => {
+    if (retryTimerRef.current) { clearInterval(retryTimerRef.current); retryTimerRef.current = null; }
+    if (fallbackTimerRef.current) { clearTimeout(fallbackTimerRef.current); fallbackTimerRef.current = null; }
+  };
+
+  const attemptFetch = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/profile`, { signal: AbortSignal.timeout(8000) });
+      const res = await fetch(`${API_BASE}/profile`, { signal: AbortSignal.timeout(6000) });
       if (res.ok) {
         const data = await res.json();
         setProfileData(data);
-        fetchedRealData.current = true;
+        gotRealData.current = true;
+        setLoadingProfile(false);
+        setWarmingUp(false);
+        clearTimers();
         return true;
       }
-    } catch (err) {
-      // network error or timeout — ignore, keep retrying
-    }
+    } catch (_) {}
     return false;
   }, []);
 
-  // Start background polling every `intervalMs` until real data is fetched
-  const startBackgroundPolling = useCallback((intervalMs = 5000) => {
-    if (bgPollRef.current) return; // already polling
-    bgPollRef.current = setInterval(async () => {
-      if (fetchedRealData.current) {
-        clearInterval(bgPollRef.current);
-        bgPollRef.current = null;
-        return;
-      }
-      const ok = await tryFetchProfile();
-      if (ok) {
-        clearInterval(bgPollRef.current);
-        bgPollRef.current = null;
-      }
-    }, intervalMs);
-  }, [tryFetchProfile]);
-
-  // Main profile loader: quick attempts first, then fallback + background poll
   const fetchProfile = useCallback(async (showLoader = false) => {
     if (showLoader) setLoadingProfile(true);
-    fetchedRealData.current = false;
+    gotRealData.current = false;
+    clearTimers();
 
-    // Quick burst: try 2 times × 2s (4s max) — covers fast backend
-    for (let i = 0; i < 2; i++) {
-      const ok = await tryFetchProfile();
-      if (ok) {
+    // First attempt — fast (backend should be awake via UptimeRobot)
+    const ok = await attemptFetch();
+    if (ok) return;
+
+    // Backend is cold-starting — show spinner + "warming up" text, retry every 3s
+    setWarmingUp(true);
+    retryTimerRef.current = setInterval(async () => {
+      if (gotRealData.current) { clearTimers(); return; }
+      await attemptFetch();
+    }, 3000);
+
+    // After 2 minutes, give up — show empty state (backend is genuinely down)
+    fallbackTimerRef.current = setTimeout(() => {
+      clearTimers();
+      if (!gotRealData.current) {
+        setProfileData({ username: '', bio: '', linkedin: '', github: '', instagram: '', facebook: '', profile_picture: null, resume_url: null });
         setLoadingProfile(false);
-        return;
-      }
-      if (i < 1) await new Promise(r => setTimeout(r, 2000));
-    }
-
-    // Backend is slow (Render cold start) — show fallback immediately, keep polling in bg
-    setProfileData(prev => prev || FALLBACK_PROFILE);
-    setLoadingProfile(false);
-
-    // Background poll every 6s until real data arrives (up to ~2 minutes)
-    startBackgroundPolling(6000);
-    setTimeout(() => {
-      if (!fetchedRealData.current) {
-        clearInterval(bgPollRef.current);
-        bgPollRef.current = null;
+        setWarmingUp(false);
       }
     }, 120000);
-  }, [tryFetchProfile, startBackgroundPolling]);
+  }, [attemptFetch]);
 
   useEffect(() => {
     fetchProfile(true);
-    return () => {
-      if (bgPollRef.current) {
-        clearInterval(bgPollRef.current);
-        bgPollRef.current = null;
-      }
-    };
+    return clearTimers;
   }, []);
 
   // Keep-alive ping every 9 min — prevents Render free-tier 15-min sleep
   useEffect(() => {
     const ping = () => fetch(`${API_BASE}/health`).catch(() => {});
-    ping(); // ping immediately on load
-    const id = setInterval(ping, 9 * 60 * 1000); // every 9 minutes
+    ping();
+    const id = setInterval(ping, 9 * 60 * 1000);
     return () => clearInterval(id);
   }, []);
 
@@ -156,20 +124,19 @@ function App() {
         width: '100vw',
         height: '100vh',
         backgroundColor: '#020202',
-        color: '#ffffff',
-        fontFamily: 'Outfit, sans-serif'
+        fontFamily: 'Outfit, sans-serif',
+        gap: '1.5rem'
       }}>
-        <div className="premium-loader"></div>
-        <div className="pulse-text" style={{
-          marginTop: '1.5rem',
-          fontSize: '1rem',
-          fontWeight: '500',
-          color: '#a0aec0',
-          letterSpacing: '1px',
-          textAlign: 'center',
-          padding: '0 2rem'
-        }}>
-          Loading Portfolio...
+        <div className="premium-loader" />
+        <div style={{ textAlign: 'center' }}>
+          <div className="pulse-text" style={{ fontSize: '1rem', fontWeight: 500, color: '#a0aec0', letterSpacing: '1px' }}>
+            {warmingUp ? 'Server warming up, please wait...' : 'Loading Portfolio...'}
+          </div>
+          {warmingUp && (
+            <div style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: '#4a5568' }}>
+              This may take up to 30 seconds on first visit
+            </div>
+          )}
         </div>
       </div>
     );
