@@ -1016,7 +1016,40 @@ app.put('/api/education/:id', authenticateToken, educationUploadFields, async (r
     q += ` WHERE id = ?`;
     params.push(id);
 
-    await query(q, params);
+    try {
+      await query(q, params);
+    } catch (dbErr) {
+      if (dbErr.code === 'ER_BAD_FIELD_ERROR' || dbErr.errno === 1054) {
+        console.log('Detected missing column error in education. Running auto-migrations...');
+        const addEduColumns = [
+          'ALTER TABLE education ADD COLUMN passing_year VARCHAR(50) NULL;',
+          'ALTER TABLE education ADD COLUMN full_marks DOUBLE NULL;',
+          'ALTER TABLE education ADD COLUMN marks_obtained DOUBLE NULL;',
+          'ALTER TABLE education ADD COLUMN percentage DOUBLE NULL;',
+          'ALTER TABLE education ADD COLUMN course VARCHAR(255) NULL;',
+          'ALTER TABLE education ADD COLUMN branch VARCHAR(255) NULL;',
+          'ALTER TABLE education ADD COLUMN semester_sgpa TEXT NULL;',
+          'ALTER TABLE education ADD COLUMN cgpa DOUBLE NULL;',
+          'ALTER TABLE education ADD COLUMN certificate_10th VARCHAR(255) NULL;',
+          'ALTER TABLE education ADD COLUMN certificate_12th VARCHAR(255) NULL;',
+          'ALTER TABLE education ADD COLUMN marksheet_12th VARCHAR(255) NULL;',
+          'ALTER TABLE education ADD COLUMN gradesheet_bachelor VARCHAR(255) NULL;',
+          'ALTER TABLE education ADD COLUMN certificate_bachelor VARCHAR(255) NULL;',
+          'ALTER TABLE education ADD COLUMN certificate_others VARCHAR(255) NULL;',
+          'ALTER TABLE education ADD COLUMN marksheet_others VARCHAR(255) NULL;',
+          'ALTER TABLE education ADD COLUMN access_cert10 BOOLEAN DEFAULT FALSE;',
+          'ALTER TABLE education ADD COLUMN access_cert12 BOOLEAN DEFAULT FALSE;',
+          'ALTER TABLE education ADD COLUMN access_certbach BOOLEAN DEFAULT FALSE;',
+          'ALTER TABLE education ADD COLUMN board VARCHAR(255) NULL;'
+        ];
+        for (const colQuery of addEduColumns) {
+          try { await query(colQuery); } catch (e) {}
+        }
+        await query(q, params);
+      } else {
+        throw dbErr;
+      }
+    }
 
     if (oldEdu) {
       if (newCert10th && oldEdu.certificate_10th) deleteFileFromDisk(oldEdu.certificate_10th);
@@ -1214,7 +1247,31 @@ app.put('/api/experience/:id', authenticateToken, experienceUploadFields, async 
     q += ` WHERE id = ?`;
     params.push(id);
 
-    await query(q, params);
+    try {
+      await query(q, params);
+    } catch (dbErr) {
+      if (dbErr.code === 'ER_BAD_FIELD_ERROR' || dbErr.errno === 1054) {
+        console.log('Detected missing column error in experience. Running auto-migrations...');
+        const addExpColumns = [
+          'ALTER TABLE experience ADD COLUMN exp_type VARCHAR(50) NULL;',
+          'ALTER TABLE experience ADD COLUMN project_name VARCHAR(255) NULL;',
+          'ALTER TABLE experience ADD COLUMN project_instructor VARCHAR(255) NULL;',
+          'ALTER TABLE experience ADD COLUMN repo_link VARCHAR(255) NULL;',
+          'ALTER TABLE experience ADD COLUMN deploy_link VARCHAR(255) NULL;',
+          'ALTER TABLE experience ADD COLUMN program_name VARCHAR(255) NULL;',
+          'ALTER TABLE experience ADD COLUMN org_name VARCHAR(255) NULL;',
+          'ALTER TABLE experience ADD COLUMN certificate_file VARCHAR(255) NULL;',
+          'ALTER TABLE experience ADD COLUMN lor_file VARCHAR(255) NULL;',
+          'ALTER TABLE experience ADD COLUMN skills_learned TEXT NULL;'
+        ];
+        for (const colQuery of addExpColumns) {
+          try { await query(colQuery); } catch (e) {}
+        }
+        await query(q, params);
+      } else {
+        throw dbErr;
+      }
+    }
 
     if (oldExp) {
       if (newCert && oldExp.certificate_file) deleteFileFromDisk(oldExp.certificate_file);
@@ -1298,7 +1355,22 @@ app.put('/api/certificates/:id', authenticateToken, upload.single('certificate_f
     q += ` WHERE id = ?`;
     params.push(id);
 
-    await query(q, params);
+    try {
+      await query(q, params);
+    } catch (dbErr) {
+      if (dbErr.code === 'ER_BAD_FIELD_ERROR' || dbErr.errno === 1054) {
+        console.log('Detected missing column error in certificates. Running auto-migrations...');
+        try {
+          await query('ALTER TABLE certificates ADD COLUMN certificate_file VARCHAR(255) NULL;');
+        } catch (e) {}
+        try {
+          await query('ALTER TABLE certificates ADD COLUMN access_cert BOOLEAN DEFAULT FALSE;');
+        } catch (e) {}
+        await query(q, params);
+      } else {
+        throw dbErr;
+      }
+    }
 
     if (newCertFile && oldCert && oldCert.certificate_file) {
       deleteFileFromDisk(oldCert.certificate_file);

@@ -192,7 +192,7 @@ const uploadWithProgress = (url, method, body, headers, onProgress) => {
       } else {
         try {
           const err = JSON.parse(xhr.responseText);
-          reject(new Error(err.message || `Upload failed with status ${xhr.status}`));
+          reject(new Error(err.message || err.error || `Upload failed with status ${xhr.status}`));
         } catch {
           reject(new Error(`Upload failed with status ${xhr.status}`));
         }
