@@ -2677,36 +2677,37 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                     )}
                     <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
                       <button 
-                        onClick={handleUploadAvatar} 
-                        disabled={!avatarFile || loading} 
+                        onClick={avatarFile ? handleUploadAvatar : handleToggleAvatarVisibility} 
+                        disabled={loading || (!avatarFile && !profile?.profile_picture)} 
                         className="glass-btn" 
-                        style={{ padding: '0.4rem 1.25rem', fontSize: '0.85rem' }}
+                        style={{ 
+                          padding: '0.4rem 1.25rem', 
+                          fontSize: '0.85rem',
+                          ...( !avatarFile && profile?.profile_picture ? {
+                            borderColor: (profile.is_avatar_public !== 0 && profile.is_avatar_public !== false) ? '#ffaa00' : 'var(--accent-green)',
+                            color: (profile.is_avatar_public !== 0 && profile.is_avatar_public !== false) ? '#ffaa00' : 'var(--accent-green)'
+                          } : {} )
+                        }}
                       >
-                        {uploadingType === 'avatar' ? (uploadProgress !== null ? `Uploading (${uploadProgress}%)` : 'Uploading...') : 'Publish Photo'}
+                        {uploadingType === 'avatar' 
+                          ? (uploadProgress !== null ? `Uploading (${uploadProgress}%)` : 'Uploading...') 
+                          : (avatarFile 
+                              ? 'Publish Photo' 
+                              : (profile?.profile_picture 
+                                  ? ((profile.is_avatar_public !== 0 && profile.is_avatar_public !== false) ? 'Unpublish Photo' : 'Publish Photo')
+                                  : 'Publish Photo'
+                                )
+                            )
+                        }
                       </button>
                       {profile?.profile_picture && (
-                        <>
-                          <button 
-                            onClick={handleToggleAvatarVisibility} 
-                            disabled={loading} 
-                            className="glass-btn" 
-                            style={{ 
-                              padding: '0.4rem 1.25rem', 
-                              fontSize: '0.85rem',
-                              borderColor: (profile.is_avatar_public !== 0 && profile.is_avatar_public !== false) ? '#ffaa00' : 'var(--accent-green)',
-                              color: (profile.is_avatar_public !== 0 && profile.is_avatar_public !== false) ? '#ffaa00' : 'var(--accent-green)'
-                            }}
-                          >
-                            {(profile.is_avatar_public !== 0 && profile.is_avatar_public !== false) ? 'Unpublish Photo' : 'Publish Photo'}
-                          </button>
-                          <button 
-                            onClick={handleRemoveAvatar} 
-                            className="glass-btn-danger" 
-                            style={{ padding: '0.4rem 1.25rem', fontSize: '0.85rem' }}
-                          >
-                            Remove Photo
-                          </button>
-                        </>
+                        <button 
+                          onClick={handleRemoveAvatar} 
+                          className="glass-btn-danger" 
+                          style={{ padding: '0.4rem 1.25rem', fontSize: '0.85rem' }}
+                        >
+                          Remove Photo
+                        </button>
                       )}
                     </div>
                   </div>
