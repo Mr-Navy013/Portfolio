@@ -104,6 +104,29 @@ const checkFileReadable = (file) => {
   });
 };
 
+const getSafeInMemoryFile = (file) => {
+  return new Promise((resolve, reject) => {
+    if (!file) {
+      resolve(null);
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const blob = new Blob([event.target.result], { type: file.type });
+        const safeFile = new File([blob], file.name || 'file', { type: file.type });
+        resolve(safeFile);
+      } catch (err) {
+        resolve(file);
+      }
+    };
+    reader.onerror = () => {
+      reject(new Error('CLOUD_READ_FAILED'));
+    };
+    reader.readAsArrayBuffer(file);
+  });
+};
+
 const verifyFilesReadable = async (files) => {
   for (const file of files) {
     if (file) {
@@ -1612,18 +1635,13 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
   const handleUploadAvatar = async () => {
     if (!avatarFile) return;
 
-    const isReadable = await checkFileReadable(avatarFile);
-    if (!isReadable) {
-      showStatus("Drive blocked Wi-Fi sync! Turn off 'Wi-Fi only' in Drive settings or download locally.", true);
-      return;
-    }
-
     setLoading(true);
     setUploadingType('avatar');
     setUploadProgress(0);
 
     try {
-      const compressed = await compressImageIfNeeded(avatarFile);
+      const bufferedFile = await getSafeInMemoryFile(avatarFile);
+      const compressed = await compressImageIfNeeded(bufferedFile);
       const formData = new FormData();
       formData.append('profile_picture', compressed);
 
@@ -1640,11 +1658,15 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       refreshProfile();
     } catch (err) {
       console.error(err);
-      const isNetworkErr = err.message?.includes('Failed to fetch') || err.message?.includes('Network error');
-      const msg = isNetworkErr 
-        ? "Drive blocked Wi-Fi sync! Turn off 'Wi-Fi only' in Drive settings or download locally."
-        : `Error uploading avatar: ${err.message || 'Network error occurred.'}`;
-      showStatus(msg, true);
+      if (err.message === 'CLOUD_READ_FAILED') {
+        showStatus("Could not download photo from Google Drive! Open the Drive app, select the file and tap 'Make available offline', or download it to your device first.", true);
+      } else {
+        const isNetworkErr = err.message?.includes('Failed to fetch') || err.message?.includes('Network error');
+        const msg = isNetworkErr 
+          ? "Network connection error! Please check your internet connection and try again."
+          : `Error uploading avatar: ${err.message || 'Network error occurred.'}`;
+        showStatus(msg, true);
+      }
     } finally {
       setLoading(false);
       setUploadingType(null);
@@ -1659,19 +1681,15 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       return;
     }
 
-    const isReadable = await checkFileReadable(resumeFile);
-    if (!isReadable) {
-      showStatus("Drive blocked Wi-Fi sync! Turn off 'Wi-Fi only' in Drive settings or download locally.", true);
-      return;
-    }
-
     setLoading(true);
     setUploadingType('resume');
     setUploadProgress(0);
-    const formData = new FormData();
-    formData.append('resume', resumeFile);
 
     try {
+      const bufferedFile = await getSafeInMemoryFile(resumeFile);
+      const formData = new FormData();
+      formData.append('resume', bufferedFile);
+
       const data = await uploadWithProgress(
         `${API_BASE}/profile/upload-resume`,
         'POST',
@@ -1685,11 +1703,15 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       refreshProfile();
     } catch (err) {
       console.error(err);
-      const isNetworkErr = err.message?.includes('Failed to fetch') || err.message?.includes('Network error');
-      const msg = isNetworkErr 
-        ? "Drive blocked Wi-Fi sync! Turn off 'Wi-Fi only' in Drive settings or download locally."
-        : `Error uploading resume: ${err.message || 'Network error occurred.'}`;
-      showStatus(msg, true);
+      if (err.message === 'CLOUD_READ_FAILED') {
+        showStatus("Could not download resume from Google Drive! Open the Drive app, select the file and tap 'Make available offline', or download it to your device first.", true);
+      } else {
+        const isNetworkErr = err.message?.includes('Failed to fetch') || err.message?.includes('Network error');
+        const msg = isNetworkErr 
+          ? "Network connection error! Please check your internet connection and try again."
+          : `Error uploading resume: ${err.message || 'Network error occurred.'}`;
+        showStatus(msg, true);
+      }
     } finally {
       setLoading(false);
       setUploadingType(null);
@@ -1807,14 +1829,6 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       return;
     }
 
-    if (projThumbnail) {
-      const isReadable = await checkFileReadable(projThumbnail);
-      if (!isReadable) {
-        showStatus("Drive blocked Wi-Fi sync! Turn off 'Wi-Fi only' in Drive settings or download locally.", true);
-        return;
-      }
-    }
-
     setLoading(true);
     setUploadProgress(0);
     const formData = new FormData();
@@ -1826,7 +1840,8 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
 
     try {
       if (projThumbnail) {
-        const compressed = await compressImageIfNeeded(projThumbnail);
+        const bufferedFile = await getSafeInMemoryFile(projThumbnail);
+        const compressed = await compressImageIfNeeded(bufferedFile);
         formData.append('thumbnail', compressed);
       }
 
@@ -1846,11 +1861,15 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       fetchDashboardCollections();
     } catch (err) {
       console.error(err);
-      const isNetworkErr = err.message?.includes('Failed to fetch') || err.message?.includes('Network error');
-      const msg = isNetworkErr 
-        ? "Drive blocked Wi-Fi sync! Turn off 'Wi-Fi only' in Drive settings or download locally."
-        : `Error saving project: ${err.message || 'Network error occurred.'}`;
-      showStatus(msg, true);
+      if (err.message === 'CLOUD_READ_FAILED') {
+        showStatus("Could not download project image from Google Drive! Open the Drive app, select the file and tap 'Make available offline', or download it to your device first.", true);
+      } else {
+        const isNetworkErr = err.message?.includes('Failed to fetch') || err.message?.includes('Network error');
+        const msg = isNetworkErr 
+          ? "Network connection error! Please check your internet connection and try again."
+          : `Error saving project: ${err.message || 'Network error occurred.'}`;
+        showStatus(msg, true);
+      }
       setShowProjModal(false);
     } finally {
       setLoading(false);
@@ -1866,22 +1885,6 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
   const handleAddEducation = async (e) => {
     e.preventDefault();
 
-    const filesToVerify = [
-      edu10thCert,
-      edu12thCert,
-      edu12thMarksheet,
-      eduBachGradesheet,
-      eduBachCert,
-      eduOthersCert,
-      eduOthersMarksheet
-    ].filter(Boolean);
-
-    const allReadable = await verifyFilesReadable(filesToVerify);
-    if (!allReadable) {
-      showStatus("Drive blocked Wi-Fi sync! Turn off 'Wi-Fi only' in Drive settings or download locally.", true);
-      return;
-    }
-
     setLoading(true);
     setUploadProgress(0);
     const formData = new FormData();
@@ -1891,96 +1894,108 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
 
     const selectedBoard = eduBoard === 'Other' ? customEduBoard : eduBoard;
 
-    if (eduType === '10th') {
-      formData.append('field_of_study', 'Secondary School (SSC)');
-      formData.append('start_date', eduPassingYear);
-      formData.append('end_date', eduPassingYear);
-      formData.append('passing_year', eduPassingYear);
-      formData.append('full_marks', eduFullMarks);
-      formData.append('marks_obtained', eduMarksObtained);
-      const pct = eduFullMarks && eduMarksObtained ? ((parseFloat(eduMarksObtained) / parseFloat(eduFullMarks)) * 100).toFixed(2) : '0';
-      formData.append('percentage', pct);
-      formData.append('board', selectedBoard);
-      const desc = `Completed 10th standard from ${selectedBoard} Board at ${eduSchool} in the year ${eduPassingYear} with a score of ${eduMarksObtained}/${eduFullMarks} (${pct}%).`;
-      formData.append('description', desc);
-      if (edu10thCert) {
-        const compressed = await compressImageIfNeeded(edu10thCert);
-        formData.append('certificate_10th', compressed);
-      }
-    } else if (eduType === '12th') {
-      formData.append('field_of_study', 'Intermediate');
-      formData.append('start_date', eduPassingYear);
-      formData.append('end_date', eduPassingYear);
-      formData.append('passing_year', eduPassingYear);
-      formData.append('full_marks', eduFullMarks);
-      formData.append('marks_obtained', eduMarksObtained);
-      const pct = eduFullMarks && eduMarksObtained ? ((parseFloat(eduMarksObtained) / parseFloat(eduFullMarks)) * 100).toFixed(2) : '0';
-      formData.append('percentage', pct);
-      formData.append('board', selectedBoard);
-      const desc = `Completed 12th standard (Intermediate) from ${selectedBoard} Board at ${eduSchool} in the year ${eduPassingYear} with a score of ${eduMarksObtained}/${eduFullMarks} (${pct}%).`;
-      formData.append('description', desc);
-      if (edu12thCert) {
-        const compressed = await compressImageIfNeeded(edu12thCert);
-        formData.append('certificate_12th', compressed);
-      }
-      if (edu12thMarksheet) {
-        const compressed = await compressImageIfNeeded(edu12thMarksheet);
-        formData.append('marksheet_12th', compressed);
-      }
-    } else if (eduType === 'Bachelor') {
-      formData.append('field_of_study', `${eduCourse} in ${eduBranch}`);
-      const startYear = parseInt(eduPassingYear) ? (parseInt(eduPassingYear) - eduBachelorDuration).toString() : '';
-      formData.append('start_date', startYear || 'N/A');
-      formData.append('end_date', eduPassingYear);
-      formData.append('passing_year', eduPassingYear);
-      formData.append('course', eduCourse);
-      formData.append('branch', eduBranch);
-      
-      const sgpas = [];
-      const semLimit = eduBachelorDuration * 2;
-      for (let i = 1; i <= semLimit; i++) {
-        const val = eduSemSgpas[`sem${i}`];
-        if (val) sgpas.push(parseFloat(val));
-      }
-      const calculatedCgpa = sgpas.length > 0 ? (sgpas.reduce((a,b) => a+b, 0) / sgpas.length).toFixed(2) : '0';
-      formData.append('cgpa', calculatedCgpa);
-      formData.append('semester_sgpa', JSON.stringify(eduSemSgpas));
-      const desc = `Successfully completed ${eduCourse} in ${eduBranch} from ${eduSchool}, graduating in the year ${eduPassingYear} with a CGPA of ${calculatedCgpa}.`;
-      formData.append('description', desc);
-      
-      if (eduBachGradesheet) {
-        const compressed = await compressImageIfNeeded(eduBachGradesheet);
-        formData.append('gradesheet_bachelor', compressed);
-      }
-      if (eduBachCert) {
-        const compressed = await compressImageIfNeeded(eduBachCert);
-        formData.append('certificate_bachelor', compressed);
-      }
-    } else if (eduType === 'Others') {
-      formData.append('field_of_study', eduCourse || 'Others');
-      formData.append('start_date', eduPassingYear);
-      formData.append('end_date', eduPassingYear);
-      formData.append('passing_year', eduPassingYear);
-      formData.append('full_marks', eduFullMarks);
-      formData.append('marks_obtained', eduMarksObtained);
-      const pct = eduFullMarks && eduMarksObtained ? ((parseFloat(eduMarksObtained) / parseFloat(eduFullMarks)) * 100).toFixed(2) : '0';
-      formData.append('percentage', pct);
-      const desc = `Completed ${eduCourse || 'education details'} at ${eduSchool} in the year ${eduPassingYear} with a score of ${eduMarksObtained}/${eduFullMarks} (${pct}%).`;
-      formData.append('description', desc);
-      if (eduOthersCert) {
-        const compressed = await compressImageIfNeeded(eduOthersCert);
-        formData.append('certificate_others', compressed);
-      }
-      if (eduOthersMarksheet) {
-        const compressed = await compressImageIfNeeded(eduOthersMarksheet);
-        formData.append('marksheet_others', compressed);
-      }
-    }
-    formData.append('access_cert10', eduAccess10th ? '1' : '0');
-    formData.append('access_cert12', eduAccess12th ? '1' : '0');
-    formData.append('access_certbach', eduAccessBach ? '1' : '0');
-
     try {
+      let safeCert10 = null, safeCert12 = null, safeMarksheet12 = null;
+      let safeGradesheetBach = null, safeCertBach = null;
+      let safeCertOthers = null, safeMarksheetOthers = null;
+
+      if (edu10thCert) safeCert10 = await getSafeInMemoryFile(edu10thCert);
+      if (edu12thCert) safeCert12 = await getSafeInMemoryFile(edu12thCert);
+      if (edu12thMarksheet) safeMarksheet12 = await getSafeInMemoryFile(edu12thMarksheet);
+      if (eduBachGradesheet) safeGradesheetBach = await getSafeInMemoryFile(eduBachGradesheet);
+      if (eduBachCert) safeCertBach = await getSafeInMemoryFile(eduBachCert);
+      if (eduOthersCert) safeCertOthers = await getSafeInMemoryFile(eduOthersCert);
+      if (eduOthersMarksheet) safeMarksheetOthers = await getSafeInMemoryFile(eduOthersMarksheet);
+
+      if (eduType === '10th') {
+        formData.append('field_of_study', 'Secondary School (SSC)');
+        formData.append('start_date', eduPassingYear);
+        formData.append('end_date', eduPassingYear);
+        formData.append('passing_year', eduPassingYear);
+        formData.append('full_marks', eduFullMarks);
+        formData.append('marks_obtained', eduMarksObtained);
+        const pct = eduFullMarks && eduMarksObtained ? ((parseFloat(eduMarksObtained) / parseFloat(eduFullMarks)) * 100).toFixed(2) : '0';
+        formData.append('percentage', pct);
+        formData.append('board', selectedBoard);
+        const desc = `Completed 10th standard from ${selectedBoard} Board at ${eduSchool} in the year ${eduPassingYear} with a score of ${eduMarksObtained}/${eduFullMarks} (${pct}%).`;
+        formData.append('description', desc);
+        if (safeCert10) {
+          const compressed = await compressImageIfNeeded(safeCert10);
+          formData.append('certificate_10th', compressed);
+        }
+      } else if (eduType === '12th') {
+        formData.append('field_of_study', 'Intermediate');
+        formData.append('start_date', eduPassingYear);
+        formData.append('end_date', eduPassingYear);
+        formData.append('passing_year', eduPassingYear);
+        formData.append('full_marks', eduFullMarks);
+        formData.append('marks_obtained', eduMarksObtained);
+        const pct = eduFullMarks && eduMarksObtained ? ((parseFloat(eduMarksObtained) / parseFloat(eduFullMarks)) * 100).toFixed(2) : '0';
+        formData.append('percentage', pct);
+        formData.append('board', selectedBoard);
+        const desc = `Completed 12th standard (Intermediate) from ${selectedBoard} Board at ${eduSchool} in the year ${eduPassingYear} with a score of ${eduMarksObtained}/${eduFullMarks} (${pct}%).`;
+        formData.append('description', desc);
+        if (safeCert12) {
+          const compressed = await compressImageIfNeeded(safeCert12);
+          formData.append('certificate_12th', compressed);
+        }
+        if (safeMarksheet12) {
+          const compressed = await compressImageIfNeeded(safeMarksheet12);
+          formData.append('marksheet_12th', compressed);
+        }
+      } else if (eduType === 'Bachelor') {
+        formData.append('field_of_study', `${eduCourse} in ${eduBranch}`);
+        const startYear = parseInt(eduPassingYear) ? (parseInt(eduPassingYear) - eduBachelorDuration).toString() : '';
+        formData.append('start_date', startYear || 'N/A');
+        formData.append('end_date', eduPassingYear);
+        formData.append('passing_year', eduPassingYear);
+        formData.append('course', eduCourse);
+        formData.append('branch', eduBranch);
+        
+        const sgpas = [];
+        const semLimit = eduBachelorDuration * 2;
+        for (let i = 1; i <= semLimit; i++) {
+          const val = eduSemSgpas[`sem${i}`];
+          if (val) sgpas.push(parseFloat(val));
+        }
+        const calculatedCgpa = sgpas.length > 0 ? (sgpas.reduce((a,b) => a+b, 0) / sgpas.length).toFixed(2) : '0';
+        formData.append('cgpa', calculatedCgpa);
+        formData.append('semester_sgpa', JSON.stringify(eduSemSgpas));
+        const desc = `Successfully completed ${eduCourse} in ${eduBranch} from ${eduSchool}, graduating in the year ${eduPassingYear} with a CGPA of ${calculatedCgpa}.`;
+        formData.append('description', desc);
+        
+        if (safeGradesheetBach) {
+          const compressed = await compressImageIfNeeded(safeGradesheetBach);
+          formData.append('gradesheet_bachelor', compressed);
+        }
+        if (safeCertBach) {
+          const compressed = await compressImageIfNeeded(safeCertBach);
+          formData.append('certificate_bachelor', compressed);
+        }
+      } else if (eduType === 'Others') {
+        formData.append('field_of_study', eduCourse || 'Others');
+        formData.append('start_date', eduPassingYear);
+        formData.append('end_date', eduPassingYear);
+        formData.append('passing_year', eduPassingYear);
+        formData.append('full_marks', eduFullMarks);
+        formData.append('marks_obtained', eduMarksObtained);
+        const pct = eduFullMarks && eduMarksObtained ? ((parseFloat(eduMarksObtained) / parseFloat(eduFullMarks)) * 100).toFixed(2) : '0';
+        formData.append('percentage', pct);
+        const desc = `Completed ${eduCourse || 'education details'} at ${eduSchool} in the year ${eduPassingYear} with a score of ${eduMarksObtained}/${eduFullMarks} (${pct}%).`;
+        formData.append('description', desc);
+        if (safeCertOthers) {
+          const compressed = await compressImageIfNeeded(safeCertOthers);
+          formData.append('certificate_others', compressed);
+        }
+        if (safeMarksheetOthers) {
+          const compressed = await compressImageIfNeeded(safeMarksheetOthers);
+          formData.append('marksheet_others', compressed);
+        }
+      }
+      formData.append('access_cert10', eduAccess10th ? '1' : '0');
+      formData.append('access_cert12', eduAccess12th ? '1' : '0');
+      formData.append('access_certbach', eduAccessBach ? '1' : '0');
+
       const data = await uploadWithProgress(
         `${API_BASE}/education`,
         'POST',
@@ -2014,11 +2029,15 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       setCustomEduBoard('');
     } catch (err) {
       console.error(err);
-      const isNetworkErr = err.message?.includes('Failed to fetch') || err.message?.includes('Network error');
-      const msg = isNetworkErr 
-        ? "Drive blocked Wi-Fi sync! Turn off 'Wi-Fi only' in Drive settings or download locally."
-        : `Error saving education: ${err.message || 'Network error occurred.'}`;
-      showStatus(msg, true);
+      if (err.message === 'CLOUD_READ_FAILED') {
+        showStatus("Could not download education files from Google Drive! Open the Drive app, select the file and tap 'Make available offline', or download it to your device first.", true);
+      } else {
+        const isNetworkErr = err.message?.includes('Failed to fetch') || err.message?.includes('Network error');
+        const msg = isNetworkErr 
+          ? "Network connection error! Please check your internet connection and try again."
+          : `Error saving education: ${err.message || 'Network error occurred.'}`;
+        showStatus(msg, true);
+      }
       setShowEduModal(false);
     } finally {
       setLoading(false);
@@ -2098,66 +2117,64 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
   const handleAddExperience = async (e) => {
     e.preventDefault();
 
-    const filesToVerify = [expCertificateFile, expLorFile].filter(Boolean);
-    const allReadable = await verifyFilesReadable(filesToVerify);
-    if (!allReadable) {
-      showStatus("Drive blocked Wi-Fi sync! Turn off 'Wi-Fi only' in Drive settings or download locally.", true);
-      return;
-    }
-
     setLoading(true);
     setUploadProgress(0);
     const formData = new FormData();
 
-    if (expType === 'project') {
-      formData.append('company', 'Group Project');
-      formData.append('role', 'Developer');
-      formData.append('start_date', expStart || 'N/A');
-      formData.append('end_date', expEnd || 'N/A');
-      
-      formData.append('exp_type', 'project');
-      formData.append('project_name', expProjectName);
-      formData.append('project_instructor', expProjectInstructor);
-      formData.append('repo_link', expRepoLink);
-      formData.append('deploy_link', expDeployLink);
-      formData.append('description', expDesc || `Worked on Group Project: ${expProjectName} instructed by ${expProjectInstructor}.`);
-      formData.append('skills_learned', expSkillsLearned);
-    } else if (expType === 'internship') {
-      formData.append('company', expOrgName);
-      formData.append('role', `${expRole} Intern`);
-      formData.append('start_date', expStart);
-      formData.append('end_date', expEnd);
-
-      formData.append('exp_type', 'internship');
-      formData.append('org_name', expOrgName);
-      formData.append('program_name', expProgramName);
-      formData.append('description', expDesc || (expProgramName ? `Interned at ${expOrgName} under ${expProgramName} as ${expRole}.` : `Interned at ${expOrgName} as ${expRole}.`));
-      formData.append('skills_learned', expSkillsLearned);
-      if (expCertificateFile) {
-        const compressed = await compressImageIfNeeded(expCertificateFile);
-        formData.append('certificate_file', compressed);
-      }
-      if (expLorFile) {
-        const compressed = await compressImageIfNeeded(expLorFile);
-        formData.append('lor_file', compressed);
-      }
-    } else if (expType === 'program') {
-      formData.append('company', expProgramName);
-      formData.append('role', 'Participant');
-      formData.append('start_date', expStart);
-      formData.append('end_date', expStart);
-
-      formData.append('exp_type', 'program');
-      formData.append('program_name', expProgramName);
-      formData.append('description', expDesc || `Participated in program ${expProgramName} on ${expStart}.`);
-      formData.append('skills_learned', expSkillsLearned);
-      if (expCertificateFile) {
-        const compressed = await compressImageIfNeeded(expCertificateFile);
-        formData.append('certificate_file', compressed);
-      }
-    }
-
     try {
+      let safeCert = null;
+      let safeLor = null;
+      if (expCertificateFile) safeCert = await getSafeInMemoryFile(expCertificateFile);
+      if (expLorFile) safeLor = await getSafeInMemoryFile(expLorFile);
+
+      if (expType === 'project') {
+        formData.append('company', 'Group Project');
+        formData.append('role', 'Developer');
+        formData.append('start_date', expStart || 'N/A');
+        formData.append('end_date', expEnd || 'N/A');
+        
+        formData.append('exp_type', 'project');
+        formData.append('project_name', expProjectName);
+        formData.append('project_instructor', expProjectInstructor);
+        formData.append('repo_link', expRepoLink);
+        formData.append('deploy_link', expDeployLink);
+        formData.append('description', expDesc || `Worked on Group Project: ${expProjectName} instructed by ${expProjectInstructor}.`);
+        formData.append('skills_learned', expSkillsLearned);
+      } else if (expType === 'internship') {
+        formData.append('company', expOrgName);
+        formData.append('role', `${expRole} Intern`);
+        formData.append('start_date', expStart);
+        formData.append('end_date', expEnd);
+
+        formData.append('exp_type', 'internship');
+        formData.append('org_name', expOrgName);
+        formData.append('program_name', expProgramName);
+        formData.append('description', expDesc || (expProgramName ? `Interned at ${expOrgName} under ${expProgramName} as ${expRole}.` : `Interned at ${expOrgName} as ${expRole}.`));
+        formData.append('skills_learned', expSkillsLearned);
+        if (safeCert) {
+          const compressed = await compressImageIfNeeded(safeCert);
+          formData.append('certificate_file', compressed);
+        }
+        if (safeLor) {
+          const compressed = await compressImageIfNeeded(safeLor);
+          formData.append('lor_file', compressed);
+        }
+      } else if (expType === 'program') {
+        formData.append('company', expProgramName);
+        formData.append('role', 'Participant');
+        formData.append('start_date', expStart);
+        formData.append('end_date', expStart);
+
+        formData.append('exp_type', 'program');
+        formData.append('program_name', expProgramName);
+        formData.append('description', expDesc || `Participated in program ${expProgramName} on ${expStart}.`);
+        formData.append('skills_learned', expSkillsLearned);
+        if (safeCert) {
+          const compressed = await compressImageIfNeeded(safeCert);
+          formData.append('certificate_file', compressed);
+        }
+      }
+
       const data = await uploadWithProgress(
         `${API_BASE}/experience`,
         'POST',
@@ -2185,11 +2202,15 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       setExpLorFile(null);
     } catch (err) {
       console.error(err);
-      const isNetworkErr = err.message?.includes('Failed to fetch') || err.message?.includes('Network error');
-      const msg = isNetworkErr 
-        ? "Drive blocked Wi-Fi sync! Turn off 'Wi-Fi only' in Drive settings or download locally."
-        : `Error saving experience: ${err.message || 'Network error occurred.'}`;
-      showStatus(msg, true);
+      if (err.message === 'CLOUD_READ_FAILED') {
+        showStatus("Could not download experience files from Google Drive! Open the Drive app, select the file and tap 'Make available offline', or download it to your device first.", true);
+      } else {
+        const isNetworkErr = err.message?.includes('Failed to fetch') || err.message?.includes('Network error');
+        const msg = isNetworkErr 
+          ? "Network connection error! Please check your internet connection and try again."
+          : `Error saving experience: ${err.message || 'Network error occurred.'}`;
+        showStatus(msg, true);
+      }
       setShowExpModal(false);
     } finally {
       setLoading(false);
@@ -2206,14 +2227,6 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       return;
     }
 
-    if (certFile) {
-      const isReadable = await checkFileReadable(certFile);
-      if (!isReadable) {
-        showStatus("Drive blocked Wi-Fi sync! Turn off 'Wi-Fi only' in Drive settings or download locally.", true);
-        return;
-      }
-    }
-
     setLoading(true);
     setUploadProgress(0);
     const formData = new FormData();
@@ -2225,7 +2238,8 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
 
     try {
       if (certFile) {
-        const compressed = await compressImageIfNeeded(certFile);
+        const bufferedFile = await getSafeInMemoryFile(certFile);
+        const compressed = await compressImageIfNeeded(bufferedFile);
         formData.append('certificate_file', compressed);
       }
 
@@ -2248,11 +2262,15 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       setCertAccess(false);
     } catch (err) {
       console.error(err);
-      const isNetworkErr = err.message?.includes('Failed to fetch') || err.message?.includes('Network error');
-      const msg = isNetworkErr 
-        ? "Drive blocked Wi-Fi sync! Turn off 'Wi-Fi only' in Drive settings or download locally."
-        : `Error saving certificate: ${err.message || 'Network error occurred.'}`;
-      showStatus(msg, true);
+      if (err.message === 'CLOUD_READ_FAILED') {
+        showStatus("Could not download certificate from Google Drive! Open the Drive app, select the file and tap 'Make available offline', or download it to your device first.", true);
+      } else {
+        const isNetworkErr = err.message?.includes('Failed to fetch') || err.message?.includes('Network error');
+        const msg = isNetworkErr 
+          ? "Network connection error! Please check your internet connection and try again."
+          : `Error saving certificate: ${err.message || 'Network error occurred.'}`;
+        showStatus(msg, true);
+      }
       setShowCertModal(false);
     } finally {
       setLoading(false);
