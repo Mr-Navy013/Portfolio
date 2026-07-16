@@ -717,7 +717,11 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
                   <h3 className="pf-timeline-title">{edu.school}</h3>
                   <div className="text-green pf-timeline-date" style={{ marginTop: '0.2rem', fontSize: '0.85rem' }}>{formatDateStr(edu.end_date)}</div>
                 </div>
-                <p className="pf-timeline-sub">{edu.degree}{edu.field_of_study ? ` in ${edu.field_of_study}` : ''}</p>
+                <p className="pf-timeline-sub">
+                  {edu.degree === '10th' ? '10th (Secondary School - SSC)' : 
+                   edu.degree === '12th' ? '12th (Intermediate)' : 
+                   `${edu.degree}${edu.field_of_study ? ` in ${edu.field_of_study}` : ''}`}
+                </p>
                 {edu.description && <p className="pf-timeline-desc">{edu.description}</p>}
 
                 <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.8rem', flexWrap: 'wrap' }}>

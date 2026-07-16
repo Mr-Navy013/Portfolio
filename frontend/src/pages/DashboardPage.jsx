@@ -1892,7 +1892,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
     const selectedBoard = eduBoard === 'Other' ? customEduBoard : eduBoard;
 
     if (eduType === '10th') {
-      formData.append('field_of_study', 'Secondary School (10th)');
+      formData.append('field_of_study', 'Secondary School (SSC)');
       formData.append('start_date', eduPassingYear);
       formData.append('end_date', eduPassingYear);
       formData.append('passing_year', eduPassingYear);
@@ -1908,7 +1908,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
         formData.append('certificate_10th', compressed);
       }
     } else if (eduType === '12th') {
-      formData.append('field_of_study', 'Intermediate (12th)');
+      formData.append('field_of_study', 'Intermediate');
       formData.append('start_date', eduPassingYear);
       formData.append('end_date', eduPassingYear);
       formData.append('passing_year', eduPassingYear);
@@ -3202,13 +3202,15 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                             background: 'rgba(0, 255, 136, 0.1)',
                             color: 'var(--accent-green)'
                           }}>
-                            {edu.degree === 'Bachelor' ? "Bachelor's Degree" : edu.degree === '12th' ? '12th (Intermediate)' : '10th (SSC)'}
+                            {edu.degree === 'Bachelor' ? "Bachelor's Degree" : edu.degree === '12th' ? '12th' : '10th'}
                           </span>
                           <h4 style={{ fontWeight: 700, margin: 0 }}>{edu.school}</h4>
                         </div>
                         
                         <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
-                          {edu.degree === 'Bachelor' ? `${edu.course} in ${edu.branch}` : edu.field_of_study}
+                          {edu.degree === 'Bachelor' ? `${edu.course} in ${edu.branch}` : 
+                           (edu.degree === '10th' ? 'Secondary School (SSC)' : 
+                            (edu.degree === '12th' ? 'Intermediate' : edu.field_of_study))}
                         </p>
                       </div>
                       
@@ -3888,8 +3890,8 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                 value={eduType}
                 onChange={(e) => setEduType(e.target.value)}
                 options={[
-                  { value: '10th', label: 'Secondary School (10th)' },
-                  { value: '12th', label: 'Intermediate (12th)' },
+                  { value: '10th', label: 'Secondary School (SSC)' },
+                  { value: '12th', label: 'Intermediate' },
                   { value: 'Bachelor', label: "Bachelor's Degree" },
                   { value: 'Others', label: "Others (Diploma / PG / etc.)" }
                 ]}
