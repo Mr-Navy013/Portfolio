@@ -2772,7 +2772,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                         Status: {(profile.is_resume_public !== 0 && profile.is_resume_public !== false) ? 'Public (Visible to viewers)' : 'Private (Only you can see)'}
                       </div>
                     )}
-                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', alignItems: 'center' }}>
                       <button 
                         onClick={handleUploadResume} 
                         disabled={!resumeFile || loading} 
@@ -2782,28 +2782,23 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                         {uploadingType === 'resume' ? (uploadProgress !== null ? `Uploading (${uploadProgress}%)` : 'Uploading...') : 'Save PDF File'}
                       </button>
                       {profile?.resume_url && (
-                        <>
+                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
                           <button 
                             onClick={handleToggleResumeVisibility} 
                             disabled={loading} 
                             className="glass-btn" 
-                            style={{ 
-                              padding: '0.4rem 1.25rem', 
-                              fontSize: '0.85rem',
-                              borderColor: (profile.is_resume_public !== 0 && profile.is_resume_public !== false) ? '#ffaa00' : 'var(--accent-green)',
-                              color: (profile.is_resume_public !== 0 && profile.is_resume_public !== false) ? '#ffaa00' : 'var(--accent-green)'
-                            }}
+                            style={{ padding: '0.4rem 1.25rem', fontSize: '0.85rem' }}
                           >
-                            {(profile.is_resume_public !== 0 && profile.is_resume_public !== false) ? 'Unpublish CV' : 'Publish CV'}
+                            {(profile.is_resume_public !== 0 && profile.is_resume_public !== false) ? 'Unpublish Resume' : 'Publish Resume'}
                           </button>
                           <button 
                             onClick={handleRemoveResume} 
                             className="glass-btn-danger" 
                             style={{ padding: '0.4rem 1.25rem', fontSize: '0.85rem' }}
                           >
-                            Remove CV
+                            Remove Resume
                           </button>
-                        </>
+                        </div>
                       )}
                     </div>
                   </div>
