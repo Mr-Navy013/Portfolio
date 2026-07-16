@@ -2680,14 +2680,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                         onClick={avatarFile ? handleUploadAvatar : handleToggleAvatarVisibility} 
                         disabled={loading || (!avatarFile && !profile?.profile_picture)} 
                         className="glass-btn" 
-                        style={{ 
-                          padding: '0.4rem 1.25rem', 
-                          fontSize: '0.85rem',
-                          ...( !avatarFile && profile?.profile_picture ? {
-                            borderColor: (profile.is_avatar_public !== 0 && profile.is_avatar_public !== false) ? '#ffaa00' : 'var(--accent-green)',
-                            color: (profile.is_avatar_public !== 0 && profile.is_avatar_public !== false) ? '#ffaa00' : 'var(--accent-green)'
-                          } : {} )
-                        }}
+                        style={{ padding: '0.4rem 1.25rem', fontSize: '0.85rem' }}
                       >
                         {uploadingType === 'avatar' 
                           ? (uploadProgress !== null ? `Uploading (${uploadProgress}%)` : 'Uploading...') 
