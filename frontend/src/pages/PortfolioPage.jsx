@@ -211,15 +211,14 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
 
   const fetchData = async () => {
     try {
-      setLoadingData(true);
       const t = Date.now();
       const [pRes, eRes, sRes, expRes, cRes, courseRes] = await Promise.all([
-        fetch(`${API_BASE}/projects?t=${t}`),
-        fetch(`${API_BASE}/education?t=${t}`),
-        fetch(`${API_BASE}/skills?t=${t}`),
-        fetch(`${API_BASE}/experience?t=${t}`),
-        fetch(`${API_BASE}/certificates?t=${t}`),
-        fetch(`${API_BASE}/courses?t=${t}`)
+        fetch(`${API_BASE}/projects?t=${t}`, { signal: AbortSignal.timeout(8000) }),
+        fetch(`${API_BASE}/education?t=${t}`, { signal: AbortSignal.timeout(8000) }),
+        fetch(`${API_BASE}/skills?t=${t}`, { signal: AbortSignal.timeout(8000) }),
+        fetch(`${API_BASE}/experience?t=${t}`, { signal: AbortSignal.timeout(8000) }),
+        fetch(`${API_BASE}/certificates?t=${t}`, { signal: AbortSignal.timeout(8000) }),
+        fetch(`${API_BASE}/courses?t=${t}`, { signal: AbortSignal.timeout(8000) })
       ]);
       if (pRes.ok) setProjects(await pRes.json());
       if (eRes.ok) setEducation(await eRes.json());
@@ -227,6 +226,8 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
       if (expRes.ok) setExperience(await expRes.json());
       if (cRes.ok) setCertificates(await cRes.json());
       if (courseRes.ok) setCourses(await courseRes.json());
+      setLoadingData(false);
+      return true;
     } catch (err) {
       setProjects([
         { id: 1, title: 'Glassmorphic Portfolio System', summary: 'An ultra-fast 3D interactive developer portfolio with owner admin dashboard, JWT auth, OTP verification, and MySQL/JSON dual database.', repo_link: 'https://github.com/navycut', live_link: 'http://localhost:5174', is_deployed: true, thumbnail: null },
@@ -254,9 +255,16 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
         { id: 1, name: 'Full-Stack Web Development Course', description: 'Learned HTML, CSS, JavaScript, React, Node.js, Express, and Database design with hands-on projects.' },
         { id: 2, name: 'Database Management Systems', description: 'Acquired in-depth knowledge on MySQL, relational DB design, normalization, complex joins, indexing and SQLite queries.' }
       ]);
-    } finally {
-      setLoadingData(false);
+      // Backend unreachable — start background polling every 7s
+      const poll = setInterval(async () => {
+        const ok = await fetchData();
+        if (ok) clearInterval(poll);
+      }, 7000);
+      // Stop polling after 2 minutes
+      setTimeout(() => clearInterval(poll), 120000);
     }
+    setLoadingData(false);
+    return false;
   };
   const handleOpenPermissionRequest = (docId, docName) => {
     setSelectedDocId(docId);
@@ -421,33 +429,6 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
     { href: '#certificates', label: 'Certifications' },
     { href: '#contact', label: 'Contact' }
   ];
-
-  if (loadingData) {
-    return (
-      <div style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        width: '100vw',
-        height: '100vh',
-        backgroundColor: '#020202',
-        color: '#ffffff',
-        fontFamily: 'Outfit, sans-serif'
-      }}>
-        <div className="premium-loader"></div>
-        <div className="pulse-text" style={{
-          marginTop: '1.5rem',
-          fontSize: '1rem',
-          fontWeight: '500',
-          color: '#a0aec0',
-          letterSpacing: '1px'
-        }}>
-          Connecting to Navycut's Portfolio...
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="portfolio-page">
