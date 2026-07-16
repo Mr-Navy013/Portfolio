@@ -955,13 +955,79 @@ app.post('/api/education', authenticateToken, educationUploadFields, async (req,
   }
 });
 
-app.put('/api/education/:id', authenticateToken, async (req, res) => {
+app.put('/api/education/:id', authenticateToken, educationUploadFields, async (req, res) => {
   const { id } = req.params;
-  const { school, degree, field_of_study, start_date, end_date, description } = req.body;
+  const { 
+    school, degree, field_of_study, start_date, end_date, description,
+    passing_year, full_marks, marks_obtained, percentage, course, branch,
+    semester_sgpa, cgpa,
+    access_cert10, access_cert12, access_certbach, board
+  } = req.body;
+
+  const fileUrl = (fieldname) => {
+    return req.files && req.files[fieldname] ? `/uploads/${req.files[fieldname][0].filename}` : null;
+  };
+
+  const parseBoolParam = (val) => {
+    return val === '1' || val === 1 || val === 'true' || val === true ? 1 : 0;
+  };
+
+  const newCert10th = fileUrl('certificate_10th');
+  const newCert12th = fileUrl('certificate_12th');
+  const newMarksheet12th = fileUrl('marksheet_12th');
+  const newGradesheetBach = fileUrl('gradesheet_bachelor');
+  const newCertBach = fileUrl('certificate_bachelor');
+  const newCertOthers = fileUrl('certificate_others');
+  const newMarksheetOthers = fileUrl('marksheet_others');
+
   try {
-    await query('UPDATE education SET school = ?, degree = ?, field_of_study = ?, start_date = ?, end_date = ?, description = ? WHERE id = ?', [
-      school, degree, field_of_study, start_date, end_date, description, id
-    ]);
+    const [rows] = await query('SELECT * FROM education WHERE id = ?', [id]);
+    const oldEdu = rows && rows[0] ? rows[0] : null;
+
+    let q = `
+      UPDATE education 
+      SET school = ?, degree = ?, field_of_study = ?, start_date = ?, end_date = ?, description = ?,
+          passing_year = ?, full_marks = ?, marks_obtained = ?, percentage = ?, course = ?, branch = ?,
+          semester_sgpa = ?, cgpa = ?, access_cert10 = ?, access_cert12 = ?, access_certbach = ?, board = ?
+    `;
+    let params = [
+      school, degree, field_of_study || null, start_date, end_date, description || null,
+      passing_year || null, 
+      full_marks ? parseFloat(full_marks) : null, 
+      marks_obtained ? parseFloat(marks_obtained) : null, 
+      percentage ? parseFloat(percentage) : null, 
+      course || null, branch || null,
+      semester_sgpa || null, 
+      cgpa ? parseFloat(cgpa) : null,
+      parseBoolParam(access_cert10),
+      parseBoolParam(access_cert12),
+      parseBoolParam(access_certbach),
+      board || null
+    ];
+
+    if (newCert10th) { q += `, certificate_10th = ?`; params.push(newCert10th); }
+    if (newCert12th) { q += `, certificate_12th = ?`; params.push(newCert12th); }
+    if (newMarksheet12th) { q += `, marksheet_12th = ?`; params.push(newMarksheet12th); }
+    if (newGradesheetBach) { q += `, gradesheet_bachelor = ?`; params.push(newGradesheetBach); }
+    if (newCertBach) { q += `, certificate_bachelor = ?`; params.push(newCertBach); }
+    if (newCertOthers) { q += `, certificate_others = ?`; params.push(newCertOthers); }
+    if (newMarksheetOthers) { q += `, marksheet_others = ?`; params.push(newMarksheetOthers); }
+
+    q += ` WHERE id = ?`;
+    params.push(id);
+
+    await query(q, params);
+
+    if (oldEdu) {
+      if (newCert10th && oldEdu.certificate_10th) deleteFileFromDisk(oldEdu.certificate_10th);
+      if (newCert12th && oldEdu.certificate_12th) deleteFileFromDisk(oldEdu.certificate_12th);
+      if (newMarksheet12th && oldEdu.marksheet_12th) deleteFileFromDisk(oldEdu.marksheet_12th);
+      if (newGradesheetBach && oldEdu.gradesheet_bachelor) deleteFileFromDisk(oldEdu.gradesheet_bachelor);
+      if (newCertBach && oldEdu.certificate_bachelor) deleteFileFromDisk(oldEdu.certificate_bachelor);
+      if (newCertOthers && oldEdu.certificate_others) deleteFileFromDisk(oldEdu.certificate_others);
+      if (newMarksheetOthers && oldEdu.marksheet_others) deleteFileFromDisk(oldEdu.marksheet_others);
+    }
+
     res.json({ success: true, message: 'Education history updated!' });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -1044,6 +1110,20 @@ app.post('/api/courses', authenticateToken, async (req, res) => {
   }
 });
 
+app.put('/api/courses/:id', authenticateToken, async (req, res) => {
+  const { id } = req.params;
+  const { name, description } = req.body;
+  if (!name || !description) {
+    return res.status(400).json({ message: 'Course Name and Description are required' });
+  }
+  try {
+    await query('UPDATE courses SET name = ?, description = ? WHERE id = ?', [name, description, id]);
+    res.json({ success: true, message: 'Course updated!' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.delete('/api/courses/:id', authenticateToken, async (req, res) => {
   const { id } = req.params;
   try {
@@ -1097,13 +1177,50 @@ app.post('/api/experience', authenticateToken, experienceUploadFields, async (re
   }
 });
 
-app.put('/api/experience/:id', authenticateToken, async (req, res) => {
+app.put('/api/experience/:id', authenticateToken, experienceUploadFields, async (req, res) => {
   const { id } = req.params;
-  const { company, role, start_date, end_date, description } = req.body;
+  const { 
+    company, role, start_date, end_date, description,
+    exp_type, project_name, project_instructor, repo_link, deploy_link,
+    program_name, org_name, skills_learned 
+  } = req.body;
+
+  const fileUrl = (fieldname) => {
+    return req.files && req.files[fieldname] ? `/uploads/${req.files[fieldname][0].filename}` : null;
+  };
+
+  const newCert = fileUrl('certificate_file');
+  const newLor = fileUrl('lor_file');
+
   try {
-    await query('UPDATE experience SET company = ?, role = ?, start_date = ?, end_date = ?, description = ? WHERE id = ?', [
-      company, role, start_date, end_date, description, id
-    ]);
+    const [rows] = await query('SELECT certificate_file, lor_file FROM experience WHERE id = ?', [id]);
+    const oldExp = rows && rows[0] ? rows[0] : null;
+
+    let q = `
+      UPDATE experience 
+      SET company = ?, role = ?, start_date = ?, end_date = ?, description = ?,
+          exp_type = ?, project_name = ?, project_instructor = ?, repo_link = ?, deploy_link = ?,
+          program_name = ?, org_name = ?, skills_learned = ?
+    `;
+    let params = [
+      company, role, start_date, end_date, description || null,
+      exp_type || null, project_name || null, project_instructor || null, repo_link || null, deploy_link || null,
+      program_name || null, org_name || null, skills_learned || null
+    ];
+
+    if (newCert) { q += `, certificate_file = ?`; params.push(newCert); }
+    if (newLor) { q += `, lor_file = ?`; params.push(newLor); }
+
+    q += ` WHERE id = ?`;
+    params.push(id);
+
+    await query(q, params);
+
+    if (oldExp) {
+      if (newCert && oldExp.certificate_file) deleteFileFromDisk(oldExp.certificate_file);
+      if (newLor && oldExp.lor_file) deleteFileFromDisk(oldExp.lor_file);
+    }
+
     res.json({ success: true, message: 'Experience updated!' });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -1152,13 +1269,41 @@ app.post('/api/certificates', authenticateToken, upload.single('certificate_file
   }
 });
 
-app.put('/api/certificates/:id', authenticateToken, async (req, res) => {
+app.put('/api/certificates/:id', authenticateToken, upload.single('certificate_file'), async (req, res) => {
   const { id } = req.params;
-  const { name, organization, issue_date, credential_url } = req.body;
+  const { name, organization, issue_date, credential_url, access_cert } = req.body;
+  const parseBoolParam = (val) => {
+    return val === '1' || val === 1 || val === 'true' || val === true ? 1 : 0;
+  };
+
+  const newCertFile = req.file ? `/uploads/${req.file.filename}` : null;
+
   try {
-    await query('UPDATE certificates SET name = ?, organization = ?, issue_date = ?, credential_url = ? WHERE id = ?', [
-      name, organization, issue_date, credential_url, id
-    ]);
+    const [rows] = await query('SELECT certificate_file FROM certificates WHERE id = ?', [id]);
+    const oldCert = rows && rows[0] ? rows[0] : null;
+
+    let q = `
+      UPDATE certificates 
+      SET name = ?, organization = ?, issue_date = ?, credential_url = ?, access_cert = ?
+    `;
+    let params = [
+      name, organization, issue_date, credential_url || null, parseBoolParam(access_cert)
+    ];
+
+    if (newCertFile) {
+      q += `, certificate_file = ?`;
+      params.push(newCertFile);
+    }
+
+    q += ` WHERE id = ?`;
+    params.push(id);
+
+    await query(q, params);
+
+    if (newCertFile && oldCert && oldCert.certificate_file) {
+      deleteFileFromDisk(oldCert.certificate_file);
+    }
+
     res.json({ success: true, message: 'Certificate updated!' });
   } catch (error) {
     res.status(500).json({ error: error.message });

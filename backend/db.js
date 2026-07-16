@@ -654,6 +654,116 @@ async function handleJsonQuery(sql, params = []) {
     return [{ affectedRows: 1 }];
   }
 
+  // UPDATE education
+  if (sqlClean.includes('UPDATE education SET school = ?')) {
+    const id = parseInt(params[params.length - 1]);
+    const edu = db.education.find(e => e.id === id);
+    if (edu) {
+      edu.school = params[0];
+      edu.degree = params[1];
+      edu.field_of_study = params[2];
+      edu.start_date = params[3];
+      edu.end_date = params[4];
+      edu.description = params[5];
+      edu.passing_year = params[6];
+      edu.full_marks = params[7];
+      edu.marks_obtained = params[8];
+      edu.percentage = params[9];
+      edu.course = params[10];
+      edu.branch = params[11];
+      edu.semester_sgpa = params[12];
+      edu.cgpa = params[13];
+      edu.access_cert10 = params[14] ? 1 : 0;
+      edu.access_cert12 = params[15] ? 1 : 0;
+      edu.access_certbach = params[16] ? 1 : 0;
+      edu.board = params[17] || null;
+
+      let paramIndex = 18;
+      if (sqlClean.includes('certificate_10th = ?')) { edu.certificate_10th = params[paramIndex++]; }
+      if (sqlClean.includes('certificate_12th = ?')) { edu.certificate_12th = params[paramIndex++]; }
+      if (sqlClean.includes('marksheet_12th = ?')) { edu.marksheet_12th = params[paramIndex++]; }
+      if (sqlClean.includes('gradesheet_bachelor = ?')) { edu.gradesheet_bachelor = params[paramIndex++]; }
+      if (sqlClean.includes('certificate_bachelor = ?')) { edu.certificate_bachelor = params[paramIndex++]; }
+      if (sqlClean.includes('certificate_others = ?')) { edu.certificate_others = params[paramIndex++]; }
+      if (sqlClean.includes('marksheet_others = ?')) { edu.marksheet_others = params[paramIndex++]; }
+    }
+    writeJsonDb(db);
+    return [{ affectedRows: 1 }];
+  }
+
+  // UPDATE skills
+  if (sqlClean.includes('UPDATE skills SET name = ?')) {
+    const id = parseInt(params[4]);
+    const skill = db.skills.find(s => s.id === id);
+    if (skill) {
+      skill.name = params[0];
+      skill.category = params[1];
+      skill.proficiency = parseInt(params[2]);
+      skill.knowledge_level = params[3] || 'basic';
+    }
+    writeJsonDb(db);
+    return [{ affectedRows: 1 }];
+  }
+
+  // UPDATE experience
+  if (sqlClean.includes('UPDATE experience SET company = ?')) {
+    const id = parseInt(params[params.length - 1]);
+    const exp = db.experience.find(e => e.id === id);
+    if (exp) {
+      exp.company = params[0];
+      exp.role = params[1];
+      exp.start_date = params[2];
+      exp.end_date = params[3];
+      exp.description = params[4];
+      exp.exp_type = params[5];
+      exp.project_name = params[6];
+      exp.project_instructor = params[7];
+      exp.repo_link = params[8];
+      exp.deploy_link = params[9];
+      exp.program_name = params[10];
+      exp.org_name = params[11];
+      exp.skills_learned = params[12];
+
+      let paramIndex = 13;
+      if (sqlClean.includes('certificate_file = ?')) { exp.certificate_file = params[paramIndex++]; }
+      if (sqlClean.includes('lor_file = ?')) { exp.lor_file = params[paramIndex++]; }
+    }
+    writeJsonDb(db);
+    return [{ affectedRows: 1 }];
+  }
+
+  // UPDATE certificates
+  if (sqlClean.includes('UPDATE certificates SET name = ?')) {
+    const id = parseInt(params[params.length - 1]);
+    const cert = db.certificates.find(c => c.id === id);
+    if (cert) {
+      cert.name = params[0];
+      cert.organization = params[1];
+      cert.issue_date = params[2];
+      cert.credential_url = params[3];
+      cert.access_cert = params[4] ? 1 : 0;
+
+      if (sqlClean.includes('certificate_file = ?')) {
+        cert.certificate_file = params[5];
+      }
+    }
+    writeJsonDb(db);
+    return [{ affectedRows: 1 }];
+  }
+
+  // UPDATE courses
+  if (sqlClean.includes('UPDATE courses SET name = ?')) {
+    const id = parseInt(params[2]);
+    if (!db.courses) db.courses = [];
+    const course = db.courses.find(c => c.id === id);
+    if (course) {
+      course.name = params[0];
+      course.description = params[1];
+    }
+    writeJsonDb(db);
+    return [{ affectedRows: 1 }];
+  }
+
   // 24. INSERT INTO education
   if (sqlClean.includes('INSERT INTO education')) {
     const newEdu = {

@@ -1020,6 +1020,13 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
   const [certFile, setCertFile] = useState(null);
   const [certAccess, setCertAccess] = useState(false);
 
+  // Edit states for sections
+  const [editingEdu, setEditingEdu] = useState(null);
+  const [editingSkill, setEditingSkill] = useState(null);
+  const [editingExp, setEditingExp] = useState(null);
+  const [editingCert, setEditingCert] = useState(null);
+  const [editingCourse, setEditingCourse] = useState(null);
+
   const [showExitModal, setShowExitModal] = useState(false);
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [showMsgModal, setShowMsgModal] = useState(false);
@@ -1904,6 +1911,164 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
 
   const handleDeleteProject = (id) => requestDelete(id, 'project');
 
+  const handleOpenEduForm = (edu = null) => {
+    if (edu) {
+      setEditingEdu(edu);
+      setEduType(edu.degree);
+      setEduSchool(edu.school);
+      setEduPassingYear(edu.passing_year || edu.end_date);
+      setEduBoard(edu.board || 'CBSE');
+      setCustomEduBoard(edu.board && !['CBSE', 'ICSE', 'BSE', 'HSC', 'CHSE'].includes(edu.board) ? edu.board : '');
+      setEduCourse(edu.course || '');
+      setEduBranch(edu.branch || '');
+      setEduFullMarks(edu.full_marks || '');
+      setEduMarksObtained(edu.marks_obtained || '');
+      
+      let parsedSgpa = { sem1: '', sem2: '', sem3: '', sem4: '', sem5: '', sem6: '', sem7: '', sem8: '' };
+      if (edu.semester_sgpa) {
+        try {
+          parsedSgpa = { ...parsedSgpa, ...JSON.parse(edu.semester_sgpa) };
+        } catch (e) {
+          console.error("Error parsing SGPA", e);
+        }
+      }
+      setEduSemSgpas(parsedSgpa);
+      
+      setEdu10thCert(edu.certificate_10th || null);
+      setEdu12thCert(edu.certificate_12th || null);
+      setEdu12thMarksheet(edu.marksheet_12th || null);
+      setEduBachGradesheet(edu.gradesheet_bachelor || null);
+      setEduBachCert(edu.certificate_bachelor || null);
+      setEduOthersCert(edu.certificate_others || null);
+      setEduOthersMarksheet(edu.marksheet_others || null);
+
+      setEduAccess10th(edu.access_cert10 === 1 || edu.access_cert10 === true || edu.access_cert10 === '1');
+      setEduAccess12th(edu.access_cert12 === 1 || edu.access_cert12 === true || edu.access_cert12 === '1');
+      setEduAccessBach(edu.access_certbach === 1 || edu.access_certbach === true || edu.access_certbach === '1');
+    } else {
+      setEditingEdu(null);
+      setEduType('10th');
+      setEduSchool('');
+      setEduPassingYear('');
+      setEduBoard('CBSE');
+      setCustomEduBoard('');
+      setEduCourse('');
+      setEduBranch('');
+      setEduFullMarks('');
+      setEduMarksObtained('');
+      setEduSemSgpas({ sem1: '', sem2: '', sem3: '', sem4: '', sem5: '', sem6: '', sem7: '', sem8: '' });
+      setEdu10thCert(null);
+      setEdu12thCert(null);
+      setEdu12thMarksheet(null);
+      setEduBachGradesheet(null);
+      setEduBachCert(null);
+      setEduOthersCert(null);
+      setEduOthersMarksheet(null);
+      setEduAccess10th(false);
+      setEduAccess12th(false);
+      setEduAccessBach(false);
+    }
+    setShowEduModal(true);
+  };
+
+  const handleOpenSkillForm = (skill = null) => {
+    if (skill) {
+      setEditingSkill(skill);
+      setSkillCategory(skill.category);
+      const presets = skillPresets[skill.category] || [];
+      if (presets.includes(skill.name)) {
+        setSelectedPresetSkill(skill.name);
+        setCustomSkillName('');
+      } else {
+        setSelectedPresetSkill('Custom');
+        setCustomSkillName(skill.name);
+      }
+      setSkillLevel(skill.knowledge_level || 'basic');
+    } else {
+      setEditingSkill(null);
+      setSkillCategory('Programming Language');
+      const presets = skillPresets['Programming Language'] || [];
+      setSelectedPresetSkill(presets[0] || 'Custom');
+      setCustomSkillName('');
+      setSkillLevel('basic');
+    }
+    setShowSkillModal(true);
+  };
+
+  const handleOpenExpForm = (exp = null) => {
+    if (exp) {
+      setEditingExp(exp);
+      setExpType(exp.exp_type || 'project');
+      setExpStart(exp.start_date || '');
+      setExpEnd(exp.end_date || '');
+      setExpDesc(exp.description || '');
+      setExpSkillsLearned(exp.skills_learned || '');
+      
+      setExpProjectName(exp.project_name || '');
+      setExpProjectInstructor(exp.project_instructor || '');
+      setExpRepoLink(exp.repo_link || '');
+      setExpDeployLink(exp.deploy_link || '');
+      
+      setExpProgramName(exp.program_name || '');
+      setExpOrgName(exp.org_name || '');
+      setExpRole(exp.role || '');
+      
+      setExpCertificateFile(exp.certificate_file || null);
+      setExpLorFile(exp.lor_file || null);
+    } else {
+      setEditingExp(null);
+      setExpType('project');
+      setExpStart('');
+      setExpEnd('');
+      setExpDesc('');
+      setExpSkillsLearned('');
+      setExpProjectName('');
+      setExpProjectInstructor('');
+      setExpRepoLink('');
+      setExpDeployLink('');
+      setExpProgramName('');
+      setExpOrgName('');
+      setExpRole('');
+      setExpCertificateFile(null);
+      setExpLorFile(null);
+    }
+    setShowExpModal(true);
+  };
+
+  const handleOpenCertForm = (cert = null) => {
+    if (cert) {
+      setEditingCert(cert);
+      setCertName(cert.name);
+      setCertOrg(cert.organization);
+      setCertDate(cert.issue_date);
+      setCertUrl(cert.credential_url || '');
+      setCertFile(cert.certificate_file || null);
+      setCertAccess(cert.access_cert === 1 || cert.access_cert === true || cert.access_cert === '1');
+    } else {
+      setEditingCert(null);
+      setCertName('');
+      setCertOrg('');
+      setCertDate('');
+      setCertUrl('');
+      setCertFile(null);
+      setCertAccess(false);
+    }
+    setShowCertModal(true);
+  };
+
+  const handleOpenCourseForm = (course = null) => {
+    if (course) {
+      setEditingCourse(course);
+      setCourseName(course.name);
+      setCourseDesc(course.description);
+    } else {
+      setEditingCourse(null);
+      setCourseName('');
+      setCourseDesc('');
+    }
+    setShowCourseModal(true);
+  };
+
   /* ==========================================
      AUXILIARY COLLECTIONS CRUD ACTIONS
      ========================================== */
@@ -1924,13 +2089,13 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       let safeGradesheetBach = null, safeCertBach = null;
       let safeCertOthers = null, safeMarksheetOthers = null;
 
-      if (edu10thCert) safeCert10 = await getSafeInMemoryFile(edu10thCert, 'application/pdf');
-      if (edu12thCert) safeCert12 = await getSafeInMemoryFile(edu12thCert, 'application/pdf');
-      if (edu12thMarksheet) safeMarksheet12 = await getSafeInMemoryFile(edu12thMarksheet, 'application/pdf');
-      if (eduBachGradesheet) safeGradesheetBach = await getSafeInMemoryFile(eduBachGradesheet, 'application/pdf');
-      if (eduBachCert) safeCertBach = await getSafeInMemoryFile(eduBachCert, 'application/pdf');
-      if (eduOthersCert) safeCertOthers = await getSafeInMemoryFile(eduOthersCert, 'application/pdf');
-      if (eduOthersMarksheet) safeMarksheetOthers = await getSafeInMemoryFile(eduOthersMarksheet, 'application/pdf');
+      if (edu10thCert && typeof edu10thCert !== 'string') safeCert10 = await getSafeInMemoryFile(edu10thCert, 'application/pdf');
+      if (edu12thCert && typeof edu12thCert !== 'string') safeCert12 = await getSafeInMemoryFile(edu12thCert, 'application/pdf');
+      if (edu12thMarksheet && typeof edu12thMarksheet !== 'string') safeMarksheet12 = await getSafeInMemoryFile(edu12thMarksheet, 'application/pdf');
+      if (eduBachGradesheet && typeof eduBachGradesheet !== 'string') safeGradesheetBach = await getSafeInMemoryFile(eduBachGradesheet, 'application/pdf');
+      if (eduBachCert && typeof eduBachCert !== 'string') safeCertBach = await getSafeInMemoryFile(eduBachCert, 'application/pdf');
+      if (eduOthersCert && typeof eduOthersCert !== 'string') safeCertOthers = await getSafeInMemoryFile(eduOthersCert, 'application/pdf');
+      if (eduOthersMarksheet && typeof eduOthersMarksheet !== 'string') safeMarksheetOthers = await getSafeInMemoryFile(eduOthersMarksheet, 'application/pdf');
 
       if (eduType === '10th') {
         formData.append('field_of_study', 'Secondary School (SSC)');
@@ -2020,10 +2185,14 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       formData.append('access_cert10', eduAccess10th ? '1' : '0');
       formData.append('access_cert12', eduAccess12th ? '1' : '0');
       formData.append('access_certbach', eduAccessBach ? '1' : '0');
+      formData.append('board', selectedBoard || '');
+
+      const url = editingEdu ? `${API_BASE}/education/${editingEdu.id}` : `${API_BASE}/education`;
+      const method = editingEdu ? 'PUT' : 'POST';
 
       const data = await uploadWithProgress(
-        `${API_BASE}/education`,
-        'POST',
+        url,
+        method,
         formData,
         { 'Authorization': `Bearer ${authToken}` },
         (pct) => setUploadProgress(pct)
@@ -2031,7 +2200,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
 
       setShowEduModal(false);
       fetchDashboardCollections();
-      showStatus('Academic record updated successfully!');
+      showStatus(editingEdu ? 'Academic record updated successfully!' : 'Academic record created successfully!');
       
       setEduSchool('');
       setEduPassingYear('');
@@ -2052,6 +2221,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       setEduAccessBach(false);
       setEduBoard('CBSE');
       setCustomEduBoard('');
+      setEditingEdu(null);
     } catch (err) {
       console.error(err);
       if (err.message === 'CLOUD_READ_FAILED') {
@@ -2081,20 +2251,29 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
     }
     setLoading(true);
     try {
-      await fetch(`${API_BASE}/skills`, {
-        method: 'POST',
+      const url = editingSkill ? `${API_BASE}/skills/${editingSkill.id}` : `${API_BASE}/skills`;
+      const method = editingSkill ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${authToken}`
         },
         body: JSON.stringify({ name: finalName, category: skillCategory, proficiency: 100, knowledge_level: skillLevel })
       });
-      setShowSkillModal(false);
-      fetchDashboardCollections();
-      showStatus('Skill successfully added.');
-      setCustomSkillName('');
-      setSelectedPresetSkill('Custom');
-      setSkillLevel('basic');
+      if (res.ok) {
+        setShowSkillModal(false);
+        fetchDashboardCollections();
+        showStatus(editingSkill ? 'Skill successfully updated.' : 'Skill successfully added.');
+        setCustomSkillName('');
+        setSelectedPresetSkill('Custom');
+        setSkillLevel('basic');
+        setEditingSkill(null);
+      } else {
+        const err = await res.json();
+        showStatus(err.message || 'Failed to save skill.', true);
+      }
     } catch (err) {
       setShowSkillModal(false);
     } finally {
@@ -2112,8 +2291,11 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
     }
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/courses`, {
-        method: 'POST',
+      const url = editingCourse ? `${API_BASE}/courses/${editingCourse.id}` : `${API_BASE}/courses`;
+      const method = editingCourse ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${authToken}`
@@ -2121,10 +2303,11 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
         body: JSON.stringify({ name: courseName, description: courseDesc })
       });
       if (res.ok) {
-        showStatus('Course successfully added.');
+        showStatus(editingCourse ? 'Course successfully updated.' : 'Course successfully added.');
         setCourseName('');
         setCourseDesc('');
         setShowCourseModal(false);
+        setEditingCourse(null);
         fetchDashboardCollections();
       } else {
         const err = await res.json();
@@ -2149,8 +2332,8 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
     try {
       let safeCert = null;
       let safeLor = null;
-      if (expCertificateFile) safeCert = await getSafeInMemoryFile(expCertificateFile, 'application/pdf');
-      if (expLorFile) safeLor = await getSafeInMemoryFile(expLorFile, 'application/pdf');
+      if (expCertificateFile && typeof expCertificateFile !== 'string') safeCert = await getSafeInMemoryFile(expCertificateFile, 'application/pdf');
+      if (expLorFile && typeof expLorFile !== 'string') safeLor = await getSafeInMemoryFile(expLorFile, 'application/pdf');
 
       if (expType === 'project') {
         formData.append('company', 'Group Project');
@@ -2200,9 +2383,12 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
         }
       }
 
+      const url = editingExp ? `${API_BASE}/experience/${editingExp.id}` : `${API_BASE}/experience`;
+      const method = editingExp ? 'PUT' : 'POST';
+
       const data = await uploadWithProgress(
-        `${API_BASE}/experience`,
-        'POST',
+        url,
+        method,
         formData,
         { 'Authorization': `Bearer ${authToken}` },
         (pct) => setUploadProgress(pct)
@@ -2210,7 +2396,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
 
       setShowExpModal(false);
       fetchDashboardCollections();
-      showStatus('Experience entry registered successfully!');
+      showStatus(editingExp ? 'Experience entry updated successfully!' : 'Experience entry registered successfully!');
       
       setExpProjectName('');
       setExpProjectInstructor('');
@@ -2225,6 +2411,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       setExpSkillsLearned('');
       setExpCertificateFile(null);
       setExpLorFile(null);
+      setEditingExp(null);
     } catch (err) {
       console.error(err);
       if (err.message === 'CLOUD_READ_FAILED') {
@@ -2262,15 +2449,18 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
     formData.append('access_cert', certAccess ? '1' : '0');
 
     try {
-      if (certFile) {
+      if (certFile && typeof certFile !== 'string') {
         const bufferedFile = await getSafeInMemoryFile(certFile, 'application/pdf');
         const compressed = await compressImageIfNeeded(bufferedFile);
         formData.append('certificate_file', compressed);
       }
 
+      const url = editingCert ? `${API_BASE}/certificates/${editingCert.id}` : `${API_BASE}/certificates`;
+      const method = editingCert ? 'PUT' : 'POST';
+
       const data = await uploadWithProgress(
-        `${API_BASE}/certificates`,
-        'POST',
+        url,
+        method,
         formData,
         { 'Authorization': `Bearer ${authToken}` },
         (pct) => setUploadProgress(pct)
@@ -2278,13 +2468,14 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
 
       setShowCertModal(false);
       fetchDashboardCollections();
-      showStatus('Certificate successfully added.');
+      showStatus(editingCert ? 'Certificate successfully updated.' : 'Certificate successfully added.');
       setCertName('');
       setCertOrg('');
       setCertDate('');
       setCertUrl('');
       setCertFile(null);
       setCertAccess(false);
+      setEditingCert(null);
     } catch (err) {
       console.error(err);
       if (err.message === 'CLOUD_READ_FAILED') {
@@ -3220,7 +3411,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
             <div className="glass-panel" style={{ padding: '2rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>
                 <h2 style={{ fontSize: '1.5rem', fontWeight: 800 }}>Education</h2>
-                <button onClick={() => setShowEduModal(true)} className="glass-btn" style={{ padding: '0.4rem 1rem', fontSize: '0.85rem' }}>
+                <button onClick={() => handleOpenEduForm()} className="glass-btn" style={{ padding: '0.4rem 1rem', fontSize: '0.85rem' }}>
                   <Plus size={16} /> Add Education
                 </button>
               </div>
@@ -3252,9 +3443,14 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                         </p>
                       </div>
                       
-                      <button onClick={() => handleDeleteEdu(edu.id)} className="glass-btn-danger" style={{ padding: '0.4rem 0.8rem', alignSelf: 'flex-start' }}>
-                        <Trash2 size={16} /> Delete
-                      </button>
+                      <div style={{ display: 'flex', gap: '0.5rem', alignSelf: 'flex-start' }}>
+                        <button onClick={() => handleOpenEduForm(edu)} className="glass-btn-secondary" style={{ padding: '0.4rem 0.8rem' }}>
+                          <Edit size={16} /> Edit
+                        </button>
+                        <button onClick={() => handleDeleteEdu(edu.id)} className="glass-btn-danger" style={{ padding: '0.4rem 0.8rem' }}>
+                          <Trash2 size={16} /> Delete
+                        </button>
+                      </div>
                     </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', fontSize: '0.85rem', background: 'rgba(255,255,255,0.01)', padding: '0.8rem', borderRadius: '6px' }}>
@@ -3352,7 +3548,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
             <div className="glass-panel" style={{ padding: '2rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>
                 <h2 style={{ fontSize: '1.5rem', fontWeight: 800 }}>Skills</h2>
-                <button onClick={() => setShowSkillModal(true)} className="glass-btn" style={{ padding: '0.4rem 1rem', fontSize: '0.85rem' }}>
+                <button onClick={() => handleOpenSkillForm()} className="glass-btn" style={{ padding: '0.4rem 1rem', fontSize: '0.85rem' }}>
                   <Plus size={16} /> Add Skill
                 </button>
               </div>
@@ -3364,9 +3560,14 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                       <h4 style={{ fontWeight: 700, margin: 0 }}>{skill.name}</h4>
                       <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>{skill.category}</p>
                     </div>
-                    <button onClick={() => handleDeleteSkill(skill.id)} className="glass-btn-danger" style={{ padding: '0.3rem 0.6rem' }}>
-                      <Trash2 size={14} />
-                    </button>
+                    <div style={{ display: 'flex', gap: '0.4rem' }}>
+                      <button onClick={() => handleOpenSkillForm(skill)} className="glass-btn-secondary" style={{ padding: '0.3rem 0.6rem' }}>
+                        <Edit size={14} />
+                      </button>
+                      <button onClick={() => handleDeleteSkill(skill.id)} className="glass-btn-danger" style={{ padding: '0.3rem 0.6rem' }}>
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -3378,7 +3579,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
             <div className="glass-panel" style={{ padding: '2rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>
                 <h2 style={{ fontSize: '1.5rem', fontWeight: 800 }}>Experience</h2>
-                <button onClick={() => setShowExpModal(true)} className="glass-btn" style={{ padding: '0.4rem 1rem', fontSize: '0.85rem' }}>
+                <button onClick={() => handleOpenExpForm()} className="glass-btn" style={{ padding: '0.4rem 1rem', fontSize: '0.85rem' }}>
                   <Plus size={16} /> Add Experience
                 </button>
               </div>
@@ -3412,9 +3613,14 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                         </p>
                       </div>
 
-                      <button onClick={() => handleDeleteExp(exp.id)} className="glass-btn-danger" style={{ padding: '0.4rem 0.8rem', alignSelf: 'flex-start' }}>
-                        <Trash2 size={16} /> Delete
-                      </button>
+                      <div style={{ display: 'flex', gap: '0.5rem', alignSelf: 'flex-start' }}>
+                        <button onClick={() => handleOpenExpForm(exp)} className="glass-btn-secondary" style={{ padding: '0.4rem 0.8rem' }}>
+                          <Edit size={16} /> Edit
+                        </button>
+                        <button onClick={() => handleDeleteExp(exp.id)} className="glass-btn-danger" style={{ padding: '0.4rem 0.8rem' }}>
+                          <Trash2 size={16} /> Delete
+                        </button>
+                      </div>
                     </div>
 
                     <div style={{ fontSize: '0.85rem', background: 'rgba(255,255,255,0.01)', padding: '0.8rem', borderRadius: '6px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem' }}>
@@ -3479,7 +3685,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
             <div className="glass-panel" style={{ padding: '2rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>
                 <h2 style={{ fontSize: '1.5rem', fontWeight: 800 }}>Certificates</h2>
-                <button onClick={() => setShowCertModal(true)} className="glass-btn" style={{ padding: '0.4rem 1rem', fontSize: '0.85rem' }}>
+                <button onClick={() => handleOpenCertForm()} className="glass-btn" style={{ padding: '0.4rem 1rem', fontSize: '0.85rem' }}>
                   <Plus size={16} /> Add Certificate
                 </button>
               </div>
@@ -3526,6 +3732,9 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                           View Link
                         </a>
                       ) : null}
+                      <button onClick={() => handleOpenCertForm(cert)} className="glass-btn-secondary" style={{ padding: '0.4rem 0.8rem' }}>
+                        <Edit size={16} />
+                      </button>
                       <button onClick={() => handleDeleteCert(cert.id)} className="glass-btn-danger" style={{ padding: '0.4rem 0.8rem' }}>
                         <Trash2 size={16} />
                       </button>
@@ -3676,7 +3885,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                   Manage Courses
                 </h2>
                 <button 
-                  onClick={() => setShowCourseModal(true)} 
+                  onClick={() => handleOpenCourseForm()} 
                   className="glass-btn"
                   style={{ padding: '0.4rem 1rem', fontSize: '0.85rem' }}
                 >
@@ -3694,13 +3903,22 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                           {course.description}
                         </p>
                       </div>
-                      <button 
-                        onClick={() => handleDeleteCourse(course.id)} 
-                        className="glass-btn-danger" 
-                        style={{ padding: '0.3rem 0.6rem', alignSelf: 'flex-end', fontSize: '0.75rem', gap: '0.25rem' }}
-                      >
-                        <Trash2 size={12} /> Delete
-                      </button>
+                      <div style={{ display: 'flex', gap: '0.5rem', alignSelf: 'flex-end' }}>
+                        <button 
+                          onClick={() => handleOpenCourseForm(course)} 
+                          className="glass-btn-secondary" 
+                          style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', gap: '0.25rem' }}
+                        >
+                          <Edit size={12} /> Edit
+                        </button>
+                        <button 
+                          onClick={() => handleDeleteCourse(course.id)} 
+                          className="glass-btn-danger" 
+                          style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', gap: '0.25rem' }}
+                        >
+                          <Trash2 size={12} /> Delete
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -3912,7 +4130,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
         >
           <form onSubmit={handleAddEducation} className="glass-panel" style={{ width: '100%', maxWidth: '500px', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem', position: 'relative', maxHeight: '90vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>
-              <h3 style={{ margin: 0, fontWeight: 800 }}>Add Education</h3>
+              <h3 style={{ margin: 0, fontWeight: 800 }}>{editingEdu ? 'Modify Academic Details' : 'Add Education'}</h3>
               <button 
                 type="button" 
                 onClick={() => setShowEduModal(false)} 
@@ -4241,7 +4459,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
         >
           <form onSubmit={handleAddSkill} className="glass-panel" style={{ width: '100%', maxWidth: '400px', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem', position: 'relative' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>
-              <h3 style={{ margin: 0, fontWeight: 800 }}>Add Skill</h3>
+              <h3 style={{ margin: 0, fontWeight: 800 }}>{editingSkill ? 'Modify Skill' : 'Add Skill'}</h3>
               <button 
                 type="button" 
                 onClick={() => setShowSkillModal(false)} 
@@ -4321,7 +4539,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
         >
           <form onSubmit={handleAddExperience} className="glass-panel" style={{ width: '100%', maxWidth: '500px', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem', position: 'relative', maxHeight: '90vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>
-              <h3 style={{ margin: 0, fontWeight: 800 }}>Add Experience</h3>
+              <h3 style={{ margin: 0, fontWeight: 800 }}>{editingExp ? 'Modify Experience Details' : 'Add Experience'}</h3>
               <button 
                 type="button" 
                 onClick={() => setShowExpModal(false)} 
@@ -4481,7 +4699,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
         >
           <form onSubmit={handleAddCertificate} className="glass-panel" style={{ width: '100%', maxWidth: '400px', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem', position: 'relative' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>
-              <h3 style={{ margin: 0, fontWeight: 800 }}>Add Certificate</h3>
+              <h3 style={{ margin: 0, fontWeight: 800 }}>{editingCert ? 'Modify Certificate' : 'Add Certificate'}</h3>
               <button 
                 type="button" 
                 onClick={() => setShowCertModal(false)} 
@@ -4837,7 +5055,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
         >
           <form onSubmit={handleAddCourse} className="glass-panel" style={{ width: '100%', maxWidth: '450px', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', position: 'relative' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>
-              <h3 style={{ margin: 0, fontWeight: 800 }}>Add New Course</h3>
+              <h3 style={{ margin: 0, fontWeight: 800 }}>{editingCourse ? 'Modify Course' : 'Add New Course'}</h3>
               <button 
                 type="button" 
                 onClick={() => setShowCourseModal(false)} 
