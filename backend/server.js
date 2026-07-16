@@ -985,10 +985,25 @@ app.put('/api/education/:id', authenticateToken, educationUploadFields, async (r
     const oldEdu = rows && rows[0] ? rows[0] : null;
 
     let q = `
-      UPDATE education 
-      SET school = ?, degree = ?, field_of_study = ?, start_date = ?, end_date = ?, description = ?,
-          passing_year = ?, full_marks = ?, marks_obtained = ?, percentage = ?, course = ?, branch = ?,
-          semester_sgpa = ?, cgpa = ?, access_cert10 = ?, access_cert12 = ?, access_certbach = ?, board = ?
+      UPDATE \`education\` 
+      SET \`school\` = ?, 
+          \`degree\` = ?, 
+          \`field_of_study\` = ?, 
+          \`start_date\` = ?, 
+          \`end_date\` = ?, 
+          \`description\` = ?,
+          \`passing_year\` = ?, 
+          \`full_marks\` = ?, 
+          \`marks_obtained\` = ?, 
+          \`percentage\` = ?, 
+          \`course\` = ?, 
+          \`branch\` = ?,
+          \`semester_sgpa\` = ?, 
+          \`cgpa\` = ?, 
+          \`access_cert10\` = ?, 
+          \`access_cert12\` = ?, 
+          \`access_certbach\` = ?, 
+          \`board\` = ?
     `;
     let params = [
       school, degree, field_of_study || null, start_date, end_date, description || null,
@@ -1005,15 +1020,15 @@ app.put('/api/education/:id', authenticateToken, educationUploadFields, async (r
       board || null
     ];
 
-    if (newCert10th) { q += `, certificate_10th = ?`; params.push(newCert10th); }
-    if (newCert12th) { q += `, certificate_12th = ?`; params.push(newCert12th); }
-    if (newMarksheet12th) { q += `, marksheet_12th = ?`; params.push(newMarksheet12th); }
-    if (newGradesheetBach) { q += `, gradesheet_bachelor = ?`; params.push(newGradesheetBach); }
-    if (newCertBach) { q += `, certificate_bachelor = ?`; params.push(newCertBach); }
-    if (newCertOthers) { q += `, certificate_others = ?`; params.push(newCertOthers); }
-    if (newMarksheetOthers) { q += `, marksheet_others = ?`; params.push(newMarksheetOthers); }
+    if (newCert10th) { q += `, \`certificate_10th\` = ?`; params.push(newCert10th); }
+    if (newCert12th) { q += `, \`certificate_12th\` = ?`; params.push(newCert12th); }
+    if (newMarksheet12th) { q += `, \`marksheet_12th\` = ?`; params.push(newMarksheet12th); }
+    if (newGradesheetBach) { q += `, \`gradesheet_bachelor\` = ?`; params.push(newGradesheetBach); }
+    if (newCertBach) { q += `, \`certificate_bachelor\` = ?`; params.push(newCertBach); }
+    if (newCertOthers) { q += `, \`certificate_others\` = ?`; params.push(newCertOthers); }
+    if (newMarksheetOthers) { q += `, \`marksheet_others\` = ?`; params.push(newMarksheetOthers); }
 
-    q += ` WHERE id = ?`;
+    q += ` WHERE \`id\` = ?`;
     params.push(id);
 
     try {
@@ -1022,25 +1037,25 @@ app.put('/api/education/:id', authenticateToken, educationUploadFields, async (r
       if (dbErr.code === 'ER_BAD_FIELD_ERROR' || dbErr.errno === 1054) {
         console.log('Detected missing column error in education. Running auto-migrations...');
         const addEduColumns = [
-          'ALTER TABLE education ADD COLUMN passing_year VARCHAR(50) NULL;',
-          'ALTER TABLE education ADD COLUMN full_marks DOUBLE NULL;',
-          'ALTER TABLE education ADD COLUMN marks_obtained DOUBLE NULL;',
-          'ALTER TABLE education ADD COLUMN percentage DOUBLE NULL;',
-          'ALTER TABLE education ADD COLUMN course VARCHAR(255) NULL;',
-          'ALTER TABLE education ADD COLUMN branch VARCHAR(255) NULL;',
-          'ALTER TABLE education ADD COLUMN semester_sgpa TEXT NULL;',
-          'ALTER TABLE education ADD COLUMN cgpa DOUBLE NULL;',
-          'ALTER TABLE education ADD COLUMN certificate_10th VARCHAR(255) NULL;',
-          'ALTER TABLE education ADD COLUMN certificate_12th VARCHAR(255) NULL;',
-          'ALTER TABLE education ADD COLUMN marksheet_12th VARCHAR(255) NULL;',
-          'ALTER TABLE education ADD COLUMN gradesheet_bachelor VARCHAR(255) NULL;',
-          'ALTER TABLE education ADD COLUMN certificate_bachelor VARCHAR(255) NULL;',
-          'ALTER TABLE education ADD COLUMN certificate_others VARCHAR(255) NULL;',
-          'ALTER TABLE education ADD COLUMN marksheet_others VARCHAR(255) NULL;',
-          'ALTER TABLE education ADD COLUMN access_cert10 BOOLEAN DEFAULT FALSE;',
-          'ALTER TABLE education ADD COLUMN access_cert12 BOOLEAN DEFAULT FALSE;',
-          'ALTER TABLE education ADD COLUMN access_certbach BOOLEAN DEFAULT FALSE;',
-          'ALTER TABLE education ADD COLUMN board VARCHAR(255) NULL;'
+          'ALTER TABLE education ADD COLUMN passing_year VARCHAR(50) NULL',
+          'ALTER TABLE education ADD COLUMN full_marks DOUBLE NULL',
+          'ALTER TABLE education ADD COLUMN marks_obtained DOUBLE NULL',
+          'ALTER TABLE education ADD COLUMN percentage DOUBLE NULL',
+          'ALTER TABLE education ADD COLUMN course VARCHAR(255) NULL',
+          'ALTER TABLE education ADD COLUMN branch VARCHAR(255) NULL',
+          'ALTER TABLE education ADD COLUMN semester_sgpa TEXT NULL',
+          'ALTER TABLE education ADD COLUMN cgpa DOUBLE NULL',
+          'ALTER TABLE education ADD COLUMN certificate_10th VARCHAR(255) NULL',
+          'ALTER TABLE education ADD COLUMN certificate_12th VARCHAR(255) NULL',
+          'ALTER TABLE education ADD COLUMN marksheet_12th VARCHAR(255) NULL',
+          'ALTER TABLE education ADD COLUMN gradesheet_bachelor VARCHAR(255) NULL',
+          'ALTER TABLE education ADD COLUMN certificate_bachelor VARCHAR(255) NULL',
+          'ALTER TABLE education ADD COLUMN certificate_others VARCHAR(255) NULL',
+          'ALTER TABLE education ADD COLUMN marksheet_others VARCHAR(255) NULL',
+          'ALTER TABLE education ADD COLUMN access_cert10 BOOLEAN DEFAULT FALSE',
+          'ALTER TABLE education ADD COLUMN access_cert12 BOOLEAN DEFAULT FALSE',
+          'ALTER TABLE education ADD COLUMN access_certbach BOOLEAN DEFAULT FALSE',
+          'ALTER TABLE education ADD COLUMN board VARCHAR(255) NULL'
         ];
         for (const colQuery of addEduColumns) {
           try { await query(colQuery); } catch (e) {}
@@ -1230,10 +1245,10 @@ app.put('/api/experience/:id', authenticateToken, experienceUploadFields, async 
     const oldExp = rows && rows[0] ? rows[0] : null;
 
     let q = `
-      UPDATE experience 
-      SET company = ?, role = ?, start_date = ?, end_date = ?, description = ?,
-          exp_type = ?, project_name = ?, project_instructor = ?, repo_link = ?, deploy_link = ?,
-          program_name = ?, org_name = ?, skills_learned = ?
+      UPDATE \`experience\` 
+      SET \`company\` = ?, \`role\` = ?, \`start_date\` = ?, \`end_date\` = ?, \`description\` = ?,
+          \`exp_type\` = ?, \`project_name\` = ?, \`project_instructor\` = ?, \`repo_link\` = ?, \`deploy_link\` = ?,
+          \`program_name\` = ?, \`org_name\` = ?, \`skills_learned\` = ?
     `;
     let params = [
       company, role, start_date, end_date, description || null,
@@ -1241,10 +1256,10 @@ app.put('/api/experience/:id', authenticateToken, experienceUploadFields, async 
       program_name || null, org_name || null, skills_learned || null
     ];
 
-    if (newCert) { q += `, certificate_file = ?`; params.push(newCert); }
-    if (newLor) { q += `, lor_file = ?`; params.push(newLor); }
+    if (newCert) { q += `, \`certificate_file\` = ?`; params.push(newCert); }
+    if (newLor) { q += `, \`lor_file\` = ?`; params.push(newLor); }
 
-    q += ` WHERE id = ?`;
+    q += ` WHERE \`id\` = ?`;
     params.push(id);
 
     try {
@@ -1253,16 +1268,16 @@ app.put('/api/experience/:id', authenticateToken, experienceUploadFields, async 
       if (dbErr.code === 'ER_BAD_FIELD_ERROR' || dbErr.errno === 1054) {
         console.log('Detected missing column error in experience. Running auto-migrations...');
         const addExpColumns = [
-          'ALTER TABLE experience ADD COLUMN exp_type VARCHAR(50) NULL;',
-          'ALTER TABLE experience ADD COLUMN project_name VARCHAR(255) NULL;',
-          'ALTER TABLE experience ADD COLUMN project_instructor VARCHAR(255) NULL;',
-          'ALTER TABLE experience ADD COLUMN repo_link VARCHAR(255) NULL;',
-          'ALTER TABLE experience ADD COLUMN deploy_link VARCHAR(255) NULL;',
-          'ALTER TABLE experience ADD COLUMN program_name VARCHAR(255) NULL;',
-          'ALTER TABLE experience ADD COLUMN org_name VARCHAR(255) NULL;',
-          'ALTER TABLE experience ADD COLUMN certificate_file VARCHAR(255) NULL;',
-          'ALTER TABLE experience ADD COLUMN lor_file VARCHAR(255) NULL;',
-          'ALTER TABLE experience ADD COLUMN skills_learned TEXT NULL;'
+          'ALTER TABLE experience ADD COLUMN exp_type VARCHAR(50) NULL',
+          'ALTER TABLE experience ADD COLUMN project_name VARCHAR(255) NULL',
+          'ALTER TABLE experience ADD COLUMN project_instructor VARCHAR(255) NULL',
+          'ALTER TABLE experience ADD COLUMN repo_link VARCHAR(255) NULL',
+          'ALTER TABLE experience ADD COLUMN deploy_link VARCHAR(255) NULL',
+          'ALTER TABLE experience ADD COLUMN program_name VARCHAR(255) NULL',
+          'ALTER TABLE experience ADD COLUMN org_name VARCHAR(255) NULL',
+          'ALTER TABLE experience ADD COLUMN certificate_file VARCHAR(255) NULL',
+          'ALTER TABLE experience ADD COLUMN lor_file VARCHAR(255) NULL',
+          'ALTER TABLE experience ADD COLUMN skills_learned TEXT NULL'
         ];
         for (const colQuery of addExpColumns) {
           try { await query(colQuery); } catch (e) {}
@@ -1340,19 +1355,19 @@ app.put('/api/certificates/:id', authenticateToken, upload.single('certificate_f
     const oldCert = rows && rows[0] ? rows[0] : null;
 
     let q = `
-      UPDATE certificates 
-      SET name = ?, organization = ?, issue_date = ?, credential_url = ?, access_cert = ?
+      UPDATE \`certificates\` 
+      SET \`name\` = ?, \`organization\` = ?, \`issue_date\` = ?, \`credential_url\` = ?, \`access_cert\` = ?
     `;
     let params = [
       name, organization, issue_date, credential_url || null, parseBoolParam(access_cert)
     ];
 
     if (newCertFile) {
-      q += `, certificate_file = ?`;
+      q += `, \`certificate_file\` = ?`;
       params.push(newCertFile);
     }
 
-    q += ` WHERE id = ?`;
+    q += ` WHERE \`id\` = ?`;
     params.push(id);
 
     try {
@@ -1361,10 +1376,10 @@ app.put('/api/certificates/:id', authenticateToken, upload.single('certificate_f
       if (dbErr.code === 'ER_BAD_FIELD_ERROR' || dbErr.errno === 1054) {
         console.log('Detected missing column error in certificates. Running auto-migrations...');
         try {
-          await query('ALTER TABLE certificates ADD COLUMN certificate_file VARCHAR(255) NULL;');
+          await query('ALTER TABLE certificates ADD COLUMN certificate_file VARCHAR(255) NULL');
         } catch (e) {}
         try {
-          await query('ALTER TABLE certificates ADD COLUMN access_cert BOOLEAN DEFAULT FALSE;');
+          await query('ALTER TABLE certificates ADD COLUMN access_cert BOOLEAN DEFAULT FALSE');
         } catch (e) {}
         await query(q, params);
       } else {
