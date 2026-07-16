@@ -1731,6 +1731,40 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
     }
   };
 
+  const handleToggleAvatarVisibility = async () => {
+    if (!profile?.profile_picture) return;
+    const currentStatus = profile.is_avatar_public !== 0 && profile.is_avatar_public !== false;
+    const nextStatus = !currentStatus;
+
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/profile/avatar/toggle-visibility`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify({ is_public: nextStatus })
+      });
+
+      if (res.ok) {
+        showStatus(`Profile photo successfully ${nextStatus ? 'published' : 'unpublished'}.`);
+        refreshProfile();
+      } else {
+        const err = await res.json();
+        showStatus(err.message || 'Failed to toggle photo visibility.', true);
+      }
+    } catch (err) {
+      console.error(err);
+      showStatus(`Toggled photo visibility to ${nextStatus ? 'public' : 'private'} offline.`);
+      if (profile) {
+        profile.is_avatar_public = nextStatus ? 1 : 0;
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   /* ==========================================
      PROJECT MANAGEMENT CRUD
      ========================================== */
@@ -2636,6 +2670,11 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                       currentFile={avatarFile}
                       placeholder="Drag & drop profile picture or click to select"
                     />
+                    {profile?.profile_picture && (
+                      <div style={{ fontSize: '0.85rem', color: (profile.is_avatar_public !== 0 && profile.is_avatar_public !== false) ? 'var(--accent-green)' : '#ffaa00', marginBottom: '0.5rem' }}>
+                        Status: {(profile.is_avatar_public !== 0 && profile.is_avatar_public !== false) ? 'Public (Visible to viewers)' : 'Private (Only you can see)'}
+                      </div>
+                    )}
                     <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
                       <button 
                         onClick={handleUploadAvatar} 
@@ -2646,13 +2685,28 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                         {uploadingType === 'avatar' ? (uploadProgress !== null ? `Uploading (${uploadProgress}%)` : 'Uploading...') : 'Publish Photo'}
                       </button>
                       {profile?.profile_picture && (
-                        <button 
-                          onClick={handleRemoveAvatar} 
-                          className="glass-btn-danger" 
-                          style={{ padding: '0.4rem 1.25rem', fontSize: '0.85rem' }}
-                        >
-                          Remove Photo
-                        </button>
+                        <>
+                          <button 
+                            onClick={handleToggleAvatarVisibility} 
+                            disabled={loading} 
+                            className="glass-btn" 
+                            style={{ 
+                              padding: '0.4rem 1.25rem', 
+                              fontSize: '0.85rem',
+                              borderColor: (profile.is_avatar_public !== 0 && profile.is_avatar_public !== false) ? '#ffaa00' : 'var(--accent-green)',
+                              color: (profile.is_avatar_public !== 0 && profile.is_avatar_public !== false) ? '#ffaa00' : 'var(--accent-green)'
+                            }}
+                          >
+                            {(profile.is_avatar_public !== 0 && profile.is_avatar_public !== false) ? 'Unpublish Photo' : 'Publish Photo'}
+                          </button>
+                          <button 
+                            onClick={handleRemoveAvatar} 
+                            className="glass-btn-danger" 
+                            style={{ padding: '0.4rem 1.25rem', fontSize: '0.85rem' }}
+                          >
+                            Remove Photo
+                          </button>
+                        </>
                       )}
                     </div>
                   </div>

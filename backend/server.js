@@ -297,7 +297,7 @@ const authenticateToken = (req, res, next) => {
 // 1. Get Owner Profile
 app.get('/api/profile', async (req, res) => {
   try {
-    const [rows] = await query('SELECT username, display_name, email, profile_picture, phone, instagram, facebook, linkedin, github, bio, resume_url, is_resume_public, email_verified, phone_verified, availability, password_text FROM owner_profile LIMIT 1');
+    const [rows] = await query('SELECT username, display_name, email, profile_picture, phone, instagram, facebook, linkedin, github, bio, resume_url, is_resume_public, is_avatar_public, email_verified, phone_verified, availability, password_text FROM owner_profile LIMIT 1');
     if (rows.length === 0) {
       return res.status(404).json({ message: 'Owner profile not found' });
     }
@@ -739,6 +739,18 @@ app.put('/api/profile/resume/toggle-visibility', authenticateToken, async (req, 
     const isPublicBool = is_public ? 1 : 0;
     await query('UPDATE owner_profile SET is_resume_public = ? LIMIT 1', [isPublicBool]);
     res.json({ success: true, is_resume_public: isPublicBool, message: `Resume visibility set to ${isPublicBool ? 'public' : 'private'}.` });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Toggle Avatar Visibility
+app.put('/api/profile/avatar/toggle-visibility', authenticateToken, async (req, res) => {
+  const { is_public } = req.body;
+  try {
+    const isPublicBool = is_public ? 1 : 0;
+    await query('UPDATE owner_profile SET is_avatar_public = ? LIMIT 1', [isPublicBool]);
+    res.json({ success: true, is_avatar_public: isPublicBool, message: `Avatar visibility set to ${isPublicBool ? 'public' : 'private'}.` });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

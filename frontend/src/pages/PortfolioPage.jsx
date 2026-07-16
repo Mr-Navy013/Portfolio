@@ -397,7 +397,8 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
   const email = profile?.email || 'navycutdehury@gmail.com';
   const phone = profile?.phone || '+91 9999999999';
   const bio = profile?.bio || 'I craft modular, fast-loading, state-of-the-art full-stack applications with clean code and premium UI/UX.';
-  const avatar = profile?.profile_picture ? (profile.profile_picture.startsWith('data:') || profile.profile_picture.startsWith('http') ? profile.profile_picture : `${BACKEND_BASE}${profile.profile_picture}`) : null;
+  const isAvatarPublic = profile?.is_avatar_public !== 0 && profile?.is_avatar_public !== false;
+  const avatar = (profile?.profile_picture && isAvatarPublic) ? (profile.profile_picture.startsWith('data:') || profile.profile_picture.startsWith('http') ? profile.profile_picture : `${BACKEND_BASE}${profile.profile_picture}`) : null;
   const linkedin = profile?.linkedin || '';
   const github = profile?.github || '';
   const instagram = profile?.instagram || '';
