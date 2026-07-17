@@ -82,6 +82,13 @@ function App() {
   }, [attemptFetch]);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const pageParam = params.get('page');
+    if (pageParam === 'login') {
+      setCurrentPage('login');
+      localStorage.setItem('currentPage', 'login');
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
     fetchProfile(true);
     return clearTimers;
   }, []);
