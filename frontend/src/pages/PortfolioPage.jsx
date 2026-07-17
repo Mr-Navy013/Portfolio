@@ -851,26 +851,52 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
                       </button>
                     )
                   )}
-                  {edu.degree === '12th' && edu.certificate_12th && (
-                    edu.access_cert12 === 1 || edu.access_cert12 === 'true' || edu.access_cert12 === true ? (
-                      <a 
-                        href={resolveFileUrl(edu.certificate_12th)}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="glass-btn" 
-                        style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', gap: '0.4rem', height: 'auto', display: 'flex', alignItems: 'center', textDecoration: 'none' }}
-                      >
-                        <Eye size={12} /> View 12th Certificate
-                      </a>
-                    ) : (
-                      <button 
-                        onClick={() => handleOpenPermissionRequest(`edu_${edu.id}_cert12`, '12th Certificate')} 
-                        className="glass-btn" 
-                        style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', gap: '0.4rem', height: 'auto' }}
-                      >
-                        <Lock size={12} /> View 12th Certificate
-                      </button>
-                    )
+                  {edu.degree === '12th' && (
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      {edu.certificate_12th && (
+                        edu.access_cert12 === 1 || edu.access_cert12 === 'true' || edu.access_cert12 === true ? (
+                          <a 
+                            href={resolveFileUrl(edu.certificate_12th)}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="glass-btn" 
+                            style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', gap: '0.4rem', height: 'auto', display: 'flex', alignItems: 'center', textDecoration: 'none' }}
+                          >
+                            <Eye size={12} /> View 12th Certificate
+                          </a>
+                        ) : (
+                          <button 
+                            onClick={() => handleOpenPermissionRequest(`edu_${edu.id}_cert12`, '12th Certificate')} 
+                            className="glass-btn" 
+                            style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', gap: '0.4rem', height: 'auto' }}
+                          >
+                            <Lock size={12} /> View 12th Certificate
+                          </button>
+                        )
+                      )}
+
+                      {edu.marksheet_12th && (
+                        edu.access_cert12 === 1 || edu.access_cert12 === 'true' || edu.access_cert12 === true ? (
+                          <a 
+                            href={resolveFileUrl(edu.marksheet_12th)}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="glass-btn" 
+                            style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', gap: '0.4rem', height: 'auto', display: 'flex', alignItems: 'center', textDecoration: 'none' }}
+                          >
+                            <Eye size={12} /> View 12th Marksheet
+                          </a>
+                        ) : (
+                          <button 
+                            onClick={() => handleOpenPermissionRequest(`edu_${edu.id}_marks12`, '12th Marksheet')} 
+                            className="glass-btn" 
+                            style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', gap: '0.4rem', height: 'auto' }}
+                          >
+                            <Lock size={12} /> View 12th Marksheet
+                          </button>
+                        )
+                      )}
+                    </div>
                   )}
                   {edu.degree === 'Bachelor' && edu.certificate_bachelor && (
                     edu.access_certbach === 1 || edu.access_certbach === 'true' || edu.access_certbach === true ? (

@@ -1738,12 +1738,21 @@ app.post('/api/document-requests/verify', async (req, res) => {
   }
 
   try {
-    // Check if approved request exists
+    let checkDocIds = [document_id];
+    if (document_id.startsWith('edu_')) {
+      const parts = document_id.split('_');
+      const id = parts[1];
+      const fieldType = parts[2];
+      if (fieldType === 'cert12' || fieldType === 'marks12') {
+        checkDocIds = [`edu_${id}_cert12`, `edu_${id}_marks12`];
+      }
+    }
+
     const [rows] = await query(`
       SELECT * FROM document_requests 
-      WHERE viewer_email = ? AND access_token = ? AND document_id = ? AND status = "Approved" 
+      WHERE viewer_email = ? AND access_token = ? AND document_id IN (?) AND status = "Approved" 
       LIMIT 1
-    `, [email, token, document_id]);
+    `, [email, token, checkDocIds]);
 
     if (rows.length === 0) {
       return res.status(400).json({ message: 'Verification failed. Either email/token is invalid or request is not approved yet.' });

@@ -4386,12 +4386,12 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                         <input 
                           type="checkbox" 
                           id="eduAccess12th" 
-                          checked={eduAccess12th} 
-                          onChange={(e) => setEduAccess12th(e.target.checked)} 
+                          checked={!eduAccess12th} 
+                          onChange={(e) => setEduAccess12th(!e.target.checked)} 
                           style={{ accentColor: 'var(--accent-green)', cursor: 'pointer' }}
                         />
                         <label htmlFor="eduAccess12th" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', cursor: 'pointer' }}>
-                          Allow viewers to view/screenshot directly (No password required)
+                          Require access code verification (password protection) for both Certificate and Marksheet
                         </label>
                       </div>
                     </div>
