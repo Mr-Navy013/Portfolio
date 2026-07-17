@@ -13,6 +13,12 @@ import { getApiBase, setApiBase } from '../utils/api';
 const API_BASE = getApiBase();
 const BACKEND_BASE = API_BASE.replace('/api', '');
 
+const resolveFileUrl = (url) => {
+  if (!url) return '';
+  if (url.startsWith('data:') || url.startsWith('http')) return url;
+  return `${BACKEND_BASE}${url}`;
+};
+
 const compressImage = (file, maxWidth = 1200, maxHeight = 1200, quality = 0.7) => {
   return new Promise((resolve) => {
     const reader = new FileReader();
@@ -2771,7 +2777,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
             >
               {profile?.profile_picture && !avatarError ? (
                 <img 
-                  src={profile.profile_picture.startsWith('data:') || profile.profile_picture.startsWith('http') ? profile.profile_picture : `${BACKEND_BASE}${profile.profile_picture}`} 
+                  src={resolveFileUrl(profile.profile_picture)} 
                   alt="owner" 
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   onError={() => setAvatarError(true)}
@@ -3526,19 +3532,19 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
 
                     <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: '0.75rem' }}>
                       {edu.degree === '10th' && edu.certificate_10th && (
-                        <a href={`${BACKEND_BASE}${edu.certificate_10th}`} target="_blank" rel="noreferrer" className="glass-btn-secondary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', textDecoration: 'none' }} download>
+                        <a href={resolveFileUrl(edu.certificate_10th)} target="_blank" rel="noreferrer" className="glass-btn-secondary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', textDecoration: 'none' }} download>
                           <Download size={12} /> 10th Certificate
                         </a>
                       )}
                       {edu.degree === '12th' && (
                         <>
                           {edu.certificate_12th && (
-                            <a href={`${BACKEND_BASE}${edu.certificate_12th}`} target="_blank" rel="noreferrer" className="glass-btn-secondary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', textDecoration: 'none' }} download>
+                            <a href={resolveFileUrl(edu.certificate_12th)} target="_blank" rel="noreferrer" className="glass-btn-secondary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', textDecoration: 'none' }} download>
                               <Download size={12} /> 12th Certificate
                             </a>
                           )}
                           {edu.marksheet_12th && (
-                            <a href={`${BACKEND_BASE}${edu.marksheet_12th}`} target="_blank" rel="noreferrer" className="glass-btn-secondary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', textDecoration: 'none' }} download>
+                            <a href={resolveFileUrl(edu.marksheet_12th)} target="_blank" rel="noreferrer" className="glass-btn-secondary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', textDecoration: 'none' }} download>
                               <Download size={12} /> 12th Marksheet
                             </a>
                           )}
@@ -3547,12 +3553,12 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                       {edu.degree === 'Bachelor' && (
                         <>
                           {edu.gradesheet_bachelor && (
-                            <a href={`${BACKEND_BASE}${edu.gradesheet_bachelor}`} target="_blank" rel="noreferrer" className="glass-btn-secondary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', textDecoration: 'none' }} download>
+                            <a href={resolveFileUrl(edu.gradesheet_bachelor)} target="_blank" rel="noreferrer" className="glass-btn-secondary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', textDecoration: 'none' }} download>
                               <Download size={12} /> Semester Gradesheet
                             </a>
                           )}
                           {edu.certificate_bachelor && (
-                            <a href={`${BACKEND_BASE}${edu.certificate_bachelor}`} target="_blank" rel="noreferrer" className="glass-btn-secondary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', textDecoration: 'none' }} download>
+                            <a href={resolveFileUrl(edu.certificate_bachelor)} target="_blank" rel="noreferrer" className="glass-btn-secondary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', textDecoration: 'none' }} download>
                               <Download size={12} /> Degree Certificate
                             </a>
                           )}
@@ -3685,12 +3691,12 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                     {(exp.certificate_file || exp.lor_file) && (
                       <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: '0.75rem' }}>
                         {exp.certificate_file && (
-                          <a href={`${BACKEND_BASE}${exp.certificate_file}`} target="_blank" rel="noreferrer" className="glass-btn-secondary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', textDecoration: 'none' }} download>
+                          <a href={resolveFileUrl(exp.certificate_file)} target="_blank" rel="noreferrer" className="glass-btn-secondary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', textDecoration: 'none' }} download>
                             <Download size={12} /> Completion Certificate
                           </a>
                         )}
                         {exp.lor_file && (
-                          <a href={`${BACKEND_BASE}${exp.lor_file}`} target="_blank" rel="noreferrer" className="glass-btn-secondary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', textDecoration: 'none' }} download>
+                          <a href={resolveFileUrl(exp.lor_file)} target="_blank" rel="noreferrer" className="glass-btn-secondary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', textDecoration: 'none' }} download>
                             <Download size={12} /> Letter of Recommendation (LOR)
                           </a>
                         )}
@@ -3726,7 +3732,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                       {cert.certificate_file ? (
                         <>
                           <a 
-                            href={`${BACKEND_BASE}${cert.certificate_file}`} 
+                            href={resolveFileUrl(cert.certificate_file)} 
                             target="_blank" 
                             rel="noreferrer" 
                             className="glass-btn-secondary"
@@ -3735,8 +3741,8 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                             View
                           </a>
                           <a 
-                            href={`${BACKEND_BASE}${cert.certificate_file}`} 
-                            className="glass-btn" 
+                            href={resolveFileUrl(cert.certificate_file)} 
+                            className="glass-btn"  
                             style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', textDecoration: 'none' }}
                             download
                           >
@@ -4988,7 +4994,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
               >
                 {profile?.profile_picture && !avatarError ? (
                   <img
-                    src={profile.profile_picture.startsWith('data:') || profile.profile_picture.startsWith('http') ? profile.profile_picture : `${BACKEND_BASE}${profile.profile_picture}`}
+                    src={resolveFileUrl(profile.profile_picture)}
                     alt="owner"
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     onError={() => setAvatarError(true)}
@@ -5196,7 +5202,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
           >
             {profile?.profile_picture ? (
               <img 
-                src={profile.profile_picture.startsWith('data:') || profile.profile_picture.startsWith('http') ? profile.profile_picture : `${BACKEND_BASE}${profile.profile_picture}`} 
+                src={resolveFileUrl(profile.profile_picture)} 
                 alt="owner large" 
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               />

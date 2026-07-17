@@ -11,6 +11,12 @@ import { getApiBase } from '../utils/api';
 const API_BASE = getApiBase();
 const BACKEND_BASE = API_BASE.replace('/api', '');
 
+const resolveFileUrl = (url) => {
+  if (!url) return '';
+  if (url.startsWith('data:') || url.startsWith('http')) return url;
+  return `${BACKEND_BASE}${url}`;
+};
+
 const formatDateStr = (str) => {
   if (!str) return '';
   if (/^\d{4}-\d{2}(-\d{2})?$/.test(str)) {
@@ -77,6 +83,37 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
   const [verifyToken, setVerifyToken] = useState('');
   const [verifyError, setVerifyError] = useState('');
   const [secureDocUrl, setSecureDocUrl] = useState('');
+  const [secureDocDisplayUrl, setSecureDocDisplayUrl] = useState('');
+
+  useEffect(() => {
+    if (secureDocUrl && secureDocUrl.startsWith('data:')) {
+      try {
+        const parts = secureDocUrl.split(',');
+        const mime = parts[0].match(/:(.*?);/)[1];
+        const b64 = parts[1];
+        
+        const byteCharacters = atob(b64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: mime });
+        const blobUrl = URL.createObjectURL(blob);
+        
+        setSecureDocDisplayUrl(blobUrl);
+        
+        return () => {
+          URL.revokeObjectURL(blobUrl);
+        };
+      } catch (err) {
+        console.error("Error creating blob URL from base64:", err);
+        setSecureDocDisplayUrl(secureDocUrl);
+      }
+    } else {
+      setSecureDocDisplayUrl(secureDocUrl);
+    }
+  }, [secureDocUrl]);
   const [secureDocName, setSecureDocName] = useState('');
 
   // Projects Slider and View Mode states
@@ -324,8 +361,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
         setShowVerifyModal(false);
 
         // Open secure document viewer modal!
-        const BACKEND_BASE = API_BASE.replace('/api', '');
-        const fullUrl = data.document_url.startsWith('http') ? data.document_url : `${BACKEND_BASE}${data.document_url}`;
+        const fullUrl = resolveFileUrl(data.document_url);
         setSecureDocUrl(fullUrl);
         setSecureDocName(selectedDocName);
         setShowSecureDocModal(true);
@@ -401,13 +437,13 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
   const phone = profile?.phone || '+91 9999999999';
   const bio = profile?.bio || 'I craft modular, fast-loading, state-of-the-art full-stack applications with clean code and premium UI/UX.';
   const isAvatarPublic = profile?.is_avatar_public !== 0 && profile?.is_avatar_public !== false;
-  const avatar = (profile?.profile_picture && isAvatarPublic) ? (profile.profile_picture.startsWith('data:') || profile.profile_picture.startsWith('http') ? profile.profile_picture : `${BACKEND_BASE}${profile.profile_picture}`) : null;
+  const avatar = (profile?.profile_picture && isAvatarPublic) ? resolveFileUrl(profile.profile_picture) : null;
   const linkedin = profile?.linkedin || '';
   const github = profile?.github || '';
   const instagram = profile?.instagram || '';
   const facebook = profile?.facebook || '';
   const isResumePublic = profile?.is_resume_public !== 0 && profile?.is_resume_public !== false;
-  const resumeUrl = (profile?.resume_url && isResumePublic) ? `${BACKEND_BASE}${profile.resume_url}` : null;
+  const resumeUrl = (profile?.resume_url && isResumePublic) ? resolveFileUrl(profile.resume_url) : null;
   const resumeExistsButPrivate = profile?.resume_url && !isResumePublic;
 
   const navLinks = [
@@ -736,7 +772,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
                   {edu.degree === '10th' && edu.certificate_10th && (
                     edu.access_cert10 === 1 || edu.access_cert10 === 'true' || edu.access_cert10 === true ? (
                       <a 
-                        href={`${BACKEND_BASE}${edu.certificate_10th}`}
+                        href={resolveFileUrl(edu.certificate_10th)}
                         target="_blank"
                         rel="noreferrer"
                         className="glass-btn" 
@@ -757,7 +793,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
                   {edu.degree === '12th' && edu.certificate_12th && (
                     edu.access_cert12 === 1 || edu.access_cert12 === 'true' || edu.access_cert12 === true ? (
                       <a 
-                        href={`${BACKEND_BASE}${edu.certificate_12th}`}
+                        href={resolveFileUrl(edu.certificate_12th)}
                         target="_blank"
                         rel="noreferrer"
                         className="glass-btn" 
@@ -778,7 +814,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
                   {edu.degree === 'Bachelor' && edu.certificate_bachelor && (
                     edu.access_certbach === 1 || edu.access_certbach === 'true' || edu.access_certbach === true ? (
                       <a 
-                        href={`${BACKEND_BASE}${edu.certificate_bachelor}`}
+                        href={resolveFileUrl(edu.certificate_bachelor)}
                         target="_blank"
                         rel="noreferrer"
                         className="glass-btn" 
@@ -1024,7 +1060,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
                             <div className="pf-project-image-wrap">
                               {proj.thumbnail ? (
                                 <img
-                                  src={`${BACKEND_BASE}${proj.thumbnail}`}
+                                  src={resolveFileUrl(proj.thumbnail)}
                                   alt={proj.title}
                                   className="pf-project-thumb"
                                 />
@@ -1101,7 +1137,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
                   <div className="pf-project-image-wrap">
                     {proj.thumbnail ? (
                       <img
-                        src={`${BACKEND_BASE}${proj.thumbnail}`}
+                        src={resolveFileUrl(proj.thumbnail)}
                         alt={proj.title}
                         className="pf-project-thumb"
                       />
@@ -1595,14 +1631,14 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
 
                     {/* Certificate */}
                     {selectedExperience.certificate_file && (
-                      <a href={`${BACKEND_BASE}${selectedExperience.certificate_file}`} target="_blank" rel="noreferrer" className="glass-btn" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.85rem', borderColor: 'var(--accent-green)' }}>
+                      <a href={resolveFileUrl(selectedExperience.certificate_file)} target="_blank" rel="noreferrer" className="glass-btn" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.85rem', borderColor: 'var(--accent-green)' }}>
                         <Award size={16} /> Certificate
                       </a>
                     )}
 
                     {/* LOR */}
                     {selectedExperience.lor_file && (
-                      <a href={`${BACKEND_BASE}${selectedExperience.lor_file}`} target="_blank" rel="noreferrer" className="glass-btn" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.85rem', borderColor: '#ffa500' }}>
+                      <a href={resolveFileUrl(selectedExperience.lor_file)} target="_blank" rel="noreferrer" className="glass-btn" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.85rem', borderColor: '#ffa500' }}>
                         <Award size={16} /> LOR Letter
                       </a>
                     )}
@@ -1804,14 +1840,14 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
             >
               {(secureDocUrl.toLowerCase().endsWith('.pdf') || secureDocUrl.startsWith('data:application/pdf')) ? (
                 <iframe 
-                  src={secureDocUrl.startsWith('data:application/pdf') ? secureDocUrl : `${secureDocUrl}#toolbar=0&navpanes=0&scrollbar=0`} 
+                  src={secureDocDisplayUrl} 
                   style={{ width: '100%', height: '65vh', border: 'none' }} 
                   title="PDF Viewer"
                 />
               ) : (
                 <div style={{ position: 'relative' }}>
                   <img 
-                    src={secureDocUrl} 
+                    src={secureDocDisplayUrl} 
                     alt="Secure Credential File" 
                     style={{ 
                       maxWidth: '100%', 
