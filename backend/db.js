@@ -957,11 +957,10 @@ async function handleJsonQuery(sql, params = []) {
       const req = db.document_requests.find(r => r.id === parseInt(params[0]));
       return [req ? [req] : []];
     }
-    if (sqlClean.includes('viewer_email = ?') && sqlClean.includes('access_token = ?')) {
-      const email = params[0];
-      const token = params[1];
-      const docId = params[2];
-      const filtered = db.document_requests.filter(r => r.viewer_email === email && r.access_token === token && r.document_id === docId && r.status === 'Approved');
+    if (sqlClean.includes('access_token = ?') && sqlClean.includes('status = "approved"')) {
+      const token = params[0];
+      const docIds = Array.isArray(params[1]) ? params[1] : [params[1]];
+      const filtered = db.document_requests.filter(r => r.access_token === token && docIds.includes(r.document_id) && r.status === 'Approved');
       return [filtered.sort((a,b) => b.id - a.id)];
     }
     return [[...db.document_requests].sort((a,b) => b.id - a.id)];

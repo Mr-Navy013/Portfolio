@@ -1732,9 +1732,9 @@ app.delete('/api/document-requests/:id', authenticateToken, async (req, res) => 
 
 // 6. Viewer verifies Access Token and retrieves document URL
 app.post('/api/document-requests/verify', async (req, res) => {
-  const { email, token, document_id } = req.body;
-  if (!email || !token || !document_id) {
-    return res.status(400).json({ message: 'Email, Verification Token, and Document ID are required' });
+  const { token, document_id } = req.body;
+  if (!token || !document_id) {
+    return res.status(400).json({ message: 'Verification Token and Document ID are required' });
   }
 
   try {
@@ -1750,12 +1750,12 @@ app.post('/api/document-requests/verify', async (req, res) => {
 
     const [rows] = await query(`
       SELECT * FROM document_requests 
-      WHERE viewer_email = ? AND access_token = ? AND document_id IN (?) AND status = "Approved" 
+      WHERE access_token = ? AND document_id IN (?) AND status = "Approved" 
       LIMIT 1
-    `, [email, token, checkDocIds]);
+    `, [token, checkDocIds]);
 
     if (rows.length === 0) {
-      return res.status(400).json({ message: 'Verification failed. Either email/token is invalid or request is not approved yet.' });
+      return res.status(400).json({ message: 'Verification failed. Either token is invalid or request is not approved yet.' });
     }
 
     // Access granted! Resolve the file path based on the document_id

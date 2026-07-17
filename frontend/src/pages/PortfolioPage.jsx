@@ -311,10 +311,30 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
   };
 
   const handleOpenPublicDocument = (url, name) => {
+    if (!url) return;
     const fullUrl = resolveFileUrl(url);
-    setSecureDocUrl(fullUrl);
-    setSecureDocName(name);
-    setShowSecureDocModal(true);
+    if (fullUrl.startsWith('data:')) {
+      try {
+        const parts = fullUrl.split(',');
+        const mime = parts[0].match(/:(.*?);/)[1];
+        const b64 = parts[1];
+        
+        const byteCharacters = atob(b64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: mime });
+        const blobUrl = URL.createObjectURL(blob);
+        window.open(blobUrl, '_blank');
+      } catch (err) {
+        console.error("Error opening base64 document:", err);
+        window.open(fullUrl, '_blank');
+      }
+    } else {
+      window.open(fullUrl, '_blank');
+    }
   };
 
   const handleSendPermissionRequest = async (e) => {
@@ -358,8 +378,8 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
   const handleVerifyAccessToken = async (e) => {
     e.preventDefault();
     setVerifyError('');
-    if (!verifyEmail || !verifyToken) {
-      setVerifyError('Email and Verification Token are required.');
+    if (!verifyToken) {
+      setVerifyError('Verification Token is required.');
       return;
     }
 
@@ -369,7 +389,6 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: verifyEmail,
           token: verifyToken,
           document_id: selectedDocId
         })
@@ -388,7 +407,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
         setSecureDocName(selectedDocName);
         setShowSecureDocModal(true);
       } else {
-        setVerifyError(data.message || 'Invalid email or token.');
+        setVerifyError(data.message || 'Invalid token.');
       }
     } catch (err) {
       setVerifyError('Connection error verifying token.');
@@ -1995,19 +2014,10 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
               <ShieldCheck size={22} className="text-green" /> Verify <span className="text-green">Access Code</span>
             </h3>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '-0.5rem', marginBottom: '1.25rem', textAlign: 'center' }}>
-              Enter your email and the 6-digit verification code to unlock: <strong style={{ color: '#fff' }}>{selectedDocName}</strong>.
+              Enter the 6-digit verification code to unlock: <strong style={{ color: '#fff' }}>{selectedDocName}</strong>.
             </p>
 
             <form onSubmit={handleVerifyAccessToken} className="pf-modal-form" style={{ gap: '1rem' }}>
-              <input
-                type="email"
-                required
-                className="glass-input"
-                placeholder="Enter registered email address"
-                value={verifyEmail}
-                onChange={e => setVerifyEmail(e.target.value)}
-                style={{ width: '100%' }}
-              />
               <input
                 type="text"
                 required
