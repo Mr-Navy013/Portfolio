@@ -168,60 +168,57 @@ const verifyFilesReadable = async (files) => {
   return true;
 };
 
-const uploadWithProgress = (url, method, body, headers, onProgress) => {
-  return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
+const uploadWithProgress = async (url, method, body, headers, onProgress) => {
+  // POST method tunneling: forward PUT/DELETE over POST to bypass restrictive mobile ISPs
+  let actualMethod = method;
+  let actualUrl = url;
+  if (method === 'PUT' || method === 'DELETE') {
+    actualMethod = 'POST';
+    const separator = actualUrl.includes('?') ? '&' : '?';
+    actualUrl = `${actualUrl}${separator}_method=${method}`;
+  }
 
-    // POST method tunneling: forward PUT/DELETE over POST to bypass restrictive mobile ISPs
-    let actualMethod = method;
-    let actualUrl = url;
-    if (method === 'PUT' || method === 'DELETE') {
-      actualMethod = 'POST';
-      const separator = actualUrl.includes('?') ? '&' : '?';
-      actualUrl = `${actualUrl}${separator}_method=${method}`;
-    }
+  // Simulate progress on fetch (no real streaming progress, but gives UI feedback)
+  let progressTimer = null;
+  if (onProgress) {
+    let fakeProgress = 0;
+    progressTimer = setInterval(() => {
+      fakeProgress = Math.min(fakeProgress + 10, 90);
+      onProgress(fakeProgress);
+    }, 300);
+  }
 
-    xhr.open(actualMethod, actualUrl);
-    
-    if (headers) {
-      Object.entries(headers).forEach(([key, val]) => {
-        xhr.setRequestHeader(key, val);
-      });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 90000); // 90 second timeout
+
+  try {
+    const res = await fetch(actualUrl, {
+      method: actualMethod,
+      headers: headers || {},
+      body: body,
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+    if (progressTimer) { clearInterval(progressTimer); onProgress && onProgress(100); }
+
+    if (res.ok) {
+      try { return await res.json(); } catch { return { success: true }; }
+    } else {
+      let errMsg = `Upload failed with status ${res.status}`;
+      try { const errBody = await res.json(); errMsg = errBody.message || errBody.error || errMsg; } catch {}
+      throw new Error(errMsg);
     }
-    
-    if (xhr.upload && onProgress) {
-      xhr.upload.addEventListener('progress', (e) => {
-        if (e.lengthComputable) {
-          const pct = Math.round((e.loaded / e.total) * 100);
-          onProgress(pct);
-        }
-      });
+  } catch (err) {
+    clearTimeout(timeoutId);
+    if (progressTimer) clearInterval(progressTimer);
+    if (err.name === 'AbortError') {
+      throw new Error('Network error: Request timed out. Please try again.');
     }
-    
-    xhr.onload = () => {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        try {
-          resolve(JSON.parse(xhr.responseText));
-        } catch {
-          resolve({ success: true });
-        }
-      } else {
-        try {
-          const err = JSON.parse(xhr.responseText);
-          reject(new Error(err.message || err.error || `Upload failed with status ${xhr.status}`));
-        } catch {
-          reject(new Error(`Upload failed with status ${xhr.status}`));
-        }
-      }
-    };
-    
-    xhr.onerror = () => {
-      reject(new Error('Network error: Failed to fetch.'));
-    };
-    
-    xhr.send(body);
-  });
+    throw new Error(`Network error: ${err.message || 'Failed to fetch.'}`);
+  }
 };
+
 
 // Resilient fetch for JSON-only requests: tunnels PUT/DELETE over POST to bypass restrictive mobile ISPs
 const resilientFetch = (url, options = {}) => {
