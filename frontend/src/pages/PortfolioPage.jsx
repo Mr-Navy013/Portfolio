@@ -202,6 +202,13 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   const [avatarError, setAvatarError] = useState(false);
 
+  // New state variables for dynamic message form
+  const [contactUserType, setContactUserType] = useState('viewer'); // 'viewer' | 'recruiter'
+  const [recruiterName, setRecruiterName] = useState('');
+  const [recruiterCompany, setRecruiterCompany] = useState('');
+  const [recruiterCurrentRole, setRecruiterCurrentRole] = useState('');
+  const [recruiterHiringRole, setRecruiterHiringRole] = useState('');
+
   useEffect(() => {
     setAvatarError(false);
   }, [profile?.profile_picture]);
@@ -405,22 +412,52 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
 
   const handleContactSubmit = async (e) => {
     e.preventDefault();
-    if (!contactEmail || !contactDesc) return;
+    
+    // Check validation based on selected user type
+    if (contactUserType === 'viewer') {
+      if (!contactEmail || !contactDesc) {
+        setToast({ show: true, message: 'Please fill in all mandatory fields.', type: 'error' });
+        return;
+      }
+    } else {
+      if (!recruiterName || !contactEmail || !recruiterCompany || !recruiterCurrentRole || !recruiterHiringRole) {
+        setToast({ show: true, message: 'Please fill in all recruiter fields marked with *.', type: 'error' });
+        return;
+      }
+    }
+
     try {
-      // 0.5 seconds delay
+      // Compile message body
+      const finalDesc = contactUserType === 'recruiter'
+        ? `💼 RECRUITER INQUIRY\n━━━━━━━━━━━━━━━━━━━━━━\n• Name: ${recruiterName}\n• Email: ${contactEmail}\n• Company: ${recruiterCompany}\n• Current Role: ${recruiterCurrentRole}\n• Hiring for: ${recruiterHiringRole}\n\n• Message:\n${contactDesc || 'No additional message provided.'}`
+        : contactDesc;
+
+      const finalPurpose = contactUserType === 'recruiter' ? 'hire' : 'review';
+
       await new Promise(resolve => setTimeout(resolve, 500));
       
       await fetch(`${API_BASE}/messages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sender_email: contactEmail, purpose: contactPurpose, description: contactDesc })
+        body: JSON.stringify({ sender_email: contactEmail, purpose: finalPurpose, description: finalDesc })
       });
+
       setToast({ show: true, message: 'Message sent successfully! Thank you for reaching out.', type: 'success' });
-      setContactEmail(''); setContactDesc('');
+      setContactEmail('');
+      setContactDesc('');
+      setRecruiterName('');
+      setRecruiterCompany('');
+      setRecruiterCurrentRole('');
+      setRecruiterHiringRole('');
       setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 1500);
     } catch {
       setToast({ show: true, message: 'Message sent successfully! Thank you for reaching out.', type: 'success' });
-      setContactEmail(''); setContactDesc('');
+      setContactEmail('');
+      setContactDesc('');
+      setRecruiterName('');
+      setRecruiterCompany('');
+      setRecruiterCurrentRole('');
+      setRecruiterHiringRole('');
       setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 1500);
     }
   };
@@ -445,6 +482,30 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
   const isResumePublic = profile?.is_resume_public !== 0 && profile?.is_resume_public !== false;
   const resumeUrl = (profile?.resume_url && isResumePublic) ? resolveFileUrl(profile.resume_url) : null;
   const resumeExistsButPrivate = profile?.resume_url && !isResumePublic;
+
+  const handleViewResume = (e) => {
+    if (resumeUrl && resumeUrl.startsWith('data:')) {
+      e.preventDefault();
+      try {
+        const parts = resumeUrl.split(',');
+        const mime = parts[0].match(/:(.*?);/)[1];
+        const b64 = parts[1];
+        
+        const byteCharacters = atob(b64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: mime });
+        const blobUrl = URL.createObjectURL(blob);
+        window.open(blobUrl, '_blank');
+      } catch (err) {
+        console.error("Error opening base64 PDF resume:", err);
+        window.open(resumeUrl, '_blank');
+      }
+    }
+  };
 
   const navLinks = [
     { href: '#about', label: 'About' },
@@ -668,7 +729,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
                 <Send size={17} /> Hire Me
               </button>
               {resumeUrl ? (
-                <a href={resumeUrl} target="_blank" rel="noreferrer" className="glass-btn-secondary pf-cta-btn">
+                <a href={resumeUrl} target="_blank" rel="noreferrer" className="glass-btn-secondary pf-cta-btn" onClick={handleViewResume}>
                   <Download size={17} style={{ color: '#00ff88' }} /> View Resume
                 </a>
               ) : (
@@ -1301,37 +1362,165 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
 
           <form onSubmit={handleContactSubmit} className="glass-panel pf-contact-form">
             <h3 className="pf-contact-form-title">Send a Message</h3>
-            <input
-              type="email"
-              required
-              className="glass-input"
-              placeholder="Enter your email"
-              value={contactEmail}
-              onChange={e => setContactEmail(e.target.value)}
-            />
-            <div className="pf-contact-radio-group">
-              {['hire', 'review'].map(p => (
-                <label key={p} className="pf-contact-radio-label">
-                  <input
-                    type="radio"
-                    name="cpurp"
-                    checked={contactPurpose === p}
-                    onChange={() => setContactPurpose(p)}
-                    style={{ accentColor: '#00ff88' }}
-                  />
-                  {p === 'hire' ? 'Hire for Project' : 'Send Review'}
-                </label>
-              ))}
+
+            {/* User Type Tabs */}
+            <div style={{ display: 'flex', gap: '0.5rem', background: 'rgba(255,255,255,0.03)', padding: '0.25rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '0.5rem' }}>
+              <button
+                type="button"
+                onClick={() => setContactUserType('viewer')}
+                style={{
+                  flex: 1,
+                  padding: '0.6rem 0.5rem',
+                  borderRadius: '6px',
+                  border: 'none',
+                  background: contactUserType === 'viewer' ? 'var(--accent-green)' : 'transparent',
+                  color: contactUserType === 'viewer' ? '#000' : '#fff',
+                  fontWeight: 600,
+                  fontSize: '0.8rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s'
+                }}
+              >
+                Viewer Feedback
+              </button>
+              <button
+                type="button"
+                onClick={() => setContactUserType('recruiter')}
+                style={{
+                  flex: 1,
+                  padding: '0.6rem 0.5rem',
+                  borderRadius: '6px',
+                  border: 'none',
+                  background: contactUserType === 'recruiter' ? 'var(--accent-green)' : 'transparent',
+                  color: contactUserType === 'recruiter' ? '#000' : '#fff',
+                  fontWeight: 600,
+                  fontSize: '0.8rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s'
+                }}
+              >
+                Recruiter Inquiry
+              </button>
             </div>
-            <textarea
-              rows={3}
-              required
-              className="glass-input"
-              placeholder="Your message..."
-              value={contactDesc}
-              onChange={e => setContactDesc(e.target.value)}
-            />
-            <button type="submit" className="glass-btn pf-contact-submit-btn">
+
+            {contactUserType === 'viewer' ? (
+              <>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                    Your Email <span style={{ color: '#ff5252' }}>*</span>
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    className="glass-input"
+                    placeholder="Enter your email address"
+                    value={contactEmail}
+                    onChange={e => setContactEmail(e.target.value)}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                    Message / Review / Feedback <span style={{ color: '#ff5252' }}>*</span>
+                  </label>
+                  <textarea
+                    rows={4}
+                    required
+                    className="glass-input"
+                    placeholder="Write your review or feedback here..."
+                    value={contactDesc}
+                    onChange={e => setContactDesc(e.target.value)}
+                  />
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                    Your Name <span style={{ color: '#ff5252' }}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    className="glass-input"
+                    placeholder="Enter your full name"
+                    value={recruiterName}
+                    onChange={e => setRecruiterName(e.target.value)}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                    Your Professional Email <span style={{ color: '#ff5252' }}>*</span>
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    className="glass-input"
+                    placeholder="Enter your work email address"
+                    value={contactEmail}
+                    onChange={e => setContactEmail(e.target.value)}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                    Company Name <span style={{ color: '#ff5252' }}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    className="glass-input"
+                    placeholder="Enter your company name"
+                    value={recruiterCompany}
+                    onChange={e => setRecruiterCompany(e.target.value)}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                    Designation / Job Role in Company <span style={{ color: '#ff5252' }}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    className="glass-input"
+                    placeholder="Enter your designation (e.g. Talent Acquisition, Lead Developer)"
+                    value={recruiterCurrentRole}
+                    onChange={e => setRecruiterCurrentRole(e.target.value)}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                    Hiring position / Job Role <span style={{ color: '#ff5252' }}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    className="glass-input"
+                    placeholder="Enter position you are hiring for (e.g. MERN Stack Engineer)"
+                    value={recruiterHiringRole}
+                    onChange={e => setRecruiterHiringRole(e.target.value)}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                    Additional Message / Guidelines (Optional)
+                  </label>
+                  <textarea
+                    rows={3}
+                    className="glass-input"
+                    placeholder="Write details about the opportunity..."
+                    value={contactDesc}
+                    onChange={e => setContactDesc(e.target.value)}
+                  />
+                </div>
+              </>
+            )}
+
+            <button type="submit" className="glass-btn pf-contact-submit-btn" style={{ marginTop: '0.5rem' }}>
               <Send size={17} /> Send Message
             </button>
             {contactSuccess && <p className="pf-contact-success">{contactSuccess}</p>}
@@ -1857,7 +2046,18 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
                 WebkitUserSelect: 'none'
               }}
             >
-              {(secureDocUrl.toLowerCase().endsWith('.pdf') || secureDocUrl.startsWith('data:application/pdf')) ? (
+              {secureDocUrl.includes('/uploads/') ? (
+                <div style={{ textAlign: 'center', color: '#ffaa00', padding: '2.5rem 1.5rem', maxWidth: '500px' }}>
+                  <ShieldCheck size={48} style={{ margin: '0 auto 1.25rem', display: 'block', color: '#ffaa00' }} />
+                  <p style={{ fontWeight: 700, fontSize: '1.1rem', color: '#fff', marginBottom: '0.75rem' }}>Legacy File Not Found</p>
+                  <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)', lineHeight: 1.6, marginBottom: '1.25rem' }}>
+                    This document was uploaded before the database migration and is stored on Render's ephemeral disk. Because Render restarts periodically, legacy files on disk are wiped.
+                  </p>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--accent-green)', fontWeight: 600, lineHeight: 1.5 }}>
+                    Please log in to your Dashboard, edit this education entry, and re-upload the file so it is saved securely as Base64 directly in the database.
+                  </p>
+                </div>
+              ) : (secureDocUrl.toLowerCase().endsWith('.pdf') || secureDocUrl.startsWith('data:application/pdf')) ? (
                 <iframe 
                   src={secureDocDisplayUrl} 
                   style={{ width: '100%', height: '65vh', border: 'none' }} 

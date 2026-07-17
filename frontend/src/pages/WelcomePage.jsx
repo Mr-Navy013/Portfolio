@@ -42,7 +42,7 @@ function WelcomePage({ navigateTo }) {
             className="glass-btn welcome-action-btn"
           >
             <Eye size={20} />
-            Enter as Viewer
+            Enter as Viewer or recruiter
           </button>
 
           <div className="welcome-divider">
