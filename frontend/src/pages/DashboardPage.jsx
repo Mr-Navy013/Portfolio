@@ -260,6 +260,22 @@ const resilientFetch = (url, options = {}) => {
   return fetch(actualUrl, { method, ...rest });
 };
 
+const getDisplayFileName = (file) => {
+  if (!file) return '';
+  if (typeof file !== 'string') return file.name || 'File selected';
+  if (file.startsWith('data:')) {
+    const mimeMatch = file.match(/^data:([^;]+);/);
+    if (mimeMatch) {
+      const mime = mimeMatch[1];
+      if (mime === 'application/pdf') return 'Uploaded Document (PDF)';
+      if (mime.startsWith('image/')) return `Uploaded Image (${mime.split('/')[1].toUpperCase()})`;
+      return `Uploaded Document (${mime.split('/')[1].toUpperCase()})`;
+    }
+    return 'Uploaded Document';
+  }
+  return file.substring(file.lastIndexOf('/') + 1);
+};
+
 const DragDropUpload = ({ onFileSelect, accept, currentFile, placeholder, required = false }) => {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef(null);
@@ -289,7 +305,7 @@ const DragDropUpload = ({ onFileSelect, accept, currentFile, placeholder, requir
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', width: '100%', overflow: 'hidden' }}>
       <div
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -298,7 +314,7 @@ const DragDropUpload = ({ onFileSelect, accept, currentFile, placeholder, requir
         style={{
           border: isDragging ? '2px solid var(--accent-green)' : '1px dashed var(--glass-border)',
           borderRadius: '12px',
-          padding: '1.5rem',
+          padding: '1.5rem 1rem',
           textAlign: 'center',
           background: isDragging ? 'rgba(0, 255, 136, 0.08)' : 'rgba(255, 255, 255, 0.02)',
           cursor: 'pointer',
@@ -309,7 +325,9 @@ const DragDropUpload = ({ onFileSelect, accept, currentFile, placeholder, requir
           gap: '0.5rem',
           boxShadow: isDragging ? '0 0 15px rgba(0, 255, 136, 0.2)' : 'none',
           marginTop: '0.25rem',
-          marginBottom: '0.25rem'
+          marginBottom: '0.25rem',
+          overflow: 'hidden',
+          width: '100%'
         }}
         className="drag-drop-zone"
       >
@@ -326,9 +344,26 @@ const DragDropUpload = ({ onFileSelect, accept, currentFile, placeholder, requir
           required={required && !currentFile}
         />
         <Upload size={24} style={{ color: isDragging ? 'var(--accent-green)' : 'rgba(255,255,255,0.4)', transition: 'color 0.2s' }} />
-        <span style={{ fontSize: '0.85rem', color: '#fff', fontWeight: 500 }}>
+        <span style={{ 
+          fontSize: '0.85rem', 
+          color: '#fff', 
+          fontWeight: 500,
+          maxWidth: '100%',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+          display: 'block'
+        }}>
           {currentFile ? (
-            <span style={{ color: 'var(--accent-green)', fontWeight: 600 }}>Selected: {currentFile.name || (typeof currentFile === 'string' ? currentFile.substring(currentFile.lastIndexOf('/') + 1) : 'File selected')}</span>
+            <span style={{ 
+              color: 'var(--accent-green)', 
+              fontWeight: 600,
+              maxWidth: '100%',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              display: 'inline-block'
+            }}>Selected: {getDisplayFileName(currentFile)}</span>
           ) : (
             placeholder || 'Drag & drop file here or click to upload'
           )}
