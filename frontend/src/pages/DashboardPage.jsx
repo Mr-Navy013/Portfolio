@@ -168,7 +168,10 @@ const verifyFilesReadable = async (files) => {
   return true;
 };
 
-const uploadWithProgress = async (url, method, body, headers, onProgress) => {
+const uploadWithProgress = async (url, method, body, headers, onProgress, _retryCount = 0) => {
+  const MAX_RETRIES = 2; // Total 3 attempts (1 original + 2 retries)
+  const RETRY_DELAY = 2500; // 2.5 seconds between retries
+
   // POST method tunneling: forward PUT/DELETE over POST to bypass restrictive mobile ISPs
   let actualMethod = method;
   let actualUrl = url;
@@ -181,15 +184,36 @@ const uploadWithProgress = async (url, method, body, headers, onProgress) => {
   // Simulate progress on fetch (no real streaming progress, but gives UI feedback)
   let progressTimer = null;
   if (onProgress) {
-    let fakeProgress = 0;
+    let fakeProgress = _retryCount > 0 ? 10 : 0;
     progressTimer = setInterval(() => {
-      fakeProgress = Math.min(fakeProgress + 10, 90);
+      fakeProgress = Math.min(fakeProgress + 8, 90);
       onProgress(fakeProgress);
-    }, 300);
+    }, 400);
   }
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 90000); // 90 second timeout
+
+  const cleanup = () => {
+    clearTimeout(timeoutId);
+    if (progressTimer) clearInterval(progressTimer);
+  };
+
+  const shouldRetry = (statusOrErr) => {
+    if (_retryCount >= MAX_RETRIES) return false;
+    if (typeof statusOrErr === 'number') {
+      return [502, 503, 504, 0].includes(statusOrErr);
+    }
+    return true; // Retry on network errors
+  };
+
+  const doRetry = async () => {
+    cleanup();
+    console.log(`[Upload] Retry ${_retryCount + 1}/${MAX_RETRIES} after ${RETRY_DELAY}ms...`);
+    if (onProgress) onProgress(5);
+    await new Promise(r => setTimeout(r, RETRY_DELAY));
+    return uploadWithProgress(url, method, body, headers, onProgress, _retryCount + 1);
+  };
 
   try {
     const res = await fetch(actualUrl, {
@@ -199,25 +223,29 @@ const uploadWithProgress = async (url, method, body, headers, onProgress) => {
       signal: controller.signal,
     });
 
-    clearTimeout(timeoutId);
-    if (progressTimer) { clearInterval(progressTimer); onProgress && onProgress(100); }
+    cleanup();
+    if (onProgress) onProgress(100);
 
     if (res.ok) {
       try { return await res.json(); } catch { return { success: true }; }
+    } else if (shouldRetry(res.status)) {
+      return doRetry();
     } else {
       let errMsg = `Upload failed with status ${res.status}`;
       try { const errBody = await res.json(); errMsg = errBody.message || errBody.error || errMsg; } catch {}
       throw new Error(errMsg);
     }
   } catch (err) {
-    clearTimeout(timeoutId);
-    if (progressTimer) clearInterval(progressTimer);
+    cleanup();
     if (err.name === 'AbortError') {
-      throw new Error('Network error: Request timed out. Please try again.');
+      if (shouldRetry(0)) return doRetry();
+      throw new Error('Request timed out after multiple attempts. The server may be starting up — please try again in 30 seconds.');
     }
+    if (shouldRetry(0)) return doRetry();
     throw new Error(`Network error: ${err.message || 'Failed to fetch.'}`);
   }
 };
+
 
 
 // Resilient fetch for JSON-only requests: tunnels PUT/DELETE over POST to bypass restrictive mobile ISPs

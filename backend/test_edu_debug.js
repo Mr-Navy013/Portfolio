@@ -1,57 +1,68 @@
+// Simulate the EXACT same request the browser makes during education edit+save
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
 const JWT_SECRET = process.env.JWT_SECRET || 'PortfolioNavyCutSecretKey2026!';
 const token = jwt.sign({ id: 1, username: 'rugha' }, JWT_SECRET, { expiresIn: '1h' });
 
-async function testEduEdit() {
-  console.log('Testing education PUT with exact form values...\n');
-
-  // First, get the list of education items to find the real ID
-  const listRes = await fetch('https://portfolio-f4os.onrender.com/api/education', {
-    headers: { 'Authorization': `Bearer ${token}` }
-  });
+async function testExactBrowserRequest() {
+  // First fetch education to get existing data (like the dashboard does)
+  console.log('1. Fetching education list...');
+  const t0 = Date.now();
+  const listRes = await fetch('https://portfolio-f4os.onrender.com/api/education');
   const list = await listRes.json();
-  console.log('Education list:', JSON.stringify(list.map(e => ({ id: e.id, school: e.school, degree: e.degree })), null, 2));
+  console.log(`   Done in ${Date.now() - t0}ms. Found ${list.length} records.`);
 
-  if (!list || !list.length) {
-    console.log('No education records found!');
-    return;
-  }
+  const rec = list.find(e => e.degree === '12th');
+  if (!rec) { console.log('No 12th record found!'); return; }
+  console.log(`   Editing: id=${rec.id} school="${rec.school}"`);
 
-  // Find the 12th record
-  const rec = list.find(e => e.degree === '12th') || list[0];
-  console.log('\nEditing record:', rec.id, rec.school, rec.degree);
-
+  // Build the EXACT FormData the frontend would build
   const formData = new FormData();
-  formData.append('school', rec.school || 'Christ college');
-  formData.append('degree', rec.degree || '12th');
+  formData.append('school', rec.school);
+  formData.append('degree', rec.degree);
   formData.append('field_of_study', 'Intermediate');
-  formData.append('start_date', rec.passing_year || '2023');
-  formData.append('end_date', rec.passing_year || '2023');
-  formData.append('passing_year', rec.passing_year || '2023');
-  formData.append('full_marks', rec.full_marks != null ? String(rec.full_marks) : '600');
-  formData.append('marks_obtained', rec.marks_obtained != null ? String(rec.marks_obtained) : '371');
+  formData.append('start_date', rec.passing_year || rec.end_date);
+  formData.append('end_date', rec.passing_year || rec.end_date);
+  formData.append('passing_year', rec.passing_year || '');
+  formData.append('full_marks', String(rec.full_marks || '600'));
+  formData.append('marks_obtained', String(rec.marks_obtained || '371'));
   const pct = rec.percentage != null ? String(rec.percentage) : '61.83';
   formData.append('percentage', pct);
   formData.append('board', rec.board || 'CBSE');
-  formData.append('description', rec.description || 'test');
+  const desc = `Completed 12th standard (Intermediate) from ${rec.board || 'CBSE'} Board at ${rec.school} in the year ${rec.passing_year} with a score of ${rec.marks_obtained}/${rec.full_marks} (${pct}%).`;
+  formData.append('description', desc);
   formData.append('access_cert10', rec.access_cert10 ? '1' : '0');
   formData.append('access_cert12', rec.access_cert12 ? '1' : '0');
   formData.append('access_certbach', rec.access_certbach ? '1' : '0');
+  formData.append('board', rec.board || '');
 
+  // Send as POST with _method=PUT (exactly like the frontend does)
   const url = `https://portfolio-f4os.onrender.com/api/education/${rec.id}?_method=PUT`;
-  console.log('\nSending POST to:', url);
-
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${token}` },
-    body: formData
-  });
-
-  console.log('Status:', res.status);
-  const text = await res.text();
-  console.log('Response:', text);
+  console.log(`\n2. Sending POST to: ${url}`);
+  const t1 = Date.now();
+  
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 90000);
+    
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` },
+      body: formData,
+      signal: controller.signal,
+    });
+    
+    clearTimeout(timeoutId);
+    console.log(`   Status: ${res.status} (${Date.now() - t1}ms)`);
+    console.log(`   Headers:`, Object.fromEntries(res.headers.entries()));
+    const text = await res.text();
+    console.log(`   Response: ${text}`);
+    console.log('\n✅ SUCCESS - No network error!');
+  } catch (err) {
+    console.log(`   ❌ ERROR after ${Date.now() - t1}ms: ${err.message}`);
+    console.log(`   Error name: ${err.name}`);
+  }
 }
 
-testEduEdit().catch(console.error);
+testExactBrowserRequest().catch(console.error);
