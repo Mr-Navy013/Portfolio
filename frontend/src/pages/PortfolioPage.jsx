@@ -1384,8 +1384,27 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
             </div>
           </div>
         </div>
-        <div className="pf-footer-bottom">
-          &copy; {new Date().getFullYear()} {(name.toLowerCase() === 'navycut' ? "Navy's Portfolio" : name).toUpperCase()}. All Rights Reserved.
+        <div className="pf-footer-bottom" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <span>&copy; {new Date().getFullYear()} {(name.toLowerCase() === 'navycut' ? "Navy's Portfolio" : name).toUpperCase()}. All Rights Reserved.</span>
+          <button
+            onClick={() => navigateTo('login')}
+            style={{
+              background: 'none',
+              border: '1px solid rgba(0,255,136,0.2)',
+              color: 'rgba(0,255,136,0.5)',
+              cursor: 'pointer',
+              fontSize: '0.7rem',
+              padding: '0.2rem 0.6rem',
+              borderRadius: '4px',
+              letterSpacing: '0.5px',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={e => { e.target.style.color = '#00ff88'; e.target.style.borderColor = '#00ff88'; }}
+            onMouseLeave={e => { e.target.style.color = 'rgba(0,255,136,0.5)'; e.target.style.borderColor = 'rgba(0,255,136,0.2)'; }}
+            title="Owner Login"
+          >
+            Owner Login
+          </button>
         </div>
       </footer>
 
