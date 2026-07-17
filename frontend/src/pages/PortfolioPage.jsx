@@ -84,6 +84,8 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
   const [verifyError, setVerifyError] = useState('');
   const [secureDocUrl, setSecureDocUrl] = useState('');
   const [secureDocDisplayUrl, setSecureDocDisplayUrl] = useState('');
+  const [isSubmittingRequest, setIsSubmittingRequest] = useState(false);
+  const [isVerifyingToken, setIsVerifyingToken] = useState(false);
 
   useEffect(() => {
     if (secureDocUrl && secureDocUrl.startsWith('data:')) {
@@ -308,6 +310,13 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
     setShowRequestModal(true);
   };
 
+  const handleOpenPublicDocument = (url, name) => {
+    const fullUrl = resolveFileUrl(url);
+    setSecureDocUrl(fullUrl);
+    setSecureDocName(name);
+    setShowSecureDocModal(true);
+  };
+
   const handleSendPermissionRequest = async (e) => {
     e.preventDefault();
     if (!viewerName || !viewerRequestEmail) {
@@ -315,6 +324,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
       return;
     }
 
+    setIsSubmittingRequest(true);
     try {
       const res = await fetch(`${API_BASE}/document-requests`, {
         method: 'POST',
@@ -331,13 +341,17 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
       if (res.ok) {
         setRequestSubmitted(true);
         setToast({ show: true, message: 'Request sent successfully!', type: 'success' });
-        setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 2000);
+        setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 1200);
       } else {
         const data = await res.json();
         setToast({ show: true, message: data.message || 'Request failed.', type: 'error' });
+        setTimeout(() => setToast({ show: false, message: '', type: 'error' }), 1500);
       }
     } catch (err) {
       setToast({ show: true, message: 'Connection error.', type: 'error' });
+      setTimeout(() => setToast({ show: false, message: '', type: 'error' }), 1500);
+    } finally {
+      setIsSubmittingRequest(false);
     }
   };
 
@@ -349,6 +363,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
       return;
     }
 
+    setIsVerifyingToken(true);
     try {
       const res = await fetch(`${API_BASE}/document-requests/verify`, {
         method: 'POST',
@@ -364,7 +379,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
 
       if (res.ok) {
         setToast({ show: true, message: 'Access verification successful!', type: 'success' });
-        setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 2000);
+        setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 1200);
         setShowVerifyModal(false);
 
         // Open secure document viewer modal!
@@ -377,6 +392,8 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
       }
     } catch (err) {
       setVerifyError('Connection error verifying token.');
+    } finally {
+      setIsVerifyingToken(false);
     }
   };
 
@@ -729,9 +746,13 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
                 <Send size={17} /> Hire Me
               </button>
               {resumeUrl ? (
-                <a href={resumeUrl} target="_blank" rel="noreferrer" className="glass-btn-secondary pf-cta-btn" onClick={handleViewResume}>
+                <button 
+                  onClick={() => handleOpenPublicDocument(resumeUrl, 'Resume / CV')} 
+                  className="glass-btn-secondary pf-cta-btn"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}
+                >
                   <Download size={17} style={{ color: '#00ff88' }} /> View Resume
-                </a>
+                </button>
               ) : (
                 <button
                   className="glass-btn-secondary pf-cta-btn"
@@ -832,15 +853,13 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
                 <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.8rem', flexWrap: 'wrap' }}>
                   {edu.degree === '10th' && edu.certificate_10th && (
                     edu.access_cert10 === 1 || edu.access_cert10 === 'true' || edu.access_cert10 === true ? (
-                      <a 
-                        href={resolveFileUrl(edu.certificate_10th)}
-                        target="_blank"
-                        rel="noreferrer"
+                      <button 
+                        onClick={() => handleOpenPublicDocument(edu.certificate_10th, `${edu.school} - 10th Certificate`)}
                         className="glass-btn" 
-                        style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', gap: '0.4rem', height: 'auto', display: 'flex', alignItems: 'center', textDecoration: 'none' }}
+                        style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', gap: '0.4rem', height: 'auto', display: 'flex', alignItems: 'center' }}
                       >
                         <Eye size={12} /> View 10th Certificate
-                      </a>
+                      </button>
                     ) : (
                       <button 
                         onClick={() => handleOpenPermissionRequest(`edu_${edu.id}_cert10`, '10th Certificate')} 
@@ -855,15 +874,13 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
                     <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                       {edu.certificate_12th && (
                         edu.access_cert12 === 1 || edu.access_cert12 === 'true' || edu.access_cert12 === true ? (
-                          <a 
-                            href={resolveFileUrl(edu.certificate_12th)}
-                            target="_blank"
-                            rel="noreferrer"
+                          <button 
+                            onClick={() => handleOpenPublicDocument(edu.certificate_12th, `${edu.school} - 12th Certificate`)}
                             className="glass-btn" 
-                            style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', gap: '0.4rem', height: 'auto', display: 'flex', alignItems: 'center', textDecoration: 'none' }}
+                            style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', gap: '0.4rem', height: 'auto', display: 'flex', alignItems: 'center' }}
                           >
                             <Eye size={12} /> View 12th Certificate
-                          </a>
+                          </button>
                         ) : (
                           <button 
                             onClick={() => handleOpenPermissionRequest(`edu_${edu.id}_cert12`, '12th Certificate')} 
@@ -877,15 +894,13 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
 
                       {edu.marksheet_12th && (
                         edu.access_cert12 === 1 || edu.access_cert12 === 'true' || edu.access_cert12 === true ? (
-                          <a 
-                            href={resolveFileUrl(edu.marksheet_12th)}
-                            target="_blank"
-                            rel="noreferrer"
+                          <button 
+                            onClick={() => handleOpenPublicDocument(edu.marksheet_12th, `${edu.school} - 12th Marksheet`)}
                             className="glass-btn" 
-                            style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', gap: '0.4rem', height: 'auto', display: 'flex', alignItems: 'center', textDecoration: 'none' }}
+                            style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', gap: '0.4rem', height: 'auto', display: 'flex', alignItems: 'center' }}
                           >
                             <Eye size={12} /> View 12th Marksheet
-                          </a>
+                          </button>
                         ) : (
                           <button 
                             onClick={() => handleOpenPermissionRequest(`edu_${edu.id}_marks12`, '12th Marksheet')} 
@@ -900,15 +915,13 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
                   )}
                   {edu.degree === 'Bachelor' && edu.certificate_bachelor && (
                     edu.access_certbach === 1 || edu.access_certbach === 'true' || edu.access_certbach === true ? (
-                      <a 
-                        href={resolveFileUrl(edu.certificate_bachelor)}
-                        target="_blank"
-                        rel="noreferrer"
+                      <button 
+                        onClick={() => handleOpenPublicDocument(edu.certificate_bachelor, `${edu.school} - Bachelor Degree Certificate`)}
                         className="glass-btn" 
-                        style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', gap: '0.4rem', height: 'auto', display: 'flex', alignItems: 'center', textDecoration: 'none' }}
+                        style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', gap: '0.4rem', height: 'auto', display: 'flex', alignItems: 'center' }}
                       >
                         <Eye size={12} /> View Degree Certificate
-                      </a>
+                      </button>
                     ) : (
                       <button 
                         onClick={() => handleOpenPermissionRequest(`edu_${edu.id}_certbach`, 'Consolidated Degree Certificate')} 
@@ -1865,16 +1878,24 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
 
                     {/* Certificate */}
                     {selectedExperience.certificate_file && (
-                      <a href={resolveFileUrl(selectedExperience.certificate_file)} target="_blank" rel="noreferrer" className="glass-btn" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.85rem', borderColor: 'var(--accent-green)' }}>
+                      <button 
+                        onClick={() => handleOpenPublicDocument(selectedExperience.certificate_file, `${selectedExperience.company} - Certificate`)}
+                        className="glass-btn" 
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.85rem', borderColor: 'var(--accent-green)', background: 'none', cursor: 'pointer' }}
+                      >
                         <Award size={16} /> Certificate
-                      </a>
+                      </button>
                     )}
 
                     {/* LOR */}
                     {selectedExperience.lor_file && (
-                      <a href={resolveFileUrl(selectedExperience.lor_file)} target="_blank" rel="noreferrer" className="glass-btn" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.85rem', borderColor: '#ffa500' }}>
+                      <button 
+                        onClick={() => handleOpenPublicDocument(selectedExperience.lor_file, `${selectedExperience.company} - LOR Letter`)}
+                        className="glass-btn" 
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.85rem', borderColor: '#ffa500', background: 'none', cursor: 'pointer' }}
+                      >
                         <Award size={16} /> LOR Letter
-                      </a>
+                      </button>
                     )}
 
                   </div>
@@ -1929,8 +1950,8 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
                   style={{ width: '100%', resize: 'none' }}
                 />
                 
-                <button type="submit" className="glass-btn pf-modal-btn" style={{ width: '100%', justifyContent: 'center', marginTop: '0.5rem' }}>
-                  Submit Access Request
+                <button type="submit" disabled={isSubmittingRequest} className="glass-btn pf-modal-btn" style={{ width: '100%', justifyContent: 'center', marginTop: '0.5rem' }}>
+                  {isSubmittingRequest ? 'Submitting Request...' : 'Submit Access Request'}
                 </button>
 
                 <div style={{ textAlign: 'center', marginTop: '0.5rem' }}>
@@ -2004,8 +2025,8 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
                 </p>
               )}
 
-              <button type="submit" className="glass-btn pf-modal-btn" style={{ width: '100%', justifyContent: 'center', marginTop: '0.5rem' }}>
-                Verify & Open Document
+              <button type="submit" disabled={isVerifyingToken} className="glass-btn pf-modal-btn" style={{ width: '100%', justifyContent: 'center', marginTop: '0.5rem' }}>
+                {isVerifyingToken ? 'Verifying Token...' : 'Verify & Open Document'}
               </button>
 
               <div style={{ textAlign: 'center', marginTop: '0.5rem' }}>
@@ -2026,18 +2047,19 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
       {showSecureDocModal && (
         <div 
           className="pf-modal-overlay" 
-          style={{ background: 'rgba(0, 0, 0, 0.96)', backdropFilter: 'blur(20px)', zIndex: 999999 }}
+          style={{ background: 'rgba(0, 0, 0, 0.96)', backdropFilter: 'blur(20px)', zIndex: 999999, padding: '1rem' }}
           onClick={e => { if (e.target === e.currentTarget) setShowSecureDocModal(false); }}
         >
           <div 
             className="glass-panel" 
             style={{ 
-              width: '95%', 
-              maxWidth: '850px', 
+              width: '98%', 
+              maxWidth: '1600px', 
+              height: '92vh',
               background: '#040806', 
               border: '1px solid rgba(0, 255, 136, 0.3)', 
               borderRadius: '12px', 
-              padding: '1.5rem',
+              padding: '1rem 1.5rem',
               display: 'flex',
               flexDirection: 'column',
               gap: '1rem',
@@ -2064,9 +2086,11 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
                 alignItems: 'center', 
                 background: '#020403', 
                 borderRadius: '8px', 
-                padding: '1rem',
-                minHeight: '400px',
-                overflow: 'auto',
+                padding: '0.5rem',
+                flex: 1,
+                width: '100%',
+                height: '100%',
+                overflow: 'hidden',
                 position: 'relative',
                 userSelect: 'none',
                 WebkitUserSelect: 'none'
@@ -2086,17 +2110,17 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
               ) : (secureDocUrl.toLowerCase().endsWith('.pdf') || secureDocUrl.startsWith('data:application/pdf')) ? (
                 <iframe 
                   src={secureDocDisplayUrl} 
-                  style={{ width: '100%', height: '65vh', border: 'none' }} 
+                  style={{ width: '100%', height: '100%', border: 'none', borderRadius: '4px' }} 
                   title="PDF Viewer"
                 />
               ) : (
-                <div style={{ position: 'relative' }}>
+                <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                   <img 
                     src={secureDocDisplayUrl} 
                     alt="Secure Credential File" 
                     style={{ 
                       maxWidth: '100%', 
-                      maxHeight: '65vh', 
+                      maxHeight: '100%', 
                       objectFit: 'contain',
                       pointerEvents: 'none',
                       userSelect: 'none',

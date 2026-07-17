@@ -19,6 +19,75 @@ const resolveFileUrl = (url) => {
   return `${BACKEND_BASE}${url}`;
 };
 
+const handleDownloadFile = (e, url, filename) => {
+  if (!url) return;
+  e.preventDefault();
+  const resolvedUrl = resolveFileUrl(url);
+  if (resolvedUrl.startsWith('data:')) {
+    try {
+      const parts = resolvedUrl.split(',');
+      const mime = parts[0].match(/:(.*?);/)[1];
+      const b64 = parts[1];
+      
+      const byteCharacters = atob(b64);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: mime });
+      const blobUrl = URL.createObjectURL(blob);
+      
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      console.error("Error downloading base64 file:", err);
+      window.open(resolvedUrl, '_blank');
+    }
+  } else {
+    const a = document.createElement('a');
+    a.href = resolvedUrl;
+    a.download = filename;
+    a.target = '_blank';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+};
+
+const handleViewFile = (e, url) => {
+  if (!url) return;
+  e.preventDefault();
+  const resolvedUrl = resolveFileUrl(url);
+  if (resolvedUrl.startsWith('data:')) {
+    try {
+      const parts = resolvedUrl.split(',');
+      const mime = parts[0].match(/:(.*?);/)[1];
+      const b64 = parts[1];
+      
+      const byteCharacters = atob(b64);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: mime });
+      const blobUrl = URL.createObjectURL(blob);
+      window.open(blobUrl, '_blank');
+    } catch (err) {
+      console.error("Error viewing base64 file:", err);
+      window.open(resolvedUrl, '_blank');
+    }
+  } else {
+    window.open(resolvedUrl, '_blank');
+  }
+};
+
 const compressImage = (file, maxWidth = 1200, maxHeight = 1200, quality = 0.7) => {
   return new Promise((resolve) => {
     const reader = new FileReader();
@@ -3590,35 +3659,55 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
 
                     <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: '0.75rem' }}>
                       {edu.degree === '10th' && edu.certificate_10th && (
-                        <a href={resolveFileUrl(edu.certificate_10th)} target="_blank" rel="noreferrer" className="glass-btn-secondary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', textDecoration: 'none' }} download>
+                        <button 
+                          onClick={(e) => handleDownloadFile(e, edu.certificate_10th, `${edu.school}_10th_Certificate.pdf`)} 
+                          className="glass-btn-secondary" 
+                          style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', border: '1px solid var(--glass-border)', background: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                        >
                           <Download size={12} /> 10th Certificate
-                        </a>
+                        </button>
                       )}
                       {edu.degree === '12th' && (
                         <>
                           {edu.certificate_12th && (
-                            <a href={resolveFileUrl(edu.certificate_12th)} target="_blank" rel="noreferrer" className="glass-btn-secondary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', textDecoration: 'none' }} download>
+                            <button 
+                              onClick={(e) => handleDownloadFile(e, edu.certificate_12th, `${edu.school}_12th_Certificate.pdf`)} 
+                              className="glass-btn-secondary" 
+                              style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', border: '1px solid var(--glass-border)', background: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                            >
                               <Download size={12} /> 12th Certificate
-                            </a>
+                            </button>
                           )}
                           {edu.marksheet_12th && (
-                            <a href={resolveFileUrl(edu.marksheet_12th)} target="_blank" rel="noreferrer" className="glass-btn-secondary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', textDecoration: 'none' }} download>
+                            <button 
+                              onClick={(e) => handleDownloadFile(e, edu.marksheet_12th, `${edu.school}_12th_Marksheet.pdf`)} 
+                              className="glass-btn-secondary" 
+                              style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', border: '1px solid var(--glass-border)', background: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                            >
                               <Download size={12} /> 12th Marksheet
-                            </a>
+                            </button>
                           )}
                         </>
                       )}
                       {edu.degree === 'Bachelor' && (
                         <>
                           {edu.gradesheet_bachelor && (
-                            <a href={resolveFileUrl(edu.gradesheet_bachelor)} target="_blank" rel="noreferrer" className="glass-btn-secondary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', textDecoration: 'none' }} download>
+                            <button 
+                              onClick={(e) => handleDownloadFile(e, edu.gradesheet_bachelor, `${edu.school}_Bachelor_Gradesheet.pdf`)} 
+                              className="glass-btn-secondary" 
+                              style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', border: '1px solid var(--glass-border)', background: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                            >
                               <Download size={12} /> Semester Gradesheet
-                            </a>
+                            </button>
                           )}
                           {edu.certificate_bachelor && (
-                            <a href={resolveFileUrl(edu.certificate_bachelor)} target="_blank" rel="noreferrer" className="glass-btn-secondary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', textDecoration: 'none' }} download>
+                            <button 
+                              onClick={(e) => handleDownloadFile(e, edu.certificate_bachelor, `${edu.school}_Bachelor_Degree_Certificate.pdf`)} 
+                              className="glass-btn-secondary" 
+                              style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', border: '1px solid var(--glass-border)', background: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                            >
                               <Download size={12} /> Degree Certificate
-                            </a>
+                            </button>
                           )}
                         </>
                       )}
@@ -3749,14 +3838,22 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                     {(exp.certificate_file || exp.lor_file) && (
                       <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: '0.75rem' }}>
                         {exp.certificate_file && (
-                          <a href={resolveFileUrl(exp.certificate_file)} target="_blank" rel="noreferrer" className="glass-btn-secondary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', textDecoration: 'none' }} download>
+                          <button 
+                            onClick={(e) => handleDownloadFile(e, exp.certificate_file, `${exp.company}_Completion_Certificate.pdf`)} 
+                            className="glass-btn-secondary" 
+                            style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', border: '1px solid var(--glass-border)', background: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                          >
                             <Download size={12} /> Completion Certificate
-                          </a>
+                          </button>
                         )}
                         {exp.lor_file && (
-                          <a href={resolveFileUrl(exp.lor_file)} target="_blank" rel="noreferrer" className="glass-btn-secondary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', textDecoration: 'none' }} download>
+                          <button 
+                            onClick={(e) => handleDownloadFile(e, exp.lor_file, `${exp.company}_LOR_Letter.pdf`)} 
+                            className="glass-btn-secondary" 
+                            style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', border: '1px solid var(--glass-border)', background: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                          >
                             <Download size={12} /> Letter of Recommendation (LOR)
-                          </a>
+                          </button>
                         )}
                       </div>
                     )}
@@ -3789,23 +3886,20 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                       {cert.certificate_file ? (
                         <>
-                          <a 
-                            href={resolveFileUrl(cert.certificate_file)} 
-                            target="_blank" 
-                            rel="noreferrer" 
+                          <button 
+                            onClick={(e) => handleViewFile(e, cert.certificate_file)} 
                             className="glass-btn-secondary"
-                            style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', textDecoration: 'none' }}
+                            style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', border: '1px solid var(--glass-border)', background: 'none', cursor: 'pointer' }}
                           >
                             View
-                          </a>
-                          <a 
-                            href={resolveFileUrl(cert.certificate_file)} 
+                          </button>
+                          <button 
+                            onClick={(e) => handleDownloadFile(e, cert.certificate_file, `${cert.name}_Certificate.pdf`)} 
                             className="glass-btn"  
-                            style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', textDecoration: 'none' }}
-                            download
+                            style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', border: '1px solid var(--glass-border)', background: 'none', cursor: 'pointer' }}
                           >
                             Download
-                          </a>
+                          </button>
                         </>
                       ) : cert.credential_url ? (
                         <a 
