@@ -639,11 +639,12 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
                 <button
                   className="glass-btn-secondary pf-cta-btn"
                   onClick={() => {
-                    const msg = resumeExistsButPrivate
-                      ? 'Resume is currently private.'
-                      : 'Resume not uploaded yet by the owner.';
-                    setToast({ show: true, message: msg, type: 'warning' });
-                    setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 2000);
+                    if (resumeExistsButPrivate) {
+                      handleOpenPermissionRequest('resume', 'Resume/CV');
+                    } else {
+                      setToast({ show: true, message: 'Resume not uploaded yet by the owner.', type: 'warning' });
+                      setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 2000);
+                    }
                   }}
                 >
                   <FileText size={17} style={{ color: '#00ff88' }} /> View Resume
@@ -1801,9 +1802,9 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
                 WebkitUserSelect: 'none'
               }}
             >
-              {secureDocUrl.toLowerCase().endsWith('.pdf') ? (
+              {(secureDocUrl.toLowerCase().endsWith('.pdf') || secureDocUrl.startsWith('data:application/pdf')) ? (
                 <iframe 
-                  src={`${secureDocUrl}#toolbar=0&navpanes=0&scrollbar=0`} 
+                  src={secureDocUrl.startsWith('data:application/pdf') ? secureDocUrl : `${secureDocUrl}#toolbar=0&navpanes=0&scrollbar=0`} 
                   style={{ width: '100%', height: '65vh', border: 'none' }} 
                   title="PDF Viewer"
                 />

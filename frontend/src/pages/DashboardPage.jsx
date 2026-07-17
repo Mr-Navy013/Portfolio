@@ -1717,7 +1717,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       } else {
         const isNetworkErr = err.message?.includes('Failed to fetch') || err.message?.includes('Network error');
         const msg = isNetworkErr 
-          ? "Network connection error! Please check your internet connection and try again."
+          ? `Network connection error: ${err.message || 'Failed to connect.'}. Please check your connection and try again.`
           : `Error uploading avatar: ${err.message || 'Network error occurred.'}`;
         showStatus(msg, true);
       }
@@ -1762,7 +1762,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       } else {
         const isNetworkErr = err.message?.includes('Failed to fetch') || err.message?.includes('Network error');
         const msg = isNetworkErr 
-          ? "Network connection error! Please check your internet connection and try again."
+          ? `Network connection error: ${err.message || 'Failed to connect.'}. Please check your connection and try again.`
           : `Error uploading resume: ${err.message || 'Network error occurred.'}`;
         showStatus(msg, true);
       }
@@ -1920,7 +1920,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       } else {
         const isNetworkErr = err.message?.includes('Failed to fetch') || err.message?.includes('Network error');
         const msg = isNetworkErr 
-          ? "Network connection error! Please check your internet connection and try again."
+          ? `Network connection error: ${err.message || 'Failed to connect.'}. Please check your connection and try again.`
           : `Error saving project: ${err.message || 'Network error occurred.'}`;
         showStatus(msg, true);
       }
@@ -2251,7 +2251,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       } else {
         const isNetworkErr = err.message?.includes('Failed to fetch') || err.message?.includes('Network error');
         const msg = isNetworkErr 
-          ? "Network connection error! Please check your internet connection and try again."
+          ? `Network connection error: ${err.message || 'Failed to connect.'}. Please check your connection and try again.`
           : `Error saving education: ${err.message || 'Network error occurred.'}`;
         showStatus(msg, true);
       }
@@ -2441,7 +2441,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       } else {
         const isNetworkErr = err.message?.includes('Failed to fetch') || err.message?.includes('Network error');
         const msg = isNetworkErr 
-          ? "Network connection error! Please check your internet connection and try again."
+          ? `Network connection error: ${err.message || 'Failed to connect.'}. Please check your connection and try again.`
           : `Error saving experience: ${err.message || 'Network error occurred.'}`;
         showStatus(msg, true);
       }
@@ -2505,7 +2505,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       } else {
         const isNetworkErr = err.message?.includes('Failed to fetch') || err.message?.includes('Network error');
         const msg = isNetworkErr 
-          ? "Network connection error! Please check your internet connection and try again."
+          ? `Network connection error: ${err.message || 'Failed to connect.'}. Please check your connection and try again.`
           : `Error saving certificate: ${err.message || 'Network error occurred.'}`;
         showStatus(msg, true);
       }

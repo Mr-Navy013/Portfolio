@@ -335,10 +335,27 @@ async function createTables() {
     // Column already exists, ignore
   }
 
-  try {
-    await pool.query('ALTER TABLE owner_profile MODIFY COLUMN profile_picture LONGTEXT NULL');
-  } catch (err) {
-    // Column update failed or already matches, ignore
+  const longtextAlters = [
+    'ALTER TABLE owner_profile MODIFY COLUMN profile_picture LONGTEXT NULL',
+    'ALTER TABLE owner_profile MODIFY COLUMN resume_url LONGTEXT NULL',
+    'ALTER TABLE projects MODIFY COLUMN thumbnail LONGTEXT NULL',
+    'ALTER TABLE education MODIFY COLUMN certificate_10th LONGTEXT NULL',
+    'ALTER TABLE education MODIFY COLUMN certificate_12th LONGTEXT NULL',
+    'ALTER TABLE education MODIFY COLUMN marksheet_12th LONGTEXT NULL',
+    'ALTER TABLE education MODIFY COLUMN gradesheet_bachelor LONGTEXT NULL',
+    'ALTER TABLE education MODIFY COLUMN certificate_bachelor LONGTEXT NULL',
+    'ALTER TABLE education MODIFY COLUMN certificate_others LONGTEXT NULL',
+    'ALTER TABLE education MODIFY COLUMN marksheet_others LONGTEXT NULL',
+    'ALTER TABLE experience MODIFY COLUMN certificate_file LONGTEXT NULL',
+    'ALTER TABLE experience MODIFY COLUMN lor_file LONGTEXT NULL',
+    'ALTER TABLE certificates MODIFY COLUMN certificate_file LONGTEXT NULL'
+  ];
+  for (const alt of longtextAlters) {
+    try {
+      await pool.query(alt);
+    } catch (err) {
+      // Column update failed or already matches, ignore
+    }
   }
 
   await pool.query(`

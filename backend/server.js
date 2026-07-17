@@ -723,13 +723,15 @@ app.post('/api/profile/upload-resume', authenticateToken, upload.single('resume'
   }
 
   try {
-    const [rows] = await query('SELECT resume_url FROM owner_profile LIMIT 1');
-    const oldResume = rows && rows[0] ? rows[0].resume_url : null;
+    const filePath = req.file.path;
+    const fileBuffer = fs.readFileSync(filePath);
+    const base64Data = fileBuffer.toString('base64');
+    const resume_url = `data:${req.file.mimetype};base64,${base64Data}`;
 
-    const resume_url = `/uploads/${req.file.filename}`;
     await query('UPDATE owner_profile SET resume_url = ? LIMIT 1', [resume_url]);
 
-    if (oldResume) deleteFileFromDisk(oldResume);
+    // Delete the local uploaded file immediately as it's saved as base64 in database
+    fs.unlinkSync(filePath);
 
     res.json({ success: true, resume_url });
   } catch (error) {
@@ -828,7 +830,18 @@ app.post('/api/projects', authenticateToken, upload.single('thumbnail'), async (
     return res.status(400).json({ message: 'Deployed projects must have a Live demo link!' });
   }
 
-  const thumbnail_url = req.file ? `/uploads/${req.file.filename}` : null;
+  let thumbnail_url = null;
+  if (req.file) {
+    const filePath = req.file.path;
+    const fileBuffer = fs.readFileSync(filePath);
+    const base64Data = fileBuffer.toString('base64');
+    thumbnail_url = `data:${req.file.mimetype};base64,${base64Data}`;
+    try {
+      fs.unlinkSync(filePath);
+    } catch (err) {
+      console.warn(`Could not delete temp upload file: ${filePath}`, err.message);
+    }
+  }
 
   try {
     await query(`
@@ -869,8 +882,17 @@ app.put('/api/projects/:id', authenticateToken, upload.single('thumbnail'), asyn
     let params = [title, summary, repo_link, isDeployedBool ? live_link : null, isDeployedBool];
 
     if (req.file) {
+      const filePath = req.file.path;
+      const fileBuffer = fs.readFileSync(filePath);
+      const base64Data = fileBuffer.toString('base64');
+      const newThumbnailUrl = `data:${req.file.mimetype};base64,${base64Data}`;
+      try {
+        fs.unlinkSync(filePath);
+      } catch (err) {
+        console.warn(`Could not delete temp upload file: ${filePath}`, err.message);
+      }
       q += `, thumbnail = ?`;
-      params.push(`/uploads/${req.file.filename}`);
+      params.push(newThumbnailUrl);
     }
 
     q += ` WHERE id = ?`;
@@ -926,21 +948,34 @@ app.post('/api/education', authenticateToken, educationUploadFields, async (req,
     return res.status(400).json({ message: 'School, Degree, and Dates are required' });
   }
 
-  const fileUrl = (fieldname) => {
-    return req.files && req.files[fieldname] ? `/uploads/${req.files[fieldname][0].filename}` : null;
+  const getBase64File = (fieldname) => {
+    if (req.files && req.files[fieldname] && req.files[fieldname][0]) {
+      const file = req.files[fieldname][0];
+      const filePath = file.path;
+      const fileBuffer = fs.readFileSync(filePath);
+      const base64Data = fileBuffer.toString('base64');
+      const base64Url = `data:${file.mimetype};base64,${base64Data}`;
+      try {
+        fs.unlinkSync(filePath);
+      } catch (err) {
+        console.warn(`Could not delete temp upload file: ${filePath}`, err.message);
+      }
+      return base64Url;
+    }
+    return null;
   };
 
   const parseBoolParam = (val) => {
     return val === '1' || val === 1 || val === 'true' || val === true ? 1 : 0;
   };
 
-  const cert10th = fileUrl('certificate_10th');
-  const cert12th = fileUrl('certificate_12th');
-  const marksheet12th = fileUrl('marksheet_12th');
-  const gradesheetBach = fileUrl('gradesheet_bachelor');
-  const certBach = fileUrl('certificate_bachelor');
-  const certOthers = fileUrl('certificate_others');
-  const marksheetOthers = fileUrl('marksheet_others');
+  const cert10th = getBase64File('certificate_10th');
+  const cert12th = getBase64File('certificate_12th');
+  const marksheet12th = getBase64File('marksheet_12th');
+  const gradesheetBach = getBase64File('gradesheet_bachelor');
+  const certBach = getBase64File('certificate_bachelor');
+  const certOthers = getBase64File('certificate_others');
+  const marksheetOthers = getBase64File('marksheet_others');
 
   try {
     await query(`
@@ -981,21 +1016,34 @@ app.put('/api/education/:id', authenticateToken, educationUploadFields, async (r
     access_cert10, access_cert12, access_certbach, board
   } = req.body;
 
-  const fileUrl = (fieldname) => {
-    return req.files && req.files[fieldname] ? `/uploads/${req.files[fieldname][0].filename}` : null;
+  const getBase64File = (fieldname) => {
+    if (req.files && req.files[fieldname] && req.files[fieldname][0]) {
+      const file = req.files[fieldname][0];
+      const filePath = file.path;
+      const fileBuffer = fs.readFileSync(filePath);
+      const base64Data = fileBuffer.toString('base64');
+      const base64Url = `data:${file.mimetype};base64,${base64Data}`;
+      try {
+        fs.unlinkSync(filePath);
+      } catch (err) {
+        console.warn(`Could not delete temp upload file: ${filePath}`, err.message);
+      }
+      return base64Url;
+    }
+    return null;
   };
 
   const parseBoolParam = (val) => {
     return val === '1' || val === 1 || val === 'true' || val === true ? 1 : 0;
   };
 
-  const newCert10th = fileUrl('certificate_10th');
-  const newCert12th = fileUrl('certificate_12th');
-  const newMarksheet12th = fileUrl('marksheet_12th');
-  const newGradesheetBach = fileUrl('gradesheet_bachelor');
-  const newCertBach = fileUrl('certificate_bachelor');
-  const newCertOthers = fileUrl('certificate_others');
-  const newMarksheetOthers = fileUrl('marksheet_others');
+  const newCert10th = getBase64File('certificate_10th');
+  const newCert12th = getBase64File('certificate_12th');
+  const newMarksheet12th = getBase64File('marksheet_12th');
+  const newGradesheetBach = getBase64File('gradesheet_bachelor');
+  const newCertBach = getBase64File('certificate_bachelor');
+  const newCertOthers = getBase64File('certificate_others');
+  const newMarksheetOthers = getBase64File('marksheet_others');
 
   try {
     const [rows] = await query('SELECT * FROM education WHERE id = ?', [id]);
@@ -1217,12 +1265,25 @@ app.post('/api/experience', authenticateToken, experienceUploadFields, async (re
     return res.status(400).json({ message: 'Company, Role, and Dates are required' });
   }
 
-  const fileUrl = (fieldname) => {
-    return req.files && req.files[fieldname] ? `/uploads/${req.files[fieldname][0].filename}` : null;
+  const getBase64File = (fieldname) => {
+    if (req.files && req.files[fieldname] && req.files[fieldname][0]) {
+      const file = req.files[fieldname][0];
+      const filePath = file.path;
+      const fileBuffer = fs.readFileSync(filePath);
+      const base64Data = fileBuffer.toString('base64');
+      const base64Url = `data:${file.mimetype};base64,${base64Data}`;
+      try {
+        fs.unlinkSync(filePath);
+      } catch (err) {
+        console.warn(`Could not delete temp upload file: ${filePath}`, err.message);
+      }
+      return base64Url;
+    }
+    return null;
   };
 
-  const certFile = fileUrl('certificate_file');
-  const lorFile = fileUrl('lor_file');
+  const certFile = getBase64File('certificate_file');
+  const lorFile = getBase64File('lor_file');
 
   try {
     await query(`
@@ -1250,12 +1311,25 @@ app.put('/api/experience/:id', authenticateToken, experienceUploadFields, async 
     program_name, org_name, skills_learned 
   } = req.body;
 
-  const fileUrl = (fieldname) => {
-    return req.files && req.files[fieldname] ? `/uploads/${req.files[fieldname][0].filename}` : null;
+  const getBase64File = (fieldname) => {
+    if (req.files && req.files[fieldname] && req.files[fieldname][0]) {
+      const file = req.files[fieldname][0];
+      const filePath = file.path;
+      const fileBuffer = fs.readFileSync(filePath);
+      const base64Data = fileBuffer.toString('base64');
+      const base64Url = `data:${file.mimetype};base64,${base64Data}`;
+      try {
+        fs.unlinkSync(filePath);
+      } catch (err) {
+        console.warn(`Could not delete temp upload file: ${filePath}`, err.message);
+      }
+      return base64Url;
+    }
+    return null;
   };
 
-  const newCert = fileUrl('certificate_file');
-  const newLor = fileUrl('lor_file');
+  const newCert = getBase64File('certificate_file');
+  const newLor = getBase64File('lor_file');
 
   try {
     const [rows] = await query('SELECT certificate_file, lor_file FROM experience WHERE id = ?', [id]);
@@ -1342,7 +1416,19 @@ app.post('/api/certificates', authenticateToken, upload.single('certificate_file
     return res.status(400).json({ message: 'Name, Organization, and Date are required' });
   }
 
-  const certFile = req.file ? `/uploads/${req.file.filename}` : null;
+  let certFile = null;
+  if (req.file) {
+    const filePath = req.file.path;
+    const fileBuffer = fs.readFileSync(filePath);
+    const base64Data = fileBuffer.toString('base64');
+    certFile = `data:${req.file.mimetype};base64,${base64Data}`;
+    try {
+      fs.unlinkSync(filePath);
+    } catch (err) {
+      console.warn(`Could not delete temp upload file: ${filePath}`, err.message);
+    }
+  }
+
   const parseBoolParam = (val) => {
     return val === '1' || val === 1 || val === 'true' || val === true ? 1 : 0;
   };
@@ -1365,7 +1451,18 @@ app.put('/api/certificates/:id', authenticateToken, upload.single('certificate_f
     return val === '1' || val === 1 || val === 'true' || val === true ? 1 : 0;
   };
 
-  const newCertFile = req.file ? `/uploads/${req.file.filename}` : null;
+  let newCertFile = null;
+  if (req.file) {
+    const filePath = req.file.path;
+    const fileBuffer = fs.readFileSync(filePath);
+    const base64Data = fileBuffer.toString('base64');
+    newCertFile = `data:${req.file.mimetype};base64,${base64Data}`;
+    try {
+      fs.unlinkSync(filePath);
+    } catch (err) {
+      console.warn(`Could not delete temp upload file: ${filePath}`, err.message);
+    }
+  }
 
   try {
     const [rows] = await query('SELECT certificate_file FROM certificates WHERE id = ?', [id]);
@@ -1689,7 +1786,12 @@ app.post('/api/document-requests/verify', async (req, res) => {
     // Access granted! Resolve the file path based on the document_id
     let fileUrl = null;
 
-    if (document_id.startsWith('edu_')) {
+    if (document_id === 'resume') {
+      const [profileRows] = await query('SELECT resume_url FROM owner_profile LIMIT 1');
+      if (profileRows.length > 0) {
+        fileUrl = profileRows[0].resume_url;
+      }
+    } else if (document_id.startsWith('edu_')) {
       const parts = document_id.split('_'); // edu, id, fieldType
       const id = parseInt(parts[1]);
       const fieldType = parts[2];
