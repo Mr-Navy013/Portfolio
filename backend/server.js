@@ -67,17 +67,15 @@ const getExtensionFromMimeType = (mimetype, filename) => {
   return '';
 };
 
-// Config Multer for storage
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, uploadsDir);
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    const ext = getExtensionFromMimeType(file.mimetype, file.originalname);
-    cb(null, file.fieldname + '-' + uniqueSuffix + ext);
-  }
-});
+// Ensure array inputs are normalized to single strings (prevents crashes from duplicate fields)
+const ensureString = (val) => {
+  if (Array.isArray(val)) return val[0];
+  return val;
+};
+
+// Config Multer for memory storage (files stored as Base64 in DB, no disk needed)
+// This avoids crashes on Render's ephemeral filesystem where uploads dir gets deleted on restart
+const storage = multer.memoryStorage();
 
 const upload = multer({
   storage: storage,
@@ -693,20 +691,11 @@ app.post('/api/profile/upload-avatar', authenticateToken, upload.single('profile
     const [rows] = await query('SELECT profile_picture FROM owner_profile LIMIT 1');
     const oldAvatar = rows && rows[0] ? rows[0].profile_picture : null;
 
-    // Convert file to Base64 data URL
-    const filePath = req.file.path;
-    const fileBuffer = fs.readFileSync(filePath);
-    const base64Data = fileBuffer.toString('base64');
+    // Convert file to Base64 data URL (memory buffer, no disk)
+    const base64Data = req.file.buffer.toString('base64');
     const profile_picture_url = `data:${req.file.mimetype};base64,${base64Data}`;
 
     await query('UPDATE owner_profile SET profile_picture = ? LIMIT 1', [profile_picture_url]);
-    
-    // Delete the local uploaded file immediately as it's saved as base64 in database
-    try {
-      fs.unlinkSync(filePath);
-    } catch (unlinkErr) {
-      console.warn(`[TEMP FILE CLEANUP WARNING] Could not delete temp file: ${filePath}`, unlinkErr.message);
-    }
 
     if (oldAvatar) deleteFileFromDisk(oldAvatar);
 
@@ -723,15 +712,10 @@ app.post('/api/profile/upload-resume', authenticateToken, upload.single('resume'
   }
 
   try {
-    const filePath = req.file.path;
-    const fileBuffer = fs.readFileSync(filePath);
-    const base64Data = fileBuffer.toString('base64');
+    const base64Data = req.file.buffer.toString('base64');
     const resume_url = `data:${req.file.mimetype};base64,${base64Data}`;
 
     await query('UPDATE owner_profile SET resume_url = ? LIMIT 1', [resume_url]);
-
-    // Delete the local uploaded file immediately as it's saved as base64 in database
-    fs.unlinkSync(filePath);
 
     res.json({ success: true, resume_url });
   } catch (error) {
@@ -832,15 +816,8 @@ app.post('/api/projects', authenticateToken, upload.single('thumbnail'), async (
 
   let thumbnail_url = null;
   if (req.file) {
-    const filePath = req.file.path;
-    const fileBuffer = fs.readFileSync(filePath);
-    const base64Data = fileBuffer.toString('base64');
+    const base64Data = req.file.buffer.toString('base64');
     thumbnail_url = `data:${req.file.mimetype};base64,${base64Data}`;
-    try {
-      fs.unlinkSync(filePath);
-    } catch (err) {
-      console.warn(`Could not delete temp upload file: ${filePath}`, err.message);
-    }
   }
 
   try {
@@ -882,15 +859,8 @@ app.put('/api/projects/:id', authenticateToken, upload.single('thumbnail'), asyn
     let params = [title, summary, repo_link, isDeployedBool ? live_link : null, isDeployedBool];
 
     if (req.file) {
-      const filePath = req.file.path;
-      const fileBuffer = fs.readFileSync(filePath);
-      const base64Data = fileBuffer.toString('base64');
+      const base64Data = req.file.buffer.toString('base64');
       const newThumbnailUrl = `data:${req.file.mimetype};base64,${base64Data}`;
-      try {
-        fs.unlinkSync(filePath);
-      } catch (err) {
-        console.warn(`Could not delete temp upload file: ${filePath}`, err.message);
-      }
       q += `, thumbnail = ?`;
       params.push(newThumbnailUrl);
     }
@@ -937,12 +907,31 @@ const educationUploadFields = upload.fields([
 ]);
 
 app.post('/api/education', authenticateToken, educationUploadFields, async (req, res) => {
-  const { 
+  let { 
     school, degree, field_of_study, start_date, end_date, description,
     passing_year, full_marks, marks_obtained, percentage, course, branch,
     semester_sgpa, cgpa,
     access_cert10, access_cert12, access_certbach, board
   } = req.body;
+
+  school = ensureString(school);
+  degree = ensureString(degree);
+  field_of_study = ensureString(field_of_study);
+  start_date = ensureString(start_date);
+  end_date = ensureString(end_date);
+  description = ensureString(description);
+  passing_year = ensureString(passing_year);
+  full_marks = ensureString(full_marks);
+  marks_obtained = ensureString(marks_obtained);
+  percentage = ensureString(percentage);
+  course = ensureString(course);
+  branch = ensureString(branch);
+  semester_sgpa = ensureString(semester_sgpa);
+  cgpa = ensureString(cgpa);
+  access_cert10 = ensureString(access_cert10);
+  access_cert12 = ensureString(access_cert12);
+  access_certbach = ensureString(access_certbach);
+  board = ensureString(board);
 
   if (!school || !degree || !start_date || !end_date) {
     return res.status(400).json({ message: 'School, Degree, and Dates are required' });
@@ -951,15 +940,8 @@ app.post('/api/education', authenticateToken, educationUploadFields, async (req,
   const getBase64File = (fieldname) => {
     if (req.files && req.files[fieldname] && req.files[fieldname][0]) {
       const file = req.files[fieldname][0];
-      const filePath = file.path;
-      const fileBuffer = fs.readFileSync(filePath);
-      const base64Data = fileBuffer.toString('base64');
+      const base64Data = file.buffer.toString('base64');
       const base64Url = `data:${file.mimetype};base64,${base64Data}`;
-      try {
-        fs.unlinkSync(filePath);
-      } catch (err) {
-        console.warn(`Could not delete temp upload file: ${filePath}`, err.message);
-      }
       return base64Url;
     }
     return null;
@@ -1009,25 +991,37 @@ app.post('/api/education', authenticateToken, educationUploadFields, async (req,
 
 app.put('/api/education/:id', authenticateToken, educationUploadFields, async (req, res) => {
   const { id } = req.params;
-  const { 
+  let { 
     school, degree, field_of_study, start_date, end_date, description,
     passing_year, full_marks, marks_obtained, percentage, course, branch,
     semester_sgpa, cgpa,
     access_cert10, access_cert12, access_certbach, board
   } = req.body;
 
+  school = ensureString(school);
+  degree = ensureString(degree);
+  field_of_study = ensureString(field_of_study);
+  start_date = ensureString(start_date);
+  end_date = ensureString(end_date);
+  description = ensureString(description);
+  passing_year = ensureString(passing_year);
+  full_marks = ensureString(full_marks);
+  marks_obtained = ensureString(marks_obtained);
+  percentage = ensureString(percentage);
+  course = ensureString(course);
+  branch = ensureString(branch);
+  semester_sgpa = ensureString(semester_sgpa);
+  cgpa = ensureString(cgpa);
+  access_cert10 = ensureString(access_cert10);
+  access_cert12 = ensureString(access_cert12);
+  access_certbach = ensureString(access_certbach);
+  board = ensureString(board);
+
   const getBase64File = (fieldname) => {
     if (req.files && req.files[fieldname] && req.files[fieldname][0]) {
       const file = req.files[fieldname][0];
-      const filePath = file.path;
-      const fileBuffer = fs.readFileSync(filePath);
-      const base64Data = fileBuffer.toString('base64');
+      const base64Data = file.buffer.toString('base64');
       const base64Url = `data:${file.mimetype};base64,${base64Data}`;
-      try {
-        fs.unlinkSync(filePath);
-      } catch (err) {
-        console.warn(`Could not delete temp upload file: ${filePath}`, err.message);
-      }
       return base64Url;
     }
     return null;
@@ -1268,15 +1262,8 @@ app.post('/api/experience', authenticateToken, experienceUploadFields, async (re
   const getBase64File = (fieldname) => {
     if (req.files && req.files[fieldname] && req.files[fieldname][0]) {
       const file = req.files[fieldname][0];
-      const filePath = file.path;
-      const fileBuffer = fs.readFileSync(filePath);
-      const base64Data = fileBuffer.toString('base64');
+      const base64Data = file.buffer.toString('base64');
       const base64Url = `data:${file.mimetype};base64,${base64Data}`;
-      try {
-        fs.unlinkSync(filePath);
-      } catch (err) {
-        console.warn(`Could not delete temp upload file: ${filePath}`, err.message);
-      }
       return base64Url;
     }
     return null;
@@ -1314,15 +1301,8 @@ app.put('/api/experience/:id', authenticateToken, experienceUploadFields, async 
   const getBase64File = (fieldname) => {
     if (req.files && req.files[fieldname] && req.files[fieldname][0]) {
       const file = req.files[fieldname][0];
-      const filePath = file.path;
-      const fileBuffer = fs.readFileSync(filePath);
-      const base64Data = fileBuffer.toString('base64');
+      const base64Data = file.buffer.toString('base64');
       const base64Url = `data:${file.mimetype};base64,${base64Data}`;
-      try {
-        fs.unlinkSync(filePath);
-      } catch (err) {
-        console.warn(`Could not delete temp upload file: ${filePath}`, err.message);
-      }
       return base64Url;
     }
     return null;
@@ -1418,15 +1398,8 @@ app.post('/api/certificates', authenticateToken, upload.single('certificate_file
 
   let certFile = null;
   if (req.file) {
-    const filePath = req.file.path;
-    const fileBuffer = fs.readFileSync(filePath);
-    const base64Data = fileBuffer.toString('base64');
+    const base64Data = req.file.buffer.toString('base64');
     certFile = `data:${req.file.mimetype};base64,${base64Data}`;
-    try {
-      fs.unlinkSync(filePath);
-    } catch (err) {
-      console.warn(`Could not delete temp upload file: ${filePath}`, err.message);
-    }
   }
 
   const parseBoolParam = (val) => {
@@ -1453,15 +1426,8 @@ app.put('/api/certificates/:id', authenticateToken, upload.single('certificate_f
 
   let newCertFile = null;
   if (req.file) {
-    const filePath = req.file.path;
-    const fileBuffer = fs.readFileSync(filePath);
-    const base64Data = fileBuffer.toString('base64');
+    const base64Data = req.file.buffer.toString('base64');
     newCertFile = `data:${req.file.mimetype};base64,${base64Data}`;
-    try {
-      fs.unlinkSync(filePath);
-    } catch (err) {
-      console.warn(`Could not delete temp upload file: ${filePath}`, err.message);
-    }
   }
 
   try {

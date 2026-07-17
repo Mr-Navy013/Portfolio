@@ -2159,7 +2159,6 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
         formData.append('marks_obtained', eduMarksObtained);
         const pct = eduFullMarks && eduMarksObtained ? ((parseFloat(eduMarksObtained) / parseFloat(eduFullMarks)) * 100).toFixed(2) : '0';
         formData.append('percentage', pct);
-        formData.append('board', selectedBoard);
         const desc = `Completed 10th standard from ${selectedBoard} Board at ${eduSchool} in the year ${eduPassingYear} with a score of ${eduMarksObtained}/${eduFullMarks} (${pct}%).`;
         formData.append('description', desc);
         if (safeCert10) {
@@ -2175,7 +2174,6 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
         formData.append('marks_obtained', eduMarksObtained);
         const pct = eduFullMarks && eduMarksObtained ? ((parseFloat(eduMarksObtained) / parseFloat(eduFullMarks)) * 100).toFixed(2) : '0';
         formData.append('percentage', pct);
-        formData.append('board', selectedBoard);
         const desc = `Completed 12th standard (Intermediate) from ${selectedBoard} Board at ${eduSchool} in the year ${eduPassingYear} with a score of ${eduMarksObtained}/${eduFullMarks} (${pct}%).`;
         formData.append('description', desc);
         if (safeCert12) {
