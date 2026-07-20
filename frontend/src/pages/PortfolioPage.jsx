@@ -826,13 +826,11 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
                 <h3 className="pf-skill-cat-title">{cat}</h3>
                 <div className="pf-skill-list">
                   {list.map(skill => (
-                    <div key={skill.id} className="pf-skill-item" style={{ marginBottom: '0.5rem' }}>
-                      <div className="pf-skill-item-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span>{skill.name}</span>
-                        <span className="text-green pf-skill-level" style={{ fontSize: '0.8rem', fontWeight: 600, textTransform: 'capitalize', padding: '0.15rem 0.5rem', borderRadius: '4px', background: 'rgba(0, 255, 136, 0.08)', border: '1px solid rgba(0, 255, 136, 0.2)' }}>
-                          {skill.knowledge_level || 'basic'}
-                        </span>
-                      </div>
+                    <div key={skill.id} className="pf-skill-block">
+                      <span className="pf-skill-block-name">{skill.name}</span>
+                      <span className="pf-skill-block-level">
+                        {skill.knowledge_level || 'basic'}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -1353,7 +1351,22 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
         {certificates.length > 0 ? (
           <div className="grid-2">
             {certificates.map(cert => (
-              <div key={cert.id} className="glass-card pf-cert-card">
+              <div 
+                key={cert.id} 
+                className="glass-card pf-cert-card"
+                onClick={() => {
+                  const hasAccess = cert.access_cert === 1 || cert.access_cert === 'true' || cert.access_cert === true;
+                  if (hasAccess) {
+                    if (cert.certificate_file) {
+                      handleOpenPublicDocument(cert.certificate_file, cert.name);
+                    } else if (cert.credential_url) {
+                      window.open(cert.credential_url, '_blank');
+                    }
+                  } else {
+                    handleOpenPermissionRequest(`cert_${cert.id}`, cert.name);
+                  }
+                }}
+              >
                 <div className="pf-cert-icon">
                   <Award size={28} />
                 </div>
@@ -1361,28 +1374,18 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
                   <h3 className="pf-cert-title">{cert.name}</h3>
                   <p className="pf-cert-meta">{cert.organization} · {formatDateStr(cert.issue_date)}</p>
                 </div>
-                {cert.credential_url && (
-                  cert.access_cert === 1 || cert.access_cert === 'true' || cert.access_cert === true ? (
-                    <a 
-                      href={cert.credential_url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="pf-cert-link" 
-                      title="View Certificate"
-                      style={{ background: 'none', border: 'none', color: 'var(--accent-green)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                    >
+                {(cert.credential_url || cert.certificate_file) && (
+                  <div 
+                    className="pf-cert-link" 
+                    title={cert.access_cert === 1 || cert.access_cert === 'true' || cert.access_cert === true ? "View Certificate" : "Request Access to view"}
+                    style={{ color: 'var(--accent-green)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  >
+                    {cert.access_cert === 1 || cert.access_cert === 'true' || cert.access_cert === true ? (
                       <Eye size={18} />
-                    </a>
-                  ) : (
-                    <button 
-                      onClick={() => handleOpenPermissionRequest(`cert_${cert.id}`, cert.name)} 
-                      className="pf-cert-link" 
-                      title="Request Access to view"
-                      style={{ background: 'none', border: 'none', color: 'var(--accent-green)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                    >
+                    ) : (
                       <Lock size={18} />
-                    </button>
-                  )
+                    )}
+                  </div>
                 )}
               </div>
             ))}
@@ -1633,25 +1636,6 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
         </div>
         <div className="pf-footer-bottom" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
           <span>&copy; {new Date().getFullYear()} {(name.toLowerCase() === 'navycut' ? "Navy's Portfolio" : name).toUpperCase()}. All Rights Reserved.</span>
-          <button
-            onClick={() => navigateTo('login')}
-            style={{
-              background: 'none',
-              border: '1px solid rgba(0,255,136,0.2)',
-              color: 'rgba(0,255,136,0.5)',
-              cursor: 'pointer',
-              fontSize: '0.7rem',
-              padding: '0.2rem 0.6rem',
-              borderRadius: '4px',
-              letterSpacing: '0.5px',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={e => { e.target.style.color = '#00ff88'; e.target.style.borderColor = '#00ff88'; }}
-            onMouseLeave={e => { e.target.style.color = 'rgba(0,255,136,0.5)'; e.target.style.borderColor = 'rgba(0,255,136,0.2)'; }}
-            title="Owner Login"
-          >
-            Owner Login
-          </button>
         </div>
       </footer>
 
@@ -1900,7 +1884,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
                       <button 
                         onClick={() => handleOpenPublicDocument(selectedExperience.certificate_file, `${selectedExperience.company} - Certificate`)}
                         className="glass-btn" 
-                        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.85rem', borderColor: 'var(--accent-green)', background: 'none', cursor: 'pointer' }}
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.85rem' }}
                       >
                         <Award size={16} /> Certificate
                       </button>

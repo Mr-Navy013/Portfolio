@@ -511,34 +511,45 @@
 
 .pf-skill-list {
   display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 0.8rem;
 }
 
-.pf-skill-item-header {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 0.5rem;
-  font-size: 0.95rem;
+.pf-skill-block {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8px);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.pf-skill-pct {
-  font-weight: 700;
+.pf-skill-block:hover {
+  transform: translateY(-2px);
+  border-color: rgba(0, 255, 136, 0.3);
+  background: rgba(0, 255, 136, 0.02);
+  box-shadow: 0 4px 20px rgba(0, 255, 136, 0.05);
 }
 
-/* Skill bar */
-.skill-bar-track {
-  height: 6px;
-  background: rgba(255, 255, 255, 0.06);
+.pf-skill-block-name {
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.pf-skill-block-level {
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  padding: 0.15rem 0.5rem;
   border-radius: 4px;
-  overflow: hidden;
-}
-
-.skill-bar-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #00ff88, rgba(0, 255, 136, 0.45));
-  border-radius: 4px;
-  transition: width 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+  background: rgba(0, 255, 136, 0.08);
+  border: 1px solid rgba(0, 255, 136, 0.2);
+  color: #00ff88;
 }
 
 /* ============================================================
@@ -703,6 +714,7 @@
   display: flex;
   align-items: center;
   gap: 1.1rem;
+  cursor: pointer;
   transition: transform 0.25s ease, border-color 0.25s ease;
 }
 
