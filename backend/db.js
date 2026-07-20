@@ -387,6 +387,8 @@ async function createTables() {
 async function handleJsonQuery(sql, params = []) {
   const db = readJsonDb();
   const sqlClean = sql.trim().replace(/\s+/g, ' ').replace(/`/g, '');
+  const hasWhereId = sqlClean.includes('WHERE id = ?') || sqlClean.includes('WHERE id=?');
+  const targetId = hasWhereId ? parseInt(params[0]) : null;
 
   // 1. SELECT owner_profile LIMIT 1
   if (sqlClean.includes('owner_profile LIMIT 1')) {
@@ -407,16 +409,28 @@ async function handleJsonQuery(sql, params = []) {
 
   // 4. SELECT * FROM projects ORDER BY created_at
   if (sqlClean.includes('FROM projects')) {
+    if (hasWhereId && targetId) {
+      const item = db.projects.find(p => p.id === targetId);
+      return [item ? [item] : []];
+    }
     return [[...db.projects].sort((a,b) => b.id - a.id)];
   }
 
   // 5. SELECT * FROM experience
   if (sqlClean.includes('FROM experience')) {
+    if (hasWhereId && targetId) {
+      const item = db.experience.find(e => e.id === targetId);
+      return [item ? [item] : []];
+    }
     return [[...db.experience].sort((a,b) => b.id - a.id)];
   }
 
   // 6. SELECT * FROM education
   if (sqlClean.includes('FROM education')) {
+    if (hasWhereId && targetId) {
+      const item = db.education.find(e => e.id === targetId);
+      return [item ? [item] : []];
+    }
     return [[...db.education].sort((a,b) => b.id - a.id)];
   }
 
@@ -433,6 +447,10 @@ async function handleJsonQuery(sql, params = []) {
 
   // 8. SELECT * FROM certificates
   if (sqlClean.includes('FROM certificates')) {
+    if (hasWhereId && targetId) {
+      const item = db.certificates.find(c => c.id === targetId);
+      return [item ? [item] : []];
+    }
     return [[...db.certificates].sort((a,b) => b.id - a.id)];
   }
 
@@ -957,7 +975,7 @@ async function handleJsonQuery(sql, params = []) {
       const req = db.document_requests.find(r => r.id === parseInt(params[0]));
       return [req ? [req] : []];
     }
-    if (sqlClean.includes('access_token = ?') && sqlClean.includes('status = "approved"')) {
+    if (sqlClean.includes('access_token = ?') && (sqlClean.toLowerCase().includes('status = "approved"') || sqlClean.includes('status = "Approved"'))) {
       const token = params[0];
       const docIds = Array.isArray(params[1]) ? params[1] : [params[1]];
       const filtered = db.document_requests.filter(r => r.access_token === token && docIds.includes(r.document_id) && r.status === 'Approved');

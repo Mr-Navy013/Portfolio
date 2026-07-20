@@ -1658,7 +1658,8 @@ app.get('/api/document-requests', authenticateToken, async (req, res) => {
 // 3. Owner approves request (Authenticated)
 app.post('/api/document-requests/:id/approve', authenticateToken, async (req, res) => {
   const { id } = req.params;
-  const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6 digit OTP
+  const { access_token } = req.body;
+  const otp = access_token || Math.floor(100000 + Math.random() * 900000).toString(); // 6 digit OTP
 
   try {
     const [reqRows] = await query('SELECT * FROM document_requests WHERE id = ?', [id]);
@@ -1786,9 +1787,9 @@ app.post('/api/document-requests/verify', async (req, res) => {
       const parts = document_id.split('_'); // cert, id
       const id = parseInt(parts[1]);
 
-      const [certRows] = await query('SELECT credential_url FROM certificates WHERE id = ?', [id]);
+      const [certRows] = await query('SELECT certificate_file, credential_url FROM certificates WHERE id = ?', [id]);
       if (certRows.length > 0) {
-        fileUrl = certRows[0].credential_url;
+        fileUrl = certRows[0].certificate_file || certRows[0].credential_url;
       }
     }
 

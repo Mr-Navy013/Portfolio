@@ -1634,7 +1634,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
             </div>
           </div>
         </div>
-        <div className="pf-footer-bottom" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+        <div className="pf-footer-bottom" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
           <span>&copy; {new Date().getFullYear()} {(name.toLowerCase() === 'navycut' ? "Navy's Portfolio" : name).toUpperCase()}. All Rights Reserved.</span>
         </div>
       </footer>

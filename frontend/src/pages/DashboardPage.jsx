@@ -1474,10 +1474,17 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
     }
     fetchDashboardCollections();
 
+    // Poll for new requests/messages every 5 seconds to show new requests automatically
+    const pollInterval = setInterval(() => {
+      fetchDashboardCollections();
+    }, 5000);
+
     if (sessionStorage.getItem('justLoggedIn') === 'true') {
       showStatus('Login Successful!');
       sessionStorage.removeItem('justLoggedIn');
     }
+
+    return () => clearInterval(pollInterval);
   }, [authToken]);
 
   const fetchDashboardCollections = async () => {
@@ -1515,10 +1522,24 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
   };
 
   const handleApproveRequest = async (id) => {
+    const localOtp = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    // Optimistic UI Update: instantly update status and access code in UI
+    setDocRequests(prev => prev.map(req => {
+      if (req.id === id) {
+        return { ...req, status: 'Approved', access_token: localOtp };
+      }
+      return req;
+    }));
+
     try {
       const res = await fetch(`${API_BASE}/document-requests/${id}/approve`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${authToken}` }
+        headers: { 
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ access_token: localOtp })
       });
       const data = await res.json();
       if (res.ok) {
@@ -1526,9 +1547,11 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
         fetchDashboardCollections();
       } else {
         showStatus(data.message || 'Approval failed.', true);
+        fetchDashboardCollections(); // Rollback
       }
     } catch (err) {
       showStatus('Error approving request.', true);
+      fetchDashboardCollections(); // Rollback
     }
   };
 
