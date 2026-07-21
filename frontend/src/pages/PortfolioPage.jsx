@@ -87,6 +87,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, onLogout
   const [verifyError, setVerifyError] = useState('');
   const [secureDocUrl, setSecureDocUrl] = useState('');
   const [secureDocDisplayUrl, setSecureDocDisplayUrl] = useState('');
+  const [secureDocInfo, setSecureDocInfo] = useState(null);
   const [isSubmittingRequest, setIsSubmittingRequest] = useState(false);
   const [isVerifyingToken, setIsVerifyingToken] = useState(false);
 
@@ -394,37 +395,26 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, onLogout
     return 'entry';
   };
 
-  const handleOpenPublicDocument = (url, name) => {
+  const handleOpenPublicDocument = (url, name, docInfo = null) => {
     if (!url) return;
     const fullUrl = resolveFileUrl(url);
-    if (fullUrl.includes('/uploads/')) {
-      setSecureDocUrl(fullUrl);
-      setSecureDocName(name);
-      setShowSecureDocModal(true);
-      return;
-    }
+    
+    let displayName = name;
     if (fullUrl.startsWith('data:')) {
       try {
-        const parts = fullUrl.split(',');
-        const mime = parts[0].match(/:(.*?);/)[1];
-        const b64 = parts[1];
-        
-        const byteCharacters = atob(b64);
-        const byteNumbers = new Array(byteCharacters.length);
-        for (let i = 0; i < byteCharacters.length; i++) {
-          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        const namePart = fullUrl.split(';').find(p => p.startsWith('name='));
+        if (namePart) {
+          displayName = decodeURIComponent(namePart.split('=')[1]);
         }
-        const byteArray = new Uint8Array(byteNumbers);
-        const blob = new Blob([byteArray], { type: mime });
-        const blobUrl = URL.createObjectURL(blob);
-        window.open(blobUrl, '_blank');
       } catch (err) {
-        console.error("Error opening base64 document:", err);
-        window.open(fullUrl, '_blank');
+        console.error("Error parsing name from URL:", err);
       }
-    } else {
-      window.open(fullUrl, '_blank');
     }
+
+    setSecureDocUrl(fullUrl);
+    setSecureDocName(displayName);
+    setSecureDocInfo(docInfo);
+    setShowSecureDocModal(true);
   };
 
   const handleSendPermissionRequest = async (e) => {
@@ -493,8 +483,45 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, onLogout
 
         // Open secure document viewer modal!
         const fullUrl = resolveFileUrl(data.document_url);
+        
+        let displayName = selectedDocName;
+        if (fullUrl.startsWith('data:')) {
+          try {
+            const namePart = fullUrl.split(';').find(p => p.startsWith('name='));
+            if (namePart) {
+              displayName = decodeURIComponent(namePart.split('=')[1]);
+            }
+          } catch (err) {
+            console.error("Error parsing name from URL:", err);
+          }
+        }
+
+        let docInfo = null;
+        if (selectedDocId === 'resume') {
+          docInfo = { type: 'resume', token: verifyToken };
+        } else if (selectedDocId.startsWith('edu_')) {
+          const parts = selectedDocId.split('_'); // edu, id, fieldType
+          const id = parts[1];
+          const fieldType = parts[2];
+          const fieldMap = {
+            cert10: 'certificate_10th',
+            cert12: 'certificate_12th',
+            marks12: 'marksheet_12th',
+            certbach: 'certificate_bachelor',
+            gradesbach: 'gradesheet_bachelor',
+            certothers: 'certificate_others',
+            marksothers: 'marksheet_others'
+          };
+          docInfo = { type: 'education', id, field: fieldMap[fieldType] || fieldType, token: verifyToken };
+        } else if (selectedDocId.startsWith('cert_')) {
+          const parts = selectedDocId.split('_'); // cert, id
+          const id = parts[1];
+          docInfo = { type: 'certificates', id, field: 'certificate_file', token: verifyToken };
+        }
+
         setSecureDocUrl(fullUrl);
-        setSecureDocName(selectedDocName);
+        setSecureDocName(displayName);
+        setSecureDocInfo(docInfo);
         setShowSecureDocModal(true);
       } else {
         setVerifyError(data.message || 'Invalid token.');
@@ -919,7 +946,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, onLogout
               </button>
               {resumeUrl ? (
                 <button 
-                  onClick={() => handleOpenPublicDocument(resumeUrl, 'Resume / CV')} 
+                  onClick={() => handleOpenPublicDocument(resumeUrl, 'Resume / CV', { type: 'resume' })} 
                   className="glass-btn-secondary pf-cta-btn"
                   style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}
                 >
@@ -1023,8 +1050,8 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, onLogout
                 <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.8rem', flexWrap: 'wrap' }}>
                   {edu.degree === '10th' && edu.certificate_10th && (
                     edu.access_cert10 === 1 || edu.access_cert10 === 'true' || edu.access_cert10 === true ? (
-                      <button 
-                        onClick={() => handleOpenPublicDocument(edu.certificate_10th, `${edu.school} - 10th Certificate`)}
+                       <button 
+                        onClick={() => handleOpenPublicDocument(edu.certificate_10th, `${edu.school} - 10th Certificate`, { type: 'education', id: edu.id, field: 'certificate_10th' })}
                         className="glass-btn" 
                         style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', gap: '0.4rem', height: 'auto', display: 'flex', alignItems: 'center' }}
                       >
@@ -1045,7 +1072,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, onLogout
                       {edu.certificate_12th && (
                         edu.access_cert12 === 1 || edu.access_cert12 === 'true' || edu.access_cert12 === true ? (
                           <button 
-                            onClick={() => handleOpenPublicDocument(edu.certificate_12th, `${edu.school} - 12th Certificate`)}
+                            onClick={() => handleOpenPublicDocument(edu.certificate_12th, `${edu.school} - 12th Certificate`, { type: 'education', id: edu.id, field: 'certificate_12th' })}
                             className="glass-btn" 
                             style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', gap: '0.4rem', height: 'auto', display: 'flex', alignItems: 'center' }}
                           >
@@ -1065,7 +1092,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, onLogout
                       {edu.marksheet_12th && (
                         edu.access_cert12 === 1 || edu.access_cert12 === 'true' || edu.access_cert12 === true ? (
                           <button 
-                            onClick={() => handleOpenPublicDocument(edu.marksheet_12th, `${edu.school} - 12th Marksheet`)}
+                            onClick={() => handleOpenPublicDocument(edu.marksheet_12th, `${edu.school} - 12th Marksheet`, { type: 'education', id: edu.id, field: 'marksheet_12th' })}
                             className="glass-btn" 
                             style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', gap: '0.4rem', height: 'auto', display: 'flex', alignItems: 'center' }}
                           >
@@ -1086,7 +1113,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, onLogout
                   {edu.degree === 'Bachelor' && edu.certificate_bachelor && (
                     edu.access_certbach === 1 || edu.access_certbach === 'true' || edu.access_certbach === true ? (
                       <button 
-                        onClick={() => handleOpenPublicDocument(edu.certificate_bachelor, `${edu.school} - Bachelor Degree Certificate`)}
+                        onClick={() => handleOpenPublicDocument(edu.certificate_bachelor, `${edu.school} - Bachelor Degree Certificate`, { type: 'education', id: edu.id, field: 'certificate_bachelor' })}
                         className="glass-btn" 
                         style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', gap: '0.4rem', height: 'auto', display: 'flex', alignItems: 'center' }}
                       >
@@ -1536,7 +1563,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, onLogout
                   const hasAccess = cert.access_cert === 1 || cert.access_cert === 'true' || cert.access_cert === true;
                   if (hasAccess) {
                     if (cert.certificate_file) {
-                      handleOpenPublicDocument(cert.certificate_file, cert.name);
+                      handleOpenPublicDocument(cert.certificate_file, cert.name, { type: 'certificates', id: cert.id, field: 'certificate_file' });
                     } else if (cert.credential_url) {
                       window.open(cert.credential_url, '_blank');
                     }
@@ -2106,7 +2133,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, onLogout
                     {/* Certificate */}
                     {selectedExperience.certificate_file && (
                       <button 
-                        onClick={() => handleOpenPublicDocument(selectedExperience.certificate_file, `${selectedExperience.company} - Certificate`)}
+                        onClick={() => handleOpenPublicDocument(selectedExperience.certificate_file, `${selectedExperience.company} - Certificate`, { type: 'experience', id: selectedExperience.id, field: 'certificate_file' })}
                         className="glass-btn" 
                         style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.85rem' }}
                       >
@@ -2117,7 +2144,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, onLogout
                     {/* LOR */}
                     {selectedExperience.lor_file && (
                       <button 
-                        onClick={() => handleOpenPublicDocument(selectedExperience.lor_file, `${selectedExperience.company} - LOR Letter`)}
+                        onClick={() => handleOpenPublicDocument(selectedExperience.lor_file, `${selectedExperience.company} - LOR Letter`, { type: 'experience', id: selectedExperience.id, field: 'lor_file' })}
                         className="glass-btn glass-btn-lor" 
                         style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.85rem' }}
                       >
@@ -2471,109 +2498,145 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, onLogout
       )}
 
       {/* ── SECURE DOCUMENT VIEWER MODAL ── */}
-      {showSecureDocModal && (
-        <div 
-          className="pf-modal-overlay" 
-          style={{ background: 'rgba(0, 0, 0, 0.96)', backdropFilter: 'blur(20px)', zIndex: 999999, padding: '1rem' }}
-          onClick={e => { if (e.target === e.currentTarget) setShowSecureDocModal(false); }}
-        >
-          <div 
-            className="glass-panel" 
-            style={{ 
-              width: '98%', 
-              maxWidth: '1600px', 
-              height: '92vh',
-              background: '#040806', 
-              border: '1px solid rgba(0, 255, 136, 0.3)', 
-              borderRadius: '12px', 
-              padding: '1rem 1.5rem',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '1rem',
-              position: 'relative'
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '0.75rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <ShieldCheck className="text-green" size={20} />
-                <h4 style={{ margin: 0, fontSize: '1.1rem', color: '#fff', fontWeight: 'bold' }}>SECURE VIEWER: {secureDocName}</h4>
-              </div>
-              <button 
-                onClick={() => setShowSecureDocModal(false)} 
-                style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 0 }}
-              >
-                <X size={24} />
-              </button>
-            </div>
+      {showSecureDocModal && (() => {
+        const getDownloadLink = () => {
+          if (!secureDocInfo) return null;
+          const { type, id, field, token } = secureDocInfo;
+          let url = `${API_BASE}/documents/download?type=${type}`;
+          if (id) url += `&id=${id}`;
+          if (field) url += `&field=${field}`;
+          if (token) url += `&token=${token}`;
+          return url;
+        };
+        const downloadLink = getDownloadLink();
 
+        return (
+          <div 
+            className="pf-modal-overlay" 
+            style={{ background: 'rgba(0, 0, 0, 0.96)', backdropFilter: 'blur(20px)', zIndex: 999999, padding: '1rem' }}
+            onClick={e => { if (e.target === e.currentTarget) setShowSecureDocModal(false); }}
+          >
             <div 
+              className="glass-panel" 
               style={{ 
-                display: 'flex', 
-                justifyContent: 'center', 
-                alignItems: 'center', 
-                background: '#020403', 
-                borderRadius: '8px', 
-                padding: '0.5rem',
-                flex: 1,
-                width: '100%',
-                height: '100%',
-                overflow: 'hidden',
-                position: 'relative',
-                userSelect: 'none',
-                WebkitUserSelect: 'none'
+                width: '98%', 
+                maxWidth: '1600px', 
+                height: '92vh',
+                background: '#040806', 
+                border: '1px solid rgba(0, 255, 136, 0.3)', 
+                borderRadius: '12px', 
+                padding: '1rem 1.5rem',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1rem',
+                position: 'relative'
               }}
             >
-              {secureDocUrl.includes('/uploads/') ? (
-                <div style={{ textAlign: 'center', color: '#ffaa00', padding: '2.5rem 1.5rem', maxWidth: '500px' }}>
-                  <ShieldCheck size={48} style={{ margin: '0 auto 1.25rem', display: 'block', color: '#ffaa00' }} />
-                  <p style={{ fontWeight: 700, fontSize: '1.1rem', color: '#fff', marginBottom: '0.75rem' }}>Legacy File Not Found</p>
-                  <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)', lineHeight: 1.6, marginBottom: '1.25rem' }}>
-                    This document was uploaded before the database migration and is stored on Render's ephemeral disk. Because Render restarts periodically, legacy files on disk are wiped.
-                  </p>
-                  <p style={{ fontSize: '0.85rem', color: 'var(--accent-green)', fontWeight: 600, lineHeight: 1.5 }}>
-                    Please log in to your Dashboard, edit this {getEntryTypeName()} entry, and re-upload the file so it is saved securely as Base64 directly in the database.
-                  </p>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <ShieldCheck className="text-green" size={20} />
+                  <h4 style={{ margin: 0, fontSize: '1.1rem', color: '#fff', fontWeight: 'bold' }}>SECURE VIEWER: {secureDocName}</h4>
                 </div>
-              ) : (secureDocUrl.toLowerCase().endsWith('.pdf') || secureDocUrl.startsWith('data:application/pdf')) ? (
-                <iframe 
-                  src={secureDocDisplayUrl} 
-                  style={{ width: '100%', height: '100%', border: 'none', borderRadius: '4px' }} 
-                  title="PDF Viewer"
-                />
-              ) : (
-                <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                  <img 
-                    src={secureDocDisplayUrl} 
-                    alt="Secure Credential File" 
-                    style={{ 
-                      maxWidth: '100%', 
-                      maxHeight: '100%', 
-                      objectFit: 'contain',
-                      pointerEvents: 'none',
-                      userSelect: 'none',
-                      WebkitUserSelect: 'none'
-                    }}
-                    onDragStart={e => e.preventDefault()}
-                  />
-                  {/* Transparent overlay covering the image to fully block context menu clicks / drag operations */}
-                  <div 
-                    style={{ 
-                      position: 'absolute', 
-                      top: 0, 
-                      left: 0, 
-                      right: 0, 
-                      bottom: 0, 
-                      background: 'rgba(0,0,0,0)', 
-                      zIndex: 999 
-                    }} 
-                  />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  {downloadLink && (
+                    <a 
+                      href={downloadLink} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="glass-btn"
+                      style={{ 
+                        display: 'inline-flex', 
+                        alignItems: 'center', 
+                        gap: '0.5rem', 
+                        padding: '0.4rem 0.8rem', 
+                        fontSize: '0.85rem',
+                        borderRadius: '6px',
+                        textDecoration: 'none',
+                        color: 'var(--accent-green)',
+                        border: '1px solid rgba(0, 255, 136, 0.3)',
+                        background: 'rgba(0, 255, 136, 0.05)'
+                      }}
+                    >
+                      <Download size={14} /> Download / View PDF
+                    </a>
+                  )}
+                  <button 
+                    onClick={() => setShowSecureDocModal(false)} 
+                    style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 0 }}
+                  >
+                    <X size={24} />
+                  </button>
                 </div>
-              )}
-            </div>
+              </div>
 
+              <div 
+                style={{ 
+                  display: 'flex', 
+                  justifyContent: 'center', 
+                  alignItems: 'center', 
+                  background: '#020403', 
+                  borderRadius: '8px', 
+                  padding: '0.5rem',
+                  flex: 1,
+                  width: '100%',
+                  height: '100%',
+                  overflow: 'hidden',
+                  position: 'relative',
+                  userSelect: 'none',
+                  WebkitUserSelect: 'none'
+                }}
+              >
+                {secureDocUrl.includes('/uploads/') ? (
+                  <div style={{ textAlign: 'center', color: '#ffaa00', padding: '2.5rem 1.5rem', maxWidth: '500px' }}>
+                    <ShieldCheck size={48} style={{ margin: '0 auto 1.25rem', display: 'block', color: '#ffaa00' }} />
+                    <p style={{ fontWeight: 700, fontSize: '1.1rem', color: '#fff', marginBottom: '0.75rem' }}>Legacy File Not Found</p>
+                    <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)', lineHeight: 1.6, marginBottom: '1.25rem' }}>
+                      This document was uploaded before the database migration and is stored on Render's ephemeral disk. Because Render restarts periodically, legacy files on disk are wiped.
+                    </p>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--accent-green)', fontWeight: 600, lineHeight: 1.5 }}>
+                      Please log in to your Dashboard, edit this {getEntryTypeName()} entry, and re-upload the file so it is saved securely as Base64 directly in the database.
+                    </p>
+                  </div>
+                ) : (secureDocUrl.toLowerCase().endsWith('.pdf') || secureDocUrl.startsWith('data:application/pdf')) ? (
+                  <iframe 
+                    src={downloadLink || secureDocDisplayUrl} 
+                    style={{ width: '100%', height: '100%', border: 'none', borderRadius: '4px' }} 
+                    title="PDF Viewer"
+                  />
+                ) : (
+                  <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                    <img 
+                      src={downloadLink || secureDocDisplayUrl} 
+                      alt="Secure Credential File" 
+                      style={{ 
+                        maxWidth: '100%', 
+                        maxHeight: '100%', 
+                        objectFit: 'contain',
+                        pointerEvents: 'none',
+                        userSelect: 'none',
+                        WebkitUserSelect: 'none'
+                      }}
+                      onDragStart={e => e.preventDefault()}
+                    />
+                    {/* Transparent overlay covering the image to fully block context menu clicks / drag operations */}
+                    <div 
+                      style={{ 
+                        position: 'absolute', 
+                        top: 0, 
+                        left: 0, 
+                        right: 0, 
+                        bottom: 0, 
+                        background: 'rgba(0,0,0,0)', 
+                        zIndex: 999 
+                      }} 
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Floating Toast Notification */}
       {toast.show && (

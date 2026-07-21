@@ -23,6 +23,19 @@ const handleDownloadFile = (e, url, filename) => {
   if (!url) return;
   e.preventDefault();
   const resolvedUrl = resolveFileUrl(url);
+  
+  let actualFilename = filename;
+  if (resolvedUrl.startsWith('data:')) {
+    try {
+      const namePart = resolvedUrl.split(';').find(p => p.startsWith('name='));
+      if (namePart) {
+        actualFilename = decodeURIComponent(namePart.split('=')[1]);
+      }
+    } catch (err) {
+      console.error("Error parsing filename from data URL:", err);
+    }
+  }
+
   if (resolvedUrl.startsWith('data:')) {
     try {
       const parts = resolvedUrl.split(',');
@@ -40,7 +53,7 @@ const handleDownloadFile = (e, url, filename) => {
       
       const a = document.createElement('a');
       a.href = blobUrl;
-      a.download = filename;
+      a.download = actualFilename;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -52,7 +65,7 @@ const handleDownloadFile = (e, url, filename) => {
   } else {
     const a = document.createElement('a');
     a.href = resolvedUrl;
-    a.download = filename;
+    a.download = actualFilename;
     a.target = '_blank';
     document.body.appendChild(a);
     a.click();
@@ -1635,6 +1648,14 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
   };
 
   const handleDeclineRequest = async (id) => {
+    // Optimistic UI Update: instantly update status in UI
+    setDocRequests(prev => prev.map(req => {
+      if (req.id === id) {
+        return { ...req, status: 'Rejected' };
+      }
+      return req;
+    }));
+
     try {
       const res = await fetch(`${API_BASE}/document-requests/${id}/decline`, {
         method: 'POST',
@@ -1646,9 +1667,11 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
         fetchDashboardCollections();
       } else {
         showStatus(data.message || 'Decline failed.', true);
+        fetchDashboardCollections(); // Rollback
       }
     } catch (err) {
       showStatus('Error declining request.', true);
+      fetchDashboardCollections(); // Rollback
     }
   };
 

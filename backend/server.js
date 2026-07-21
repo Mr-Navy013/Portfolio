@@ -693,7 +693,8 @@ app.post('/api/profile/upload-avatar', authenticateToken, upload.single('profile
 
     // Convert file to Base64 data URL (memory buffer, no disk)
     const base64Data = req.file.buffer.toString('base64');
-    const profile_picture_url = `data:${req.file.mimetype};base64,${base64Data}`;
+    const avatarFilenamePart = req.file.originalname ? `;name=${encodeURIComponent(req.file.originalname)}` : '';
+    const profile_picture_url = `data:${req.file.mimetype}${avatarFilenamePart};base64,${base64Data}`;
 
     await query('UPDATE owner_profile SET profile_picture = ? LIMIT 1', [profile_picture_url]);
 
@@ -713,7 +714,8 @@ app.post('/api/profile/upload-resume', authenticateToken, upload.single('resume'
 
   try {
     const base64Data = req.file.buffer.toString('base64');
-    const resume_url = `data:${req.file.mimetype};base64,${base64Data}`;
+    const resumeFilenamePart = req.file.originalname ? `;name=${encodeURIComponent(req.file.originalname)}` : '';
+    const resume_url = `data:${req.file.mimetype}${resumeFilenamePart};base64,${base64Data}`;
 
     await query('UPDATE owner_profile SET resume_url = ? LIMIT 1', [resume_url]);
 
@@ -817,7 +819,8 @@ app.post('/api/projects', authenticateToken, upload.single('thumbnail'), async (
   let thumbnail_url = null;
   if (req.file) {
     const base64Data = req.file.buffer.toString('base64');
-    thumbnail_url = `data:${req.file.mimetype};base64,${base64Data}`;
+    const filenamePart = req.file.originalname ? `;name=${encodeURIComponent(req.file.originalname)}` : '';
+    thumbnail_url = `data:${req.file.mimetype}${filenamePart};base64,${base64Data}`;
   }
 
   try {
@@ -860,7 +863,8 @@ app.put('/api/projects/:id', authenticateToken, upload.single('thumbnail'), asyn
 
     if (req.file) {
       const base64Data = req.file.buffer.toString('base64');
-      const newThumbnailUrl = `data:${req.file.mimetype};base64,${base64Data}`;
+      const filenamePart = req.file.originalname ? `;name=${encodeURIComponent(req.file.originalname)}` : '';
+      const newThumbnailUrl = `data:${req.file.mimetype}${filenamePart};base64,${base64Data}`;
       q += `, thumbnail = ?`;
       params.push(newThumbnailUrl);
     }
@@ -941,7 +945,8 @@ app.post('/api/education', authenticateToken, educationUploadFields, async (req,
     if (req.files && req.files[fieldname] && req.files[fieldname][0]) {
       const file = req.files[fieldname][0];
       const base64Data = file.buffer.toString('base64');
-      const base64Url = `data:${file.mimetype};base64,${base64Data}`;
+      const filenamePart = file.originalname ? `;name=${encodeURIComponent(file.originalname)}` : '';
+      const base64Url = `data:${file.mimetype}${filenamePart};base64,${base64Data}`;
       return base64Url;
     }
     return null;
@@ -1021,7 +1026,8 @@ app.put('/api/education/:id', authenticateToken, educationUploadFields, async (r
     if (req.files && req.files[fieldname] && req.files[fieldname][0]) {
       const file = req.files[fieldname][0];
       const base64Data = file.buffer.toString('base64');
-      const base64Url = `data:${file.mimetype};base64,${base64Data}`;
+      const filenamePart = file.originalname ? `;name=${encodeURIComponent(file.originalname)}` : '';
+      const base64Url = `data:${file.mimetype}${filenamePart};base64,${base64Data}`;
       return base64Url;
     }
     return null;
@@ -1263,7 +1269,8 @@ app.post('/api/experience', authenticateToken, experienceUploadFields, async (re
     if (req.files && req.files[fieldname] && req.files[fieldname][0]) {
       const file = req.files[fieldname][0];
       const base64Data = file.buffer.toString('base64');
-      const base64Url = `data:${file.mimetype};base64,${base64Data}`;
+      const filenamePart = file.originalname ? `;name=${encodeURIComponent(file.originalname)}` : '';
+      const base64Url = `data:${file.mimetype}${filenamePart};base64,${base64Data}`;
       return base64Url;
     }
     return null;
@@ -1302,7 +1309,8 @@ app.put('/api/experience/:id', authenticateToken, experienceUploadFields, async 
     if (req.files && req.files[fieldname] && req.files[fieldname][0]) {
       const file = req.files[fieldname][0];
       const base64Data = file.buffer.toString('base64');
-      const base64Url = `data:${file.mimetype};base64,${base64Data}`;
+      const filenamePart = file.originalname ? `;name=${encodeURIComponent(file.originalname)}` : '';
+      const base64Url = `data:${file.mimetype}${filenamePart};base64,${base64Data}`;
       return base64Url;
     }
     return null;
@@ -1399,7 +1407,8 @@ app.post('/api/certificates', authenticateToken, upload.single('certificate_file
   let certFile = null;
   if (req.file) {
     const base64Data = req.file.buffer.toString('base64');
-    certFile = `data:${req.file.mimetype};base64,${base64Data}`;
+    const filenamePart = req.file.originalname ? `;name=${encodeURIComponent(req.file.originalname)}` : '';
+    certFile = `data:${req.file.mimetype}${filenamePart};base64,${base64Data}`;
   }
 
   const parseBoolParam = (val) => {
@@ -1427,7 +1436,8 @@ app.put('/api/certificates/:id', authenticateToken, upload.single('certificate_f
   let newCertFile = null;
   if (req.file) {
     const base64Data = req.file.buffer.toString('base64');
-    newCertFile = `data:${req.file.mimetype};base64,${base64Data}`;
+    const filenamePart = req.file.originalname ? `;name=${encodeURIComponent(req.file.originalname)}` : '';
+    newCertFile = `data:${req.file.mimetype}${filenamePart};base64,${base64Data}`;
   }
 
   try {
@@ -1728,6 +1738,139 @@ app.delete('/api/document-requests/:id', authenticateToken, async (req, res) => 
     res.json({ success: true, message: 'Access request deleted successfully.' });
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+// Serves documents directly for inline rendering or download (bypasses WebView blob/data restrictions)
+app.get('/api/documents/download', async (req, res) => {
+  const { type, id, field, token } = req.query;
+  if (!type) {
+    return res.status(400).json({ message: 'Type parameter is required.' });
+  }
+
+  try {
+    let fileUrl = null;
+    let isPublic = false;
+
+    // Check if the document is public or if access is verified
+    if (type === 'resume') {
+      const [profileRows] = await query('SELECT resume_url, is_resume_public FROM owner_profile LIMIT 1');
+      if (profileRows.length > 0) {
+        isPublic = profileRows[0].is_resume_public === 1 || profileRows[0].is_resume_public === true || profileRows[0].is_resume_public === '1';
+        fileUrl = profileRows[0].resume_url;
+      }
+    } else if (type === 'education') {
+      if (!id || !field) return res.status(400).json({ message: 'ID and Field are required for education documents.' });
+      const [rows] = await query('SELECT * FROM education WHERE id = ?', [id]);
+      if (rows.length > 0) {
+        const edu = rows[0];
+        fileUrl = edu[field];
+        // Check if field is public
+        if (field === 'certificate_10th') isPublic = edu.access_cert10 === 1 || edu.access_cert10 === true || edu.access_cert10 === '1';
+        else if (field === 'certificate_12th') isPublic = edu.access_cert12 === 1 || edu.access_cert12 === true || edu.access_cert12 === '1';
+        else if (field === 'marksheet_12th') isPublic = edu.access_cert12 === 1 || edu.access_cert12 === true || edu.access_cert12 === '1'; // 12th cert access acts as proxy for marksheet
+        else if (field === 'certificate_bachelor') isPublic = edu.access_certbach === 1 || edu.access_certbach === true || edu.access_certbach === '1';
+        else if (field === 'gradesheet_bachelor') isPublic = edu.access_certbach === 1 || edu.access_certbach === true || edu.access_certbach === '1'; // bachelor cert access acts as proxy for gradesheet
+        else isPublic = true; // others are public
+      }
+    } else if (type === 'experience') {
+      if (!id || !field) return res.status(400).json({ message: 'ID and Field are required for experience documents.' });
+      const [rows] = await query('SELECT certificate_file, lor_file FROM experience WHERE id = ?', [id]);
+      if (rows.length > 0) {
+        fileUrl = rows[0][field];
+        isPublic = true; // Experience documents are always public in this app
+      }
+    } else if (type === 'certificates') {
+      if (!id) return res.status(400).json({ message: 'ID is required for certificate documents.' });
+      const [rows] = await query('SELECT certificate_file, access_cert FROM certificates WHERE id = ?', [id]);
+      if (rows.length > 0) {
+        fileUrl = rows[0].certificate_file;
+        isPublic = rows[0].access_cert === 1 || rows[0].access_cert === true || rows[0].access_cert === '1';
+      }
+    }
+
+    // If not public, check token
+    if (!isPublic) {
+      if (!token) {
+        return res.status(403).json({ message: 'Access denied. Verification token is required.' });
+      }
+      
+      // Determine what document ID to look up in requests
+      let checkDocId = type === 'resume' ? 'resume' : `${type}_${id}_${field}`;
+      if (type === 'education') {
+        const fieldTypeMap = {
+          certificate_10th: 'cert10',
+          certificate_12th: 'cert12',
+          marksheet_12th: 'marks12',
+          certificate_bachelor: 'certbach',
+          gradesheet_bachelor: 'gradesbach',
+          certificate_others: 'certothers',
+          marksheet_others: 'marksothers'
+        };
+        const fType = fieldTypeMap[field] || field;
+        checkDocId = `edu_${id}_${fType}`;
+      } else if (type === 'certificates') {
+        checkDocId = `cert_${id}`;
+      }
+
+      let checkDocIds = [checkDocId];
+      if (checkDocId.startsWith('edu_')) {
+        const parts = checkDocId.split('_');
+        const eduId = parts[1];
+        const fieldType = parts[2];
+        if (fieldType === 'cert12' || fieldType === 'marks12') {
+          checkDocIds = [`edu_${eduId}_cert12`, `edu_${eduId}_marks12`];
+        }
+      }
+
+      const [reqRows] = await query(`
+        SELECT * FROM document_requests 
+        WHERE access_token = ? AND document_id IN (?) AND status = "Approved" 
+        LIMIT 1
+      `, [token, checkDocIds]);
+
+      if (reqRows.length === 0) {
+        return res.status(403).json({ message: 'Access denied. Invalid or unapproved verification token.' });
+      }
+    }
+
+    if (!fileUrl) {
+      return res.status(404).json({ message: 'Document file not found.' });
+    }
+
+    // Serve file
+    if (fileUrl.startsWith('data:')) {
+      const parts = fileUrl.split(',');
+      const mimeMatch = parts[0].match(/:(.*?);/);
+      const mime = mimeMatch ? mimeMatch[1] : 'application/octet-stream';
+      const b64 = parts[1];
+      const buffer = Buffer.from(b64, 'base64');
+
+      let filename = 'document';
+      const nameMatch = parts[0].split(';').find(p => p.startsWith('name='));
+      if (nameMatch) {
+        filename = decodeURIComponent(nameMatch.split('=')[1]);
+      } else {
+        const ext = mime === 'application/pdf' ? '.pdf' : mime.startsWith('image/') ? `.${mime.split('/')[1]}` : '';
+        filename = `${type}_${field || 'file'}${ext}`;
+      }
+
+      res.setHeader('Content-Type', mime);
+      res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+      return res.send(buffer);
+    } else {
+      // Legacy disk storage
+      const fileName = fileUrl.replace('/uploads/', '');
+      const filePath = path.join(__dirname, 'uploads', fileName);
+      if (fs.existsSync(filePath)) {
+        res.setHeader('Content-Disposition', `inline; filename="${fileName}"`);
+        return res.sendFile(filePath);
+      } else {
+        return res.status(404).json({ message: 'Legacy file not found on disk.' });
+      }
+    }
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
   }
 });
 
