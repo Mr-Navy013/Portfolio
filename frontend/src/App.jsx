@@ -168,6 +168,7 @@ function App() {
           profile={profileData}
           refreshProfile={() => fetchProfile(false)}
           cameFrom={previousPage}
+          onLogout={handleLogout}
         />
       )}
       {currentPage === 'login' && (

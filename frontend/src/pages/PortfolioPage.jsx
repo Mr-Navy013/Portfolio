@@ -30,7 +30,7 @@ const formatDateStr = (str) => {
   return str;
 };
 
-function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
+function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, onLogout }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -658,9 +658,35 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
           <button id="hire-me-nav" onClick={() => setShowHireModal(true)} className="glass-btn pf-hire-btn">
             Hire Me
           </button>
-          <button id="exit-viewer-nav" onClick={() => navigateTo(cameFrom === 'dashboard' ? 'dashboard' : 'welcome')} className="glass-btn-danger pf-exit-btn">
-            <LogOut size={15} /> Back
-          </button>
+          {cameFrom === 'dashboard' ? (
+            <>
+              <button 
+                id="exit-viewer-nav" 
+                onClick={() => navigateTo('dashboard')} 
+                className="glass-btn-secondary pf-exit-btn"
+                style={{ border: '1px solid var(--glass-border)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+              >
+                Back
+              </button>
+              <button 
+                id="logout-viewer-nav" 
+                onClick={onLogout} 
+                className="glass-btn-danger pf-exit-btn"
+                style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+              >
+                <LogOut size={15} /> Logout
+              </button>
+            </>
+          ) : (
+            <button 
+              id="exit-viewer-nav" 
+              onClick={() => navigateTo('welcome')} 
+              className="glass-btn-danger pf-exit-btn"
+              style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+            >
+              Back to Home
+            </button>
+          )}
         </div>
       </nav>
 
@@ -781,6 +807,15 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
               >
                 {cameFrom === 'dashboard' ? '← Back' : '← Back to Home'}
               </button>
+              {cameFrom === 'dashboard' && (
+                <button
+                  onClick={() => { setMobileMenuOpen(false); onLogout(); }}
+                  className="glass-btn-danger"
+                  style={{ width: '100%', justifyContent: 'center', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                >
+                  <LogOut size={16} /> Logout
+                </button>
+              )}
             </div>
           </div>
         </div>
