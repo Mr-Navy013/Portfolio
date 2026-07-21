@@ -1500,14 +1500,13 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, onLogout
               <div className="pf-timeline-content">
                 <div className="pf-timeline-header">
                   <h3 className="pf-timeline-title" style={{ fontFamily: "'Times New Roman', Times, serif" }}>
-                    {exp.exp_type === 'internship' ? `Ex-intern at ${exp.org_name || exp.company}` : exp.company}
+                    {exp.role}
                   </h3>
                   <span className="text-green pf-timeline-date">{formatDateStr(exp.start_date)} — {formatDateStr(exp.end_date)}</span>
                 </div>
                 <p className="pf-timeline-sub pf-timeline-role">
-                  {exp.exp_type === 'internship' ? `Domain: ${exp.role}` : exp.role}
+                  {exp.exp_type === 'internship' ? `Ex-intern at ${exp.company || exp.org_name}` : exp.company}
                 </p>
-                {exp.description && <p className="pf-timeline-desc">{exp.description}</p>}
                 
                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
                   <span style={{ fontSize: '0.75rem', color: 'var(--accent-green)', display: 'flex', alignItems: 'center', gap: '0.25rem', opacity: 0.8 }}>
@@ -2028,10 +2027,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, onLogout
               </span>
               
               <h3 style={{ fontSize: '1.8rem', color: '#fff', fontWeight: 'bold', margin: '0.5rem 0 0 0', fontFamily: "'Times New Roman', Times, serif" }}>
-                {selectedExperience.exp_type === 'internship' && `Ex-intern at ${selectedExperience.org_name || selectedExperience.company}`}
-                {selectedExperience.exp_type === 'project' && `Developer on ${selectedExperience.project_name || selectedExperience.company}`}
-                {selectedExperience.exp_type === 'program' && `Participant in ${selectedExperience.program_name || selectedExperience.company}`}
-                {!selectedExperience.exp_type && selectedExperience.company}
+                {selectedExperience.role}
               </h3>
               
               <span className="text-green" style={{ fontSize: '0.95rem', fontWeight: 500 }}>
@@ -2042,17 +2038,13 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, onLogout
             {/* Details Fields */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '1.25rem' }}>
               
-              {/* Role/Domain */}
-              <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr', gap: '1rem', fontSize: '0.95rem' }}>
-                <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Domain / Role:</span>
-                <span style={{ color: '#fff', fontWeight: 600 }}>{selectedExperience.role}</span>
-              </div>
-
               {/* Organization */}
-              {selectedExperience.exp_type === 'internship' && selectedExperience.org_name && (
+              {(selectedExperience.company || selectedExperience.org_name) && (
                 <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr', gap: '1rem', fontSize: '0.95rem' }}>
                   <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Organization:</span>
-                  <span style={{ color: '#fff' }}>{selectedExperience.org_name}</span>
+                  <span style={{ color: '#fff', fontWeight: 600 }}>
+                    {selectedExperience.exp_type === 'internship' ? `Ex-intern at ${selectedExperience.company || selectedExperience.org_name}` : (selectedExperience.company || selectedExperience.org_name)}
+                  </span>
                 </div>
               )}
 
@@ -2069,16 +2061,6 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, onLogout
                 <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr', gap: '1rem', fontSize: '0.95rem' }}>
                   <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Project Instructor:</span>
                   <span style={{ color: '#fff' }}>{selectedExperience.project_instructor}</span>
-                </div>
-              )}
-
-              {/* Description */}
-              {selectedExperience.description && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', fontSize: '0.95rem' }}>
-                  <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Description:</span>
-                  <p style={{ margin: 0, lineHeight: 1.6, color: '#ddd', background: 'rgba(255,255,255,0.02)', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                    {selectedExperience.description}
-                  </p>
                 </div>
               )}
 

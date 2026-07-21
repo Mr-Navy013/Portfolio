@@ -2607,7 +2607,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
         formData.append('skills_learned', expSkillsLearned);
       } else if (expType === 'internship') {
         formData.append('company', expOrgName);
-        formData.append('role', `${expRole} Intern`);
+        formData.append('role', expRole);
         formData.append('start_date', expStart);
         formData.append('end_date', expEnd);
 
