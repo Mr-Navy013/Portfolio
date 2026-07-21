@@ -1174,119 +1174,97 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
                   userSelect: 'none'
                 }}
               >
-                {(() => {
-                  const items = [];
-                  if (projects.length === 1) {
-                    items.push({ idx: 0, position: 'center' });
-                  } else {
-                    const prevIdx = (projectSliderActiveIndex - 1 + projects.length) % projects.length;
-                    const currIdx = projectSliderActiveIndex;
-                    const nextIdx = (projectSliderActiveIndex + 1) % projects.length;
-                    items.push(
-                      { idx: prevIdx, position: 'left' },
-                      { idx: currIdx, position: 'center' },
-                      { idx: nextIdx, position: 'right' }
-                    );
-                  }
-
-                  return (
-                    <div 
-                      className="pf-projects-track"
-                      style={{
-                        display: 'flex',
-                        gap: 'var(--proj-card-gap)',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        width: 'max-content',
-                        position: 'absolute',
-                        left: '50%',
-                        transform: 'translateX(-50%)'
-                      }}
-                    >
-                      {items.map((item) => {
-                        const proj = projects[item.idx];
-                        if (!proj) return null;
-                        const isActive = item.position === 'center';
-                        return (
-                          <div 
-                            key={`${proj.id}-${item.position}`} 
-                            className={`glass-panel pf-project-card ${isActive ? 'pf-active-card' : ''}`} 
-                            onClick={() => {
-                              if (item.position === 'left') {
-                                setProjectSliderActiveIndex((prevVal) => (prevVal - 1 + projects.length) % projects.length);
-                              } else if (item.position === 'right') {
-                                setProjectSliderActiveIndex((prevVal) => (prevVal + 1) % projects.length);
-                              }
-                            }}
-                            style={{
-                              width: 'var(--proj-card-width)',
-                              minWidth: 'var(--proj-card-width)',
-                              maxWidth: 'var(--proj-card-width)',
-                              height: '345px',
-                              transform: isActive ? 'scale(1.06)' : 'scale(0.92)',
-                              border: isActive ? '1px solid var(--accent-green)' : '1px solid var(--glass-border)',
-                              boxShadow: isActive ? '0 10px 30px rgba(0, 255, 136, 0.15)' : 'none',
-                              transition: 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
-                              opacity: isActive ? 1 : 0.45,
-                              zIndex: isActive ? 10 : 1,
-                              display: 'flex',
-                              flexDirection: 'column',
-                              cursor: isActive ? 'default' : 'pointer',
-                              flexShrink: 0
-                            }}
-                          >
-                            <div className="pf-project-image-wrap">
-                              {proj.thumbnail ? (
-                                <img
-                                  src={resolveFileUrl(proj.thumbnail)}
-                                  alt={proj.title}
-                                  className="pf-project-thumb"
-                                />
-                              ) : (
-                                <div className="pf-project-thumb-placeholder">
-                                  <Code size={40} style={{ color: 'rgba(0,255,136,0.35)' }} />
-                                  <span className="pf-project-thumb-label">Preview Unavailable</span>
-                                </div>
-                              )}
+                <div 
+                  className="pf-projects-track"
+                  style={{
+                    display: 'flex',
+                    gap: 'var(--proj-card-gap)',
+                    alignItems: 'center',
+                    position: 'absolute',
+                    left: 0,
+                    width: 'max-content',
+                    transition: 'transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)',
+                    transform: `translate3d(calc(50% - (${projectSliderActiveIndex} * (var(--proj-card-width) + var(--proj-card-gap))) - (var(--proj-card-width) / 2)), 0, 0)`
+                  }}
+                >
+                  {projects.map((proj, idx) => {
+                    const isActive = idx === projectSliderActiveIndex;
+                    return (
+                      <div 
+                        key={proj.id} 
+                        className={`glass-panel pf-project-card ${isActive ? 'pf-active-card' : ''}`} 
+                        onClick={() => {
+                          if (idx !== projectSliderActiveIndex) {
+                            setProjectSliderActiveIndex(idx);
+                          }
+                        }}
+                        style={{
+                          width: 'var(--proj-card-width)',
+                          minWidth: 'var(--proj-card-width)',
+                          maxWidth: 'var(--proj-card-width)',
+                          height: '345px',
+                          transform: isActive ? 'scale(1.06)' : 'scale(0.92)',
+                          border: isActive ? '1px solid var(--accent-green)' : '1px solid var(--glass-border)',
+                          boxShadow: isActive ? '0 10px 30px rgba(0, 255, 136, 0.15)' : 'none',
+                          transition: 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+                          opacity: isActive ? 1 : 0.45,
+                          zIndex: isActive ? 10 : 1,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          cursor: isActive ? 'default' : 'pointer',
+                          flexShrink: 0
+                        }}
+                      >
+                        <div className="pf-project-image-wrap">
+                          {proj.thumbnail ? (
+                            <img
+                              src={resolveFileUrl(proj.thumbnail)}
+                              alt={proj.title}
+                              className="pf-project-thumb"
+                            />
+                          ) : (
+                            <div className="pf-project-thumb-placeholder">
+                              <Code size={40} style={{ color: 'rgba(0,255,136,0.35)' }} />
+                              <span className="pf-project-thumb-label">Preview Unavailable</span>
                             </div>
-                            <div className="pf-project-body" style={{ padding: '1.2rem' }}>
-                              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                <h3 className="pf-project-title" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: '0 0 0.4rem 0', fontSize: '1.1rem' }}>{proj.title}</h3>
-                                <p className="pf-project-summary" style={{ height: '3em', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', fontSize: '0.82rem', lineHeight: '1.5', margin: 0 }}>{proj.summary}</p>
-                              </div>
-                              <div className="pf-project-links" style={{ gap: '0.6rem' }}>
-                                <a 
-                                  href={proj.repo_link} 
-                                  target="_blank" 
-                                  rel="noreferrer" 
-                                  className="glass-btn-secondary pf-project-link-btn"
-                                  onClick={(e) => e.stopPropagation()}
-                                  style={{ padding: '0.4rem', fontSize: '0.78rem' }}
-                                >
-                                  <Github size={15} /> Source
-                                </a>
-                                {proj.is_deployed && proj.live_link ? (
-                                  <a 
-                                    href={proj.live_link} 
-                                    target="_blank" 
-                                    rel="noreferrer" 
-                                    className="glass-btn pf-project-link-btn"
-                                    onClick={(e) => e.stopPropagation()}
-                                    style={{ padding: '0.4rem', fontSize: '0.78rem' }}
-                                  >
-                                    <ExternalLink size={15} /> Live
-                                  </a>
-                                ) : (
-                                  <div className="pf-project-undeployed" style={{ padding: '0.4rem', fontSize: '0.78rem' }}>Undeployed</div>
-                                )}
-                              </div>
-                            </div>
+                          )}
+                        </div>
+                        <div className="pf-project-body" style={{ padding: '1.2rem' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <h3 className="pf-project-title" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: '0 0 0.4rem 0', fontSize: '1.1rem' }}>{proj.title}</h3>
+                            <p className="pf-project-summary" style={{ height: '3em', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', fontSize: '0.82rem', lineHeight: '1.5', margin: 0 }}>{proj.summary}</p>
                           </div>
-                        );
-                      })}
-                    </div>
-                  );
-                })()}
+                          <div className="pf-project-links" style={{ gap: '0.6rem' }}>
+                            <a 
+                              href={proj.repo_link} 
+                              target="_blank" 
+                              rel="noreferrer" 
+                              className="glass-btn-secondary pf-project-link-btn"
+                              onClick={(e) => e.stopPropagation()}
+                              style={{ padding: '0.4rem', fontSize: '0.78rem' }}
+                            >
+                              <Github size={15} /> Source
+                            </a>
+                            {proj.is_deployed && proj.live_link ? (
+                              <a 
+                                href={proj.live_link} 
+                                target="_blank" 
+                                rel="noreferrer" 
+                                className="glass-btn pf-project-link-btn"
+                                onClick={(e) => e.stopPropagation()}
+                                style={{ padding: '0.4rem', fontSize: '0.78rem' }}
+                              >
+                                <ExternalLink size={15} /> Live
+                              </a>
+                            ) : (
+                              <div className="pf-project-undeployed" style={{ padding: '0.4rem', fontSize: '0.78rem' }}>Undeployed</div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
 
               {projects.length > 1 && (
