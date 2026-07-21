@@ -117,28 +117,6 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
     }
   }, [secureDocUrl]);
   const [secureDocName, setSecureDocName] = useState('');
-  const [legacyFileNotFound, setLegacyFileNotFound] = useState(false);
-
-  useEffect(() => {
-    setLegacyFileNotFound(false);
-    if (!secureDocUrl) return;
-
-    if (secureDocUrl.includes('/uploads/')) {
-      // It is a legacy file path. Let's check if it exists on the server!
-      fetch(secureDocUrl, { method: 'HEAD' })
-        .then(res => {
-          if (res.status === 404) {
-            setLegacyFileNotFound(true);
-          } else {
-            setLegacyFileNotFound(false);
-          }
-        })
-        .catch(() => {
-          // Fallback if HEAD check fails/is blocked
-          setLegacyFileNotFound(true);
-        });
-    }
-  }, [secureDocUrl]);
 
   // Projects Slider and View Mode states
   const [projectSliderActiveIndex, setProjectSliderActiveIndex] = useState(0);
@@ -219,20 +197,20 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
+  // States for the Recruiter form in Hire Me modal
+  const [hireRecruiterName, setHireRecruiterName] = useState('');
+  const [hireRecruiterEmail, setHireRecruiterEmail] = useState('');
+  const [hireRecruiterCompany, setHireRecruiterCompany] = useState('');
+  const [hireRecruiterRole, setHireRecruiterRole] = useState('');
+  const [hireRecruiterHiringRole, setHireRecruiterHiringRole] = useState('');
+  const [hireRecruiterDesc, setHireRecruiterDesc] = useState('');
+
   const [contactEmail, setContactEmail] = useState('');
   const [contactPurpose, setContactPurpose] = useState('hire');
   const [contactDesc, setContactDesc] = useState('');
   const [contactSuccess, setContactSuccess] = useState('');
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   const [avatarError, setAvatarError] = useState(false);
-
-  // Recruiter modal-specific states
-  const [hireRecruiterName, setHireRecruiterName] = useState('');
-  const [hireRecruiterEmail, setHireRecruiterEmail] = useState('');
-  const [hireRecruiterCompany, setHireRecruiterCompany] = useState('');
-  const [hireRecruiterDesignation, setHireRecruiterDesignation] = useState('');
-  const [hireRecruiterHiringRole, setHireRecruiterHiringRole] = useState('');
-  const [hireRecruiterMsg, setHireRecruiterMsg] = useState('');
 
   // New state variables for dynamic message form
   const [contactUserType, setContactUserType] = useState('viewer'); // 'viewer' | 'recruiter'
@@ -340,12 +318,69 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
     setShowRequestModal(true);
   };
 
+  const getEntryTypeName = () => {
+    if (selectedDocId) {
+      if (selectedDocId.startsWith('edu_')) return 'education';
+      if (selectedDocId.startsWith('cert_')) return 'certification';
+      if (selectedDocId.startsWith('exp_')) return 'experience';
+    }
+    if (secureDocName) {
+      const nameLower = secureDocName.toLowerCase();
+      if (nameLower.includes('lor') || nameLower.includes('letter') || nameLower.includes('intern') || nameLower.includes('experience')) {
+        return 'experience';
+      }
+      if (nameLower.includes('10th') || nameLower.includes('12th') || nameLower.includes('marksheet') || nameLower.includes('degree') || nameLower.includes('bachelor')) {
+        return 'education';
+      }
+      const inCerts = (certificates || []).some(c => c.name === secureDocName);
+      if (inCerts) return 'certification';
+      const inEdu = (education || []).some(e => e.school === secureDocName || secureDocName.includes(e.school));
+      if (inEdu) return 'education';
+      const inExp = (experience || []).some(exp => exp.company === secureDocName || secureDocName.includes(exp.company));
+      if (inExp) return 'experience';
+    }
+    if (secureDocUrl) {
+      if (secureDocUrl.includes('certificate_10th') || secureDocUrl.includes('certificate_12th') || secureDocUrl.includes('marksheet') || secureDocUrl.includes('bachelor')) {
+        return 'education';
+      }
+      if (secureDocUrl.includes('lor_file')) {
+        return 'experience';
+      }
+    }
+    return 'entry';
+  };
+
   const handleOpenPublicDocument = (url, name) => {
     if (!url) return;
     const fullUrl = resolveFileUrl(url);
-    setSecureDocUrl(fullUrl);
-    setSecureDocName(name);
-    setShowSecureDocModal(true);
+    if (fullUrl.includes('/uploads/')) {
+      setSecureDocUrl(fullUrl);
+      setSecureDocName(name);
+      setShowSecureDocModal(true);
+      return;
+    }
+    if (fullUrl.startsWith('data:')) {
+      try {
+        const parts = fullUrl.split(',');
+        const mime = parts[0].match(/:(.*?);/)[1];
+        const b64 = parts[1];
+        
+        const byteCharacters = atob(b64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: mime });
+        const blobUrl = URL.createObjectURL(blob);
+        window.open(blobUrl, '_blank');
+      } catch (err) {
+        console.error("Error opening base64 document:", err);
+        window.open(fullUrl, '_blank');
+      }
+    } else {
+      window.open(fullUrl, '_blank');
+    }
   };
 
   const handleSendPermissionRequest = async (e) => {
@@ -429,15 +464,17 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
 
   const handleHireSubmit = async (e) => {
     e.preventDefault();
-    if (!hireRecruiterName || !hireRecruiterEmail || !hireRecruiterCompany || !hireRecruiterDesignation || !hireRecruiterHiringRole) {
+    if (!hireRecruiterName || !hireRecruiterEmail || !hireRecruiterCompany || !hireRecruiterRole || !hireRecruiterHiringRole) {
       setErrorMsg('Please fill in all recruiter fields marked with *.');
       return;
     }
-    setIsSending(true); setErrorMsg('');
+    setIsSending(true);
+    setErrorMsg('');
     try {
-      // Compile message body
-      const finalDesc = `💼 RECRUITER INQUIRY\n━━━━━━━━━━━━━━━━━━━━━━\n• Name: ${hireRecruiterName}\n• Email: ${hireRecruiterEmail}\n• Company: ${hireRecruiterCompany}\n• Current Role: ${hireRecruiterDesignation}\n• Hiring for: ${hireRecruiterHiringRole}\n\n• Message:\n${hireRecruiterMsg || 'No additional message provided.'}`;
+      const finalDesc = `💼 RECRUITER INQUIRY\n━━━━━━━━━━━━━━━━━━━━━━\n• Name: ${hireRecruiterName}\n• Email: ${hireRecruiterEmail}\n• Company: ${hireRecruiterCompany}\n• Current Role: ${hireRecruiterRole}\n• Hiring for: ${hireRecruiterHiringRole}\n\n• Message:\n${hireRecruiterDesc || 'No additional message provided.'}`;
 
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       const res = await fetch(`${API_BASE}/messages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -448,26 +485,28 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
         setHireRecruiterName('');
         setHireRecruiterEmail('');
         setHireRecruiterCompany('');
-        setHireRecruiterDesignation('');
+        setHireRecruiterRole('');
         setHireRecruiterHiringRole('');
-        setHireRecruiterMsg('');
+        setHireRecruiterDesc('');
         setShowHireModal(false);
         setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 1500);
       } else {
         const err = await res.json();
         setErrorMsg(err.message || 'Failed to send message.');
       }
-    } catch (err) {
+    } catch {
       setToast({ show: true, message: 'Message sent successfully! Navy will get back to you soon.', type: 'success' });
       setHireRecruiterName('');
       setHireRecruiterEmail('');
       setHireRecruiterCompany('');
-      setHireRecruiterDesignation('');
+      setHireRecruiterRole('');
       setHireRecruiterHiringRole('');
-      setHireRecruiterMsg('');
+      setHireRecruiterDesc('');
       setShowHireModal(false);
       setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 1500);
-    } finally { setIsSending(false); }
+    } finally {
+      setIsSending(false);
+    }
   };
 
   const handleContactSubmit = async (e) => {
@@ -1666,18 +1705,15 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
       {/* ── HIRE ME MODAL ── */}
       {showHireModal && (
         <div className="pf-modal-overlay" onClick={e => { if (e.target === e.currentTarget) setShowHireModal(false); }}>
-          <div 
-            className="glass-panel pf-modal-card"
-            style={{ maxHeight: '90vh', overflowY: 'auto', maxWidth: '550px' }}
-          >
+          <div className="glass-panel pf-modal-card" style={{ maxWidth: '500px', maxHeight: '90vh', overflowY: 'auto' }}>
             <button onClick={() => setShowHireModal(false)} className="pf-modal-close-btn">
               <X size={22} />
             </button>
-            <h3 className="pf-modal-title" style={{ fontSize: '1.3rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
-              <Briefcase size={22} className="text-green" /> Recruiter Information
+            <h3 className="pf-modal-title" style={{ marginBottom: '1.25rem' }}>
+              <Briefcase size={22} className="text-green" style={{ marginRight: '0.5rem', verticalAlign: 'middle' }} /> 
+              Recruiter <span className="text-green">Information</span>
             </h3>
-            <form onSubmit={handleHireSubmit} className="pf-modal-form" style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
-              
+            <form onSubmit={handleHireSubmit} className="pf-modal-form" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                 <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
                   Your Name <span style={{ color: '#ff5252' }}>*</span>
@@ -1689,6 +1725,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
                   placeholder="Enter your full name"
                   value={hireRecruiterName}
                   onChange={e => setHireRecruiterName(e.target.value)}
+                  style={{ width: '100%' }}
                 />
               </div>
 
@@ -1703,6 +1740,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
                   placeholder="Enter your work email address"
                   value={hireRecruiterEmail}
                   onChange={e => setHireRecruiterEmail(e.target.value)}
+                  style={{ width: '100%' }}
                 />
               </div>
 
@@ -1717,6 +1755,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
                   placeholder="Enter your company name"
                   value={hireRecruiterCompany}
                   onChange={e => setHireRecruiterCompany(e.target.value)}
+                  style={{ width: '100%' }}
                 />
               </div>
 
@@ -1729,8 +1768,9 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
                   required
                   className="glass-input"
                   placeholder="Enter your designation (e.g. Talent Acquisition, Lead Developer)"
-                  value={hireRecruiterDesignation}
-                  onChange={e => setHireRecruiterDesignation(e.target.value)}
+                  value={hireRecruiterRole}
+                  onChange={e => setHireRecruiterRole(e.target.value)}
+                  style={{ width: '100%' }}
                 />
               </div>
 
@@ -1745,6 +1785,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
                   placeholder="Enter position you are hiring for (e.g. MERN Stack Engineer)"
                   value={hireRecruiterHiringRole}
                   onChange={e => setHireRecruiterHiringRole(e.target.value)}
+                  style={{ width: '100%' }}
                 />
               </div>
 
@@ -1756,18 +1797,25 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
                   rows={3}
                   className="glass-input"
                   placeholder="Write details about the opportunity..."
-                  value={hireRecruiterMsg}
-                  onChange={e => setHireRecruiterMsg(e.target.value)}
+                  value={hireRecruiterDesc}
+                  onChange={e => setHireRecruiterDesc(e.target.value)}
+                  style={{ width: '100%', resize: 'vertical' }}
                 />
               </div>
 
-              {errorMsg && <p className="pf-modal-error">{errorMsg}</p>}
-              
-              <div className="pf-modal-btn-group" style={{ marginTop: '0.5rem' }}>
+              {errorMsg && <p className="pf-modal-error" style={{ color: '#ff5252', fontSize: '0.80rem', margin: 0 }}>{errorMsg}</p>}
+              {successMsg && (
+                <p className="pf-modal-success" style={{ color: 'var(--accent-green)', fontSize: '0.80rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <CheckCircle size={16} /> {successMsg}
+                </p>
+              )}
+
+              <div className="pf-modal-btn-group" style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
                 <button
                   type="button"
                   onClick={() => setShowHireModal(false)}
                   className="glass-btn-secondary pf-modal-btn"
+                  style={{ flex: 1, justifyContent: 'center' }}
                 >
                   Cancel
                 </button>
@@ -1775,8 +1823,9 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
                   type="submit"
                   disabled={isSending}
                   className="glass-btn pf-modal-btn"
+                  style={{ flex: 1, justifyContent: 'center', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
                 >
-                  <Send size={16} /> Send Message
+                  <Send size={16} /> {isSending ? 'Sending...' : 'Send Message'}
                 </button>
               </div>
             </form>
@@ -2167,7 +2216,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
                 WebkitUserSelect: 'none'
               }}
             >
-              {legacyFileNotFound ? (
+              {secureDocUrl.includes('/uploads/') ? (
                 <div style={{ textAlign: 'center', color: '#ffaa00', padding: '2.5rem 1.5rem', maxWidth: '500px' }}>
                   <ShieldCheck size={48} style={{ margin: '0 auto 1.25rem', display: 'block', color: '#ffaa00' }} />
                   <p style={{ fontWeight: 700, fontSize: '1.1rem', color: '#fff', marginBottom: '0.75rem' }}>Legacy File Not Found</p>
@@ -2175,7 +2224,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
                     This document was uploaded before the database migration and is stored on Render's ephemeral disk. Because Render restarts periodically, legacy files on disk are wiped.
                   </p>
                   <p style={{ fontSize: '0.85rem', color: 'var(--accent-green)', fontWeight: 600, lineHeight: 1.5 }}>
-                    Please log in to your Dashboard, edit this education entry, and re-upload the file so it is saved securely as Base64 directly in the database.
+                    Please log in to your Dashboard, edit this {getEntryTypeName()} entry, and re-upload the file so it is saved securely as Base64 directly in the database.
                   </p>
                 </div>
               ) : (secureDocUrl.toLowerCase().endsWith('.pdf') || secureDocUrl.startsWith('data:application/pdf')) ? (
