@@ -34,10 +34,26 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, onLogout
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    if (mobileMenuOpen) {
+    const isAnyModalOpen = 
+      mobileMenuOpen ||
+      showHireModal || 
+      selectedExperience !== null || 
+      selectedProject !== null || 
+      selectedCourse !== null || 
+      showAvatarPopup || 
+      showRequestModal || 
+      showVerifyModal || 
+      showSecureDocModal;
+
+    if (isAnyModalOpen) {
       document.body.style.overflow = 'hidden';
       const preventDefault = (e) => {
-        if (!e.target.closest('.slide-in-left')) {
+        if (
+          !e.target.closest('.slide-in-left') && 
+          !e.target.closest('.glass-panel') &&
+          !e.target.closest('.pf-modal-card') &&
+          !e.target.closest('form')
+        ) {
           e.preventDefault();
         }
       };
@@ -49,7 +65,17 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, onLogout
     } else {
       document.body.style.overflow = 'unset';
     }
-  }, [mobileMenuOpen]);
+  }, [
+    mobileMenuOpen,
+    showHireModal, 
+    selectedExperience, 
+    selectedProject, 
+    selectedCourse, 
+    showAvatarPopup, 
+    showRequestModal, 
+    showVerifyModal, 
+    showSecureDocModal
+  ]);
 
   // SWR: load data instantly from localStorage cache, then update from server in background
   const getCached = (key, fallback) => {
@@ -2588,12 +2614,12 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, onLogout
             left: 0,
             right: 0,
             bottom: 0,
-            background: 'rgba(0, 0, 0, 0.85)',
+            background: 'rgba(0, 0, 0, 0.45)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             zIndex: 99999,
-            backdropFilter: 'blur(10px)',
+            backdropFilter: 'blur(6px)',
             animation: 'fadeIn 0.25s ease'
           }}
         >

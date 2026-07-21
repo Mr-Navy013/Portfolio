@@ -1212,6 +1212,49 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
   const [deleteTargetId, setDeleteTargetId] = useState(null);
   const [deleteTargetType, setDeleteTargetType] = useState('');
 
+  useEffect(() => {
+    const isAnyModalOpen = 
+      mobileMenuOpen ||
+      showCourseModal || 
+      showProjModal || 
+      showAvatarPopup || 
+      showEduModal || 
+      showSkillModal || 
+      showExpModal || 
+      showCertModal || 
+      showExitModal || 
+      showMsgModal || 
+      deleteConfirmOpen;
+
+    if (isAnyModalOpen) {
+      document.body.style.overflow = 'hidden';
+      const preventDefault = (e) => {
+        if (!e.target.closest('.slide-in-left') && !e.target.closest('.glass-panel') && !e.target.closest('form')) {
+          e.preventDefault();
+        }
+      };
+      document.addEventListener('touchmove', preventDefault, { passive: false });
+      return () => {
+        document.body.style.overflow = 'unset';
+        document.removeEventListener('touchmove', preventDefault);
+      };
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+  }, [
+    mobileMenuOpen,
+    showCourseModal, 
+    showProjModal, 
+    showAvatarPopup, 
+    showEduModal, 
+    showSkillModal, 
+    showExpModal, 
+    showCertModal, 
+    showExitModal, 
+    showMsgModal, 
+    deleteConfirmOpen
+  ]);
+
   const requestDelete = (id, type) => {
     setDeleteTargetId(id);
     setDeleteTargetType(type);
@@ -5486,12 +5529,12 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
             left: 0,
             right: 0,
             bottom: 0,
-            background: 'rgba(0, 0, 0, 0.85)',
+            background: 'rgba(0, 0, 0, 0.45)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             zIndex: 99999,
-            backdropFilter: 'blur(10px)',
+            backdropFilter: 'blur(6px)',
             animation: 'fadeIn 0.25s ease'
           }}
         >
