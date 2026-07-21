@@ -2086,19 +2086,17 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, onLogout
               {selectedExperience.skills_learned && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', fontSize: '0.95rem' }}>
                   <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Skills Learned:</span>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.2rem' }}>
-                    {selectedExperience.skills_learned.split(',').map((skill, idx) => (
-                      <span key={idx} style={{
-                        padding: '0.3rem 0.75rem',
-                        fontSize: '0.8rem',
-                        background: 'rgba(0, 255, 136, 0.08)',
-                        border: '1px solid rgba(0, 255, 136, 0.2)',
-                        color: 'var(--accent-green)',
-                        borderRadius: '100px'
-                      }}>
-                        {skill.trim()}
-                      </span>
-                    ))}
+                  <div style={{
+                    padding: '0.75rem 1rem',
+                    fontSize: '0.85rem',
+                    background: 'rgba(0, 255, 136, 0.04)',
+                    border: '1px solid rgba(0, 255, 136, 0.2)',
+                    color: 'var(--accent-green)',
+                    borderRadius: '8px',
+                    lineHeight: '1.6',
+                    letterSpacing: '0.3px'
+                  }}>
+                    {selectedExperience.skills_learned}
                   </div>
                 </div>
               )}
