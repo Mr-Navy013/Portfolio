@@ -1031,6 +1031,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
   const [messages, setMessages] = useState([]);
   const [courses, setCourses] = useState([]);
   const [docRequests, setDocRequests] = useState([]);
+  const [selectedRequestIds, setSelectedRequestIds] = useState([]);
   const [isReplying, setIsReplying] = useState(false);
   const [replyText, setReplyText] = useState('');
 
@@ -2675,6 +2676,54 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
   const handleDeleteCert = (id) => requestDelete(id, 'certificate');
   const handleDeleteDocRequest = (id) => requestDelete(id, 'documentRequest');
 
+  const handleToggleSelectRequest = (id) => {
+    setSelectedRequestIds(prev => 
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  };
+
+  const handleToggleSelectAllRequests = () => {
+    if (selectedRequestIds.length === docRequests.length) {
+      setSelectedRequestIds([]);
+    } else {
+      setSelectedRequestIds(docRequests.map(r => r.id));
+    }
+  };
+
+  const handleBulkDeleteDocRequests = async () => {
+    if (selectedRequestIds.length === 0) {
+      showStatus('No requests selected for deletion.', true);
+      return;
+    }
+    if (!window.confirm(`Are you sure you want to delete ${selectedRequestIds.length} selected request(s)?`)) {
+      return;
+    }
+    setLoading(true);
+    try {
+      const deletePromises = selectedRequestIds.map(id =>
+        fetch(`${API_BASE}/document-requests/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        })
+      );
+      const results = await Promise.all(deletePromises);
+      const successfulIds = [];
+      results.forEach((res, index) => {
+        if (res.ok) {
+          successfulIds.push(selectedRequestIds[index]);
+        }
+      });
+      setDocRequests(prev => prev.filter(item => !successfulIds.includes(item.id)));
+      setSelectedRequestIds([]);
+      showStatus(`Successfully deleted ${successfulIds.length} request(s).`);
+    } catch (err) {
+      console.error(err);
+      showStatus('Failed to delete some document requests.', true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div style={{ background: 'radial-gradient(ellipse at top left, #04351b 0%, #01140a 45%, #000000 100%)', minHeight: '100vh', color: '#fff', position: 'relative', overflowX: 'hidden' }}>
       
@@ -4142,6 +4191,40 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
 
               {docRequests.length > 0 ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {/* Bulk Actions Header */}
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '0.75rem 1rem',
+                    background: 'rgba(255, 255, 255, 0.03)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    borderRadius: '8px',
+                    flexWrap: 'wrap',
+                    gap: '1rem'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <input 
+                        type="checkbox"
+                        checked={docRequests.length > 0 && selectedRequestIds.length === docRequests.length}
+                        onChange={handleToggleSelectAllRequests}
+                        style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: 'var(--accent-green)' }}
+                      />
+                      <span style={{ fontSize: '0.9rem', color: '#fff', fontWeight: 600 }}>
+                        {selectedRequestIds.length === docRequests.length ? 'Deselect All' : 'Select All'} ({selectedRequestIds.length} selected)
+                      </span>
+                    </div>
+                    {selectedRequestIds.length > 0 && (
+                      <button
+                        onClick={handleBulkDeleteDocRequests}
+                        className="glass-btn-danger"
+                        style={{ padding: '0.4rem 1rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                      >
+                        <Trash2 size={14} /> Delete Selected ({selectedRequestIds.length})
+                      </button>
+                    )}
+                  </div>
+
                   {docRequests.map((req) => (
                     <div 
                       key={req.id} 
@@ -4149,84 +4232,100 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                         padding: '1rem',
                         borderRadius: '8px',
                         background: 'rgba(255, 255, 255, 0.02)',
-                        border: '1px solid rgba(255, 255, 255, 0.05)',
+                        border: selectedRequestIds.includes(req.id) ? '1px solid rgba(255, 82, 82, 0.4)' : '1px solid rgba(255, 255, 255, 0.05)',
                         display: 'flex',
-                        flexDirection: 'column',
-                        gap: '0.75rem',
+                        flexDirection: 'row',
+                        alignItems: 'flex-start',
+                        gap: '1rem',
                         transition: 'all 0.3s ease'
                       }}
                     >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem' }}>
-                        <div>
-                          <h4 style={{ margin: 0, fontWeight: 700, fontSize: '1rem', color: '#fff' }}>{req.viewer_name}</h4>
-                          <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{req.viewer_email}</span>
+                      <input 
+                        type="checkbox"
+                        checked={selectedRequestIds.includes(req.id)}
+                        onChange={() => handleToggleSelectRequest(req.id)}
+                        style={{ 
+                          marginTop: '0.25rem',
+                          width: '16px', 
+                          height: '16px', 
+                          cursor: 'pointer', 
+                          accentColor: 'var(--accent-green)',
+                          flexShrink: 0
+                        }}
+                      />
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', flex: 1 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem' }}>
+                          <div>
+                            <h4 style={{ margin: 0, fontWeight: 700, fontSize: '1rem', color: '#fff' }}>{req.viewer_name}</h4>
+                            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{req.viewer_email}</span>
+                          </div>
+                          <span 
+                            style={{
+                              fontSize: '0.75rem',
+                              padding: '0.2rem 0.6rem',
+                              borderRadius: '4px',
+                              fontWeight: 600,
+                              background: req.status === 'Approved' ? 'rgba(0, 255, 136, 0.1)' : req.status === 'Rejected' ? 'rgba(255, 82, 82, 0.1)' : 'rgba(255, 193, 7, 0.1)',
+                              color: req.status === 'Approved' ? 'var(--accent-green)' : req.status === 'Rejected' ? '#ff5252' : '#ffc107',
+                              border: req.status === 'Approved' ? '1px solid var(--accent-green)' : req.status === 'Rejected' ? '1px solid #ff5252' : '1px solid #ffc107'
+                            }}
+                          >
+                            {req.status}
+                          </span>
                         </div>
-                        <span 
-                          style={{
-                            fontSize: '0.75rem',
-                            padding: '0.2rem 0.6rem',
-                            borderRadius: '4px',
-                            fontWeight: 600,
-                            background: req.status === 'Approved' ? 'rgba(0, 255, 136, 0.1)' : req.status === 'Rejected' ? 'rgba(255, 82, 82, 0.1)' : 'rgba(255, 193, 7, 0.1)',
-                            color: req.status === 'Approved' ? 'var(--accent-green)' : req.status === 'Rejected' ? '#ff5252' : '#ffc107',
-                            border: req.status === 'Approved' ? '1px solid var(--accent-green)' : req.status === 'Rejected' ? '1px solid #ff5252' : '1px solid #ffc107'
-                          }}
-                        >
-                          {req.status}
-                        </span>
-                      </div>
 
-                      <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                        <p style={{ margin: '0 0 0.25rem 0' }}>
-                          <strong style={{ color: '#fff' }}>Requested:</strong> {req.document_name}
-                        </p>
-                        {req.purpose && (
-                          <p style={{ margin: 0, fontStyle: 'italic' }}>
-                            <strong style={{ color: '#fff', fontStyle: 'normal' }}>Purpose:</strong> "{req.purpose}"
+                        <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                          <p style={{ margin: '0 0 0.25rem 0' }}>
+                            <strong style={{ color: '#fff' }}>Requested:</strong> {req.document_name}
                           </p>
-                        )}
-                      </div>
+                          {req.purpose && (
+                            <p style={{ margin: 0, fontStyle: 'italic' }}>
+                              <strong style={{ color: '#fff', fontStyle: 'normal' }}>Purpose:</strong> "{req.purpose}"
+                            </p>
+                          )}
+                        </div>
 
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', borderTop: '1px solid rgba(255,255,255,0.03)', paddingTop: '0.75rem', marginTop: '0.25rem' }}>
-                        <span style={{ fontSize: '0.75rem', color: 'rgba(255, 255, 255, 0.3)' }}>
-                          Requested on: {new Date(req.created_at).toLocaleDateString()} at {new Date(req.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </span>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', borderTop: '1px solid rgba(255,255,255,0.03)', paddingTop: '0.75rem', marginTop: '0.25rem' }}>
+                          <span style={{ fontSize: '0.75rem', color: 'rgba(255, 255, 255, 0.3)' }}>
+                            Requested on: {new Date(req.created_at).toLocaleDateString()} at {new Date(req.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
 
-                        {req.status === 'Pending' && (
-                          <div style={{ display: 'flex', gap: '0.5rem' }}>
-                            <button 
-                              onClick={() => handleDeclineRequest(req.id)}
-                              className="glass-btn-secondary" 
-                              style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', border: '1px solid #ff5252', color: '#ff5252' }}
-                            >
-                              Decline
-                            </button>
-                            <button 
-                              onClick={() => handleApproveRequest(req.id)}
-                              className="glass-btn" 
-                              style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
-                            >
-                              Approve Access
-                            </button>
-                          </div>
-                        )}
+                          {req.status === 'Pending' && (
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                              <button 
+                                onClick={() => handleDeclineRequest(req.id)}
+                                className="glass-btn-secondary" 
+                                style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', border: '1px solid #ff5252', color: '#ff5252' }}
+                              >
+                                Decline
+                              </button>
+                              <button 
+                                onClick={() => handleApproveRequest(req.id)}
+                                className="glass-btn" 
+                                style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+                              >
+                                Approve Access
+                              </button>
+                            </div>
+                          )}
 
-                        {req.status !== 'Pending' && (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                            {req.status === 'Approved' && req.access_token && (
-                              <span style={{ fontSize: '0.8rem', color: 'var(--accent-green)', fontWeight: 600 }}>
-                                Access Code: <code style={{ letterSpacing: '1px', background: 'rgba(0,255,136,0.1)', padding: '0.1rem 0.3rem', borderRadius: '3px' }}>{req.access_token}</code>
-                              </span>
-                            )}
-                            <button 
-                              onClick={() => handleDeleteDocRequest(req.id)}
-                              className="glass-btn-danger" 
-                              style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', gap: '0.25rem', display: 'flex', alignItems: 'center' }}
-                            >
-                              <Trash2 size={12} /> Delete
-                            </button>
-                          </div>
-                        )}
+                          {req.status !== 'Pending' && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                              {req.status === 'Approved' && req.access_token && (
+                                <span style={{ fontSize: '0.8rem', color: 'var(--accent-green)', fontWeight: 600 }}>
+                                  Access Code: <code style={{ letterSpacing: '1px', background: 'rgba(0,255,136,0.1)', padding: '0.1rem 0.3rem', borderRadius: '3px' }}>{req.access_token}</code>
+                                </span>
+                              )}
+                              <button 
+                                onClick={() => handleDeleteDocRequest(req.id)}
+                                className="glass-btn-danger" 
+                                style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', gap: '0.25rem', display: 'flex', alignItems: 'center' }}
+                              >
+                                <Trash2 size={12} /> Delete
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))}
