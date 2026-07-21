@@ -68,6 +68,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
   const [certificates, setCertificates] = useState(() => getCached('cache_certificates', []));
   const [courses, setCourses] = useState(() => getCached('cache_courses', []));
   const [selectedExperience, setSelectedExperience] = useState(null);
+  const [selectedProject, setSelectedProject] = useState(null);
 
   // Document Access Permission and Viewer states
   const [showRequestModal, setShowRequestModal] = useState(false);
@@ -1233,6 +1234,12 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
                           <div style={{ display: 'flex', flexDirection: 'column' }}>
                             <h3 className="pf-project-title" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: '0 0 0.4rem 0', fontSize: '1.1rem' }}>{proj.title}</h3>
                             <p className="pf-project-summary" style={{ height: '3em', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', fontSize: '0.82rem', lineHeight: '1.5', margin: 0 }}>{proj.summary}</p>
+                            <span 
+                              onClick={(e) => { e.stopPropagation(); setSelectedProject(proj); }} 
+                              style={{ color: 'var(--accent-green)', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600, marginTop: '0.3rem', display: 'inline-block' }}
+                            >
+                              Read More...
+                            </span>
                           </div>
                           <div className="pf-project-links" style={{ gap: '0.6rem' }}>
                             <a 
@@ -1308,6 +1315,12 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
                       <h3 className="pf-project-title" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: '0 0 0.5rem 0' }}>{proj.title}</h3>
                       <p className="pf-project-summary" style={{ height: '4.5em', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', fontSize: '0.88rem', lineHeight: '1.5', margin: 0 }}>{proj.summary}</p>
+                      <span 
+                        onClick={(e) => { e.stopPropagation(); setSelectedProject(proj); }} 
+                        style={{ color: 'var(--accent-green)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, marginTop: '0.35rem', display: 'inline-block' }}
+                      >
+                        Read More...
+                      </span>
                     </div>
                     <div className="pf-project-links">
                       <a href={proj.repo_link} target="_blank" rel="noreferrer" className="glass-btn-secondary pf-project-link-btn">
@@ -2009,6 +2022,125 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
                 </div>
               )}
 
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Project Details Modal */}
+      {selectedProject && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 99999,
+            background: 'rgba(0,0,0,0.85)',
+            backdropFilter: 'blur(15px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+            animation: 'fadeIn 0.25s ease'
+          }}
+          onClick={() => setSelectedProject(null)}
+        >
+          <div 
+            className="glass-panel"
+            style={{
+              width: '100%',
+              maxWidth: '600px',
+              background: 'rgba(15, 23, 20, 0.98)',
+              border: '1px solid rgba(0, 255, 136, 0.3)',
+              borderRadius: '16px',
+              padding: '2.2rem',
+              boxShadow: '0 20px 50px rgba(0,0,0,0.8)',
+              position: 'relative',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1.2rem',
+              color: '#eee',
+              maxHeight: '90vh',
+              overflowY: 'auto'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close button */}
+            <button 
+              onClick={() => setSelectedProject(null)}
+              style={{
+                position: 'absolute',
+                top: '1.25rem',
+                right: '1.25rem',
+                background: 'rgba(255,255,255,0.05)',
+                border: 'none',
+                color: '#fff',
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                transition: 'background 0.2s',
+                zIndex: 10
+              }}
+            >
+              <X size={16} />
+            </button>
+
+            {selectedProject.thumbnail && (
+              <div style={{ width: '100%', maxHeight: '250px', overflow: 'hidden', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <img 
+                  src={resolveFileUrl(selectedProject.thumbnail)} 
+                  alt={selectedProject.title} 
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                />
+              </div>
+            )}
+
+            <div style={{ marginTop: selectedProject.thumbnail ? '0.5rem' : '1.5rem' }}>
+              <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800, color: '#fff', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '0.5rem' }}>
+                {selectedProject.title}
+              </h3>
+            </div>
+
+            <div style={{ maxHeight: '300px', overflowY: 'auto', paddingRight: '0.5rem' }}>
+              <p style={{ margin: 0, fontSize: '0.92rem', lineHeight: '1.6', color: 'var(--text-secondary)', whiteSpace: 'pre-wrap' }}>
+                {selectedProject.summary}
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '1rem' }}>
+              <a 
+                href={selectedProject.repo_link} 
+                target="_blank" 
+                rel="noreferrer" 
+                className="glass-btn-secondary"
+                style={{ flex: 1, justifyContent: 'center', padding: '0.6rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem', textDecoration: 'none' }}
+              >
+                <Github size={16} /> Source Code
+              </a>
+              {selectedProject.is_deployed && selectedProject.live_link ? (
+                <a 
+                  href={selectedProject.live_link} 
+                  target="_blank" 
+                  rel="noreferrer" 
+                  className="glass-btn"
+                  style={{ flex: 1, justifyContent: 'center', padding: '0.6rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem', textDecoration: 'none' }}
+                >
+                  <ExternalLink size={16} /> Live Demo
+                </a>
+              ) : (
+                <div 
+                  className="pf-project-undeployed" 
+                  style={{ flex: 1, justifyContent: 'center', display: 'flex', alignItems: 'center', padding: '0.6rem', fontSize: '0.85rem', background: 'rgba(255,255,255,0.03)', color: 'rgba(255,255,255,0.4)', borderRadius: '8px' }}
+                >
+                  Undeployed
+                </div>
+              )}
             </div>
           </div>
         </div>
