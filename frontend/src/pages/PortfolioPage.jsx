@@ -1656,13 +1656,13 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
       {/* ── FOOTER ── */}
       <footer className="pf-footer-premium">
         <div className="pf-footer-content">
-          <div className="pf-footer-section" style={{ width: '100%' }}>
-            <h4 className="pf-footer-title">Help, Support & Recruitment</h4>
-            <p className="pf-footer-text">
+          <div className="pf-footer-section" style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+            <h4 className="pf-footer-title" style={{ width: '100%', textAlign: 'center' }}>Help, Support & Recruitment</h4>
+            <p className="pf-footer-text" style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'center', lineHeight: '1.6' }}>
               For project collaborations, consulting, general technical support, or recruitment, hiring, and employment inquiries, please feel free to reach out. I am fully available for both freelance contracts and full-time positions.
             </p>
-            <div className="pf-footer-details" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem', marginTop: '1rem' }}>
-              <div>
+            <div className="pf-footer-details" style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: '2.5rem', marginTop: '1.5rem', width: '100%' }}>
+              <div style={{ textAlign: 'center' }}>
                 <p className="pf-footer-contact-info" style={{ margin: '0.3rem 0' }}>
                   <strong>Email:</strong> <a href={`mailto:${email}`} target="_blank" rel="noopener noreferrer">{email}</a>
                 </p>
@@ -1672,7 +1672,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
                   </p>
                 )}
               </div>
-              <div className="pf-footer-socials" style={{ display: 'flex', gap: '0.8rem', alignItems: 'center', flexWrap: 'wrap' }}>
+              <div className="pf-footer-socials" style={{ display: 'flex', gap: '1.2rem', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap' }}>
                 {linkedin && (
                   <a href={linkedin} target="_blank" rel="noopener noreferrer" title="LinkedIn" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: '#00ff88', textDecoration: 'none', fontSize: '0.85rem' }}>
                     <Linkedin size={18} /> LinkedIn
