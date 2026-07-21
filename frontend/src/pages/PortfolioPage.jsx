@@ -1181,10 +1181,10 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
                     gap: 'var(--proj-card-gap)',
                     alignItems: 'center',
                     position: 'absolute',
-                    left: 0,
+                    left: '50%',
                     width: 'max-content',
                     transition: 'transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)',
-                    transform: `translate3d(calc(50% - (${projectSliderActiveIndex} * (var(--proj-card-width) + var(--proj-card-gap))) - (var(--proj-card-width) / 2)), 0, 0)`
+                    transform: `translate3d(calc(-1 * (${projectSliderActiveIndex} * (var(--proj-card-width) + var(--proj-card-gap)) + var(--proj-card-width) / 2)), 0, 0)`
                   }}
                 >
                   {projects.map((proj, idx) => {
