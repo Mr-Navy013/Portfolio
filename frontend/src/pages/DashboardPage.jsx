@@ -2180,9 +2180,9 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       setEduBachCert(null);
       setEduOthersCert(null);
       setEduOthersMarksheet(null);
-      setEduAccess10th(false);
-      setEduAccess12th(false);
-      setEduAccessBach(false);
+      setEduAccess10th(true);
+      setEduAccess12th(true);
+      setEduAccessBach(true);
     }
     setShowEduModal(true);
   };
@@ -2267,7 +2267,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       setCertDate('');
       setCertUrl('');
       setCertFile(null);
-      setCertAccess(false);
+      setCertAccess(true);
     }
     setShowCertModal(true);
   };
@@ -3966,22 +3966,13 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                     
                     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                       {cert.certificate_file ? (
-                        <>
-                          <button 
-                            onClick={(e) => handleViewFile(e, cert.certificate_file)} 
-                            className="glass-btn-secondary"
-                            style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', border: '1px solid var(--glass-border)', background: 'none', cursor: 'pointer' }}
-                          >
-                            View
-                          </button>
-                          <button 
-                            onClick={(e) => handleDownloadFile(e, cert.certificate_file, `${cert.name}_Certificate.pdf`)} 
-                            className="glass-btn"  
-                            style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', border: '1px solid var(--glass-border)', background: 'none', cursor: 'pointer' }}
-                          >
-                            Download
-                          </button>
-                        </>
+                        <button 
+                          onClick={(e) => handleViewFile(e, cert.certificate_file)} 
+                          className="glass-btn-secondary"
+                          style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', border: '1px solid var(--glass-border)', background: 'none', cursor: 'pointer' }}
+                        >
+                          View
+                        </button>
                       ) : cert.credential_url ? (
                         <a 
                           href={cert.credential_url} 
@@ -4623,12 +4614,12 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                       <input 
                         type="checkbox" 
                         id="eduAccess10th" 
-                        checked={eduAccess10th} 
-                        onChange={(e) => setEduAccess10th(e.target.checked)} 
+                        checked={!eduAccess10th} 
+                        onChange={(e) => setEduAccess10th(!e.target.checked)} 
                         style={{ accentColor: 'var(--accent-green)', cursor: 'pointer' }}
                       />
                       <label htmlFor="eduAccess10th" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', cursor: 'pointer' }}>
-                        Allow viewers to view/screenshot directly (No password required)
+                        Require access code verification (password protection) for 10th Certificate
                       </label>
                     </div>
                   </div>
@@ -4768,12 +4759,12 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                     <input 
                       type="checkbox" 
                       id="eduAccessBach" 
-                      checked={eduAccessBach} 
-                      onChange={(e) => setEduAccessBach(e.target.checked)} 
+                      checked={!eduAccessBach} 
+                      onChange={(e) => setEduAccessBach(!e.target.checked)} 
                       style={{ accentColor: 'var(--accent-green)', cursor: 'pointer' }}
                     />
                     <label htmlFor="eduAccessBach" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', cursor: 'pointer' }}>
-                      Allow viewers to view/screenshot directly (No password required)
+                      Require access code verification (password protection) for Degree Certificate
                     </label>
                   </div>
                 </div>
@@ -5085,12 +5076,12 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                 <input 
                   type="checkbox" 
                   id="certAccess" 
-                  checked={certAccess} 
-                  onChange={(e) => setCertAccess(e.target.checked)} 
+                  checked={!certAccess} 
+                  onChange={(e) => setCertAccess(!e.target.checked)} 
                   style={{ accentColor: 'var(--accent-green)', cursor: 'pointer' }}
                 />
                 <label htmlFor="certAccess" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', cursor: 'pointer' }}>
-                  Allow viewers to view/screenshot directly (No password required)
+                  Require access code verification (password protection)
                 </label>
               </div>
             </div>
