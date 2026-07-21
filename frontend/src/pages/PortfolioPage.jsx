@@ -1178,11 +1178,6 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
                   const items = [];
                   if (projects.length === 1) {
                     items.push({ idx: 0, position: 'center' });
-                  } else if (projects.length === 2) {
-                    items.push(
-                      { idx: 0, position: 'left' },
-                      { idx: 1, position: 'center' }
-                    );
                   } else {
                     const prevIdx = (projectSliderActiveIndex - 1 + projects.length) % projects.length;
                     const currIdx = projectSliderActiveIndex;
@@ -1202,7 +1197,10 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
                         gap: 'var(--proj-card-gap)',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        width: '100%'
+                        width: 'max-content',
+                        position: 'absolute',
+                        left: '50%',
+                        transform: 'translateX(-50%)'
                       }}
                     >
                       {items.map((item) => {
@@ -1211,7 +1209,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
                         const isActive = item.position === 'center';
                         return (
                           <div 
-                            key={proj.id} 
+                            key={`${proj.id}-${item.position}`} 
                             className={`glass-panel pf-project-card ${isActive ? 'pf-active-card' : ''}`} 
                             onClick={() => {
                               if (item.position === 'left') {
