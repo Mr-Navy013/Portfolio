@@ -34,26 +34,10 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, onLogout
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    const isAnyModalOpen = 
-      mobileMenuOpen ||
-      showHireModal || 
-      selectedExperience !== null || 
-      selectedProject !== null || 
-      selectedCourse !== null || 
-      showAvatarPopup || 
-      showRequestModal || 
-      showVerifyModal || 
-      showSecureDocModal;
-
-    if (isAnyModalOpen) {
+    if (mobileMenuOpen) {
       document.body.style.overflow = 'hidden';
       const preventDefault = (e) => {
-        if (
-          !e.target.closest('.slide-in-left') && 
-          !e.target.closest('.glass-panel') &&
-          !e.target.closest('.pf-modal-card') &&
-          !e.target.closest('form')
-        ) {
+        if (!e.target.closest('.slide-in-left')) {
           e.preventDefault();
         }
       };
@@ -65,17 +49,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, onLogout
     } else {
       document.body.style.overflow = 'unset';
     }
-  }, [
-    mobileMenuOpen,
-    showHireModal, 
-    selectedExperience, 
-    selectedProject, 
-    selectedCourse, 
-    showAvatarPopup, 
-    showRequestModal, 
-    showVerifyModal, 
-    showSecureDocModal
-  ]);
+  }, [mobileMenuOpen]);
 
   // SWR: load data instantly from localStorage cache, then update from server in background
   const getCached = (key, fallback) => {
@@ -251,6 +225,47 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, onLogout
   useEffect(() => {
     setAvatarError(false);
   }, [profile?.profile_picture]);
+
+  useEffect(() => {
+    const isAnyModalOpen = 
+      showHireModal || 
+      selectedExperience !== null || 
+      selectedProject !== null || 
+      selectedCourse !== null || 
+      showAvatarPopup || 
+      showRequestModal || 
+      showVerifyModal || 
+      showSecureDocModal;
+
+    if (isAnyModalOpen) {
+      document.body.style.overflow = 'hidden';
+      const preventDefault = (e) => {
+        if (
+          !e.target.closest('.glass-panel') &&
+          !e.target.closest('.pf-modal-card') &&
+          !e.target.closest('form')
+        ) {
+          e.preventDefault();
+        }
+      };
+      document.addEventListener('touchmove', preventDefault, { passive: false });
+      return () => {
+        document.body.style.overflow = 'unset';
+        document.removeEventListener('touchmove', preventDefault);
+      };
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+  }, [
+    showHireModal, 
+    selectedExperience, 
+    selectedProject, 
+    selectedCourse, 
+    showAvatarPopup, 
+    showRequestModal, 
+    showVerifyModal, 
+    showSecureDocModal
+  ]);
 
   useEffect(() => { fetchData(); }, []);
 
