@@ -2118,8 +2118,8 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, onLogout
                     {selectedExperience.lor_file && (
                       <button 
                         onClick={() => handleOpenPublicDocument(selectedExperience.lor_file, `${selectedExperience.company} - LOR Letter`)}
-                        className="glass-btn" 
-                        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.85rem', borderColor: '#ffa500', background: 'none', cursor: 'pointer' }}
+                        className="glass-btn glass-btn-lor" 
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.85rem' }}
                       >
                         <Award size={16} /> LOR Letter
                       </button>
