@@ -69,6 +69,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, onLogout
   const [courses, setCourses] = useState(() => getCached('cache_courses', []));
   const [selectedExperience, setSelectedExperience] = useState(null);
   const [selectedProject, setSelectedProject] = useState(null);
+  const [selectedCourse, setSelectedCourse] = useState(null);
 
   // Document Access Permission and Viewer states
   const [showRequestModal, setShowRequestModal] = useState(false);
@@ -1065,9 +1066,47 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, onLogout
         {courses.length > 0 ? (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
             {courses.map(course => (
-              <div key={course.id} className="glass-panel pf-course-card" style={{ padding: '1.5rem', borderLeft: '3px solid var(--accent-green)', display: 'flex', flexDirection: 'column', gap: '0.5rem', transition: 'transform 0.25s ease' }}>
+              <div 
+                key={course.id} 
+                className="glass-panel pf-course-card" 
+                style={{ 
+                  padding: '1.5rem', 
+                  borderLeft: '3px solid var(--accent-green)', 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  gap: '0.5rem', 
+                  transition: 'transform 0.25s ease',
+                  cursor: 'pointer'
+                }}
+                onClick={() => setSelectedCourse(course)}
+              >
                 <h3 style={{ margin: 0, fontWeight: 700, fontSize: '1.1rem', color: '#fff' }}>{course.name}</h3>
-                <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>{course.description}</p>
+                <p 
+                  style={{ 
+                    margin: 0, 
+                    fontSize: '0.9rem', 
+                    color: 'var(--text-secondary)', 
+                    lineHeight: '1.5',
+                    height: '3em',
+                    overflow: 'hidden',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical'
+                  }}
+                >
+                  {course.description}
+                </p>
+                <span 
+                  style={{ 
+                    color: 'var(--accent-green)', 
+                    fontSize: '0.8rem', 
+                    fontWeight: 600, 
+                    marginTop: '0.2rem',
+                    cursor: 'pointer' 
+                  }}
+                >
+                  Read More...
+                </span>
               </div>
             ))}
           </div>
@@ -2176,6 +2215,96 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, onLogout
                   Undeployed
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Course Details Modal */}
+      {selectedCourse && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 99999,
+            background: 'rgba(0,0,0,0.85)',
+            backdropFilter: 'blur(15px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+            animation: 'fadeIn 0.25s ease'
+          }}
+          onClick={() => setSelectedCourse(null)}
+        >
+          <div 
+            className="glass-panel"
+            style={{
+              width: '100%',
+              maxWidth: '550px',
+              background: 'rgba(15, 23, 20, 0.98)',
+              border: '1px solid rgba(0, 255, 136, 0.3)',
+              borderRadius: '16px',
+              padding: '2.2rem',
+              boxShadow: '0 20px 50px rgba(0,0,0,0.8)',
+              position: 'relative',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1.2rem',
+              color: '#eee',
+              maxHeight: '85vh',
+              overflowY: 'auto'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close button */}
+            <button 
+              onClick={() => setSelectedCourse(null)}
+              style={{
+                position: 'absolute',
+                top: '1.25rem',
+                right: '1.25rem',
+                background: 'rgba(255,255,255,0.05)',
+                border: 'none',
+                color: '#fff',
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                transition: 'background 0.2s',
+                zIndex: 10
+              }}
+            >
+              <X size={16} />
+            </button>
+
+            <div style={{ marginTop: '1rem' }}>
+              <h3 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 800, color: '#fff', borderBottom: '1px solid rgba(0, 255, 136, 0.2)', paddingBottom: '0.6rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <GraduationCap size={24} style={{ color: 'var(--accent-green)' }} />
+                {selectedCourse.name}
+              </h3>
+            </div>
+
+            <div style={{ maxHeight: '350px', overflowY: 'auto', paddingRight: '0.5rem', marginTop: '0.5rem' }}>
+              <p style={{ margin: 0, fontSize: '0.95rem', lineHeight: '1.6', color: 'var(--text-secondary)', whiteSpace: 'pre-wrap' }}>
+                {selectedCourse.description}
+              </p>
+            </div>
+            
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+              <button 
+                onClick={() => setSelectedCourse(null)} 
+                className="glass-btn-secondary"
+                style={{ padding: '0.5rem 1.5rem', fontSize: '0.85rem' }}
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>
