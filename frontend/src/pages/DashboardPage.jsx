@@ -1220,6 +1220,12 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
 
   const getDeleteModalContent = () => {
     switch (deleteTargetType) {
+      case 'bulkDocumentRequests':
+        return {
+          title: 'Delete Selected Requests?',
+          message: `Are you sure you want to permanently delete the ${selectedRequestIds.length} selected document access requests? This action cannot be undone.`,
+          confirmText: 'Delete'
+        };
       case 'messages':
         return {
           title: `Delete Messages?`,
@@ -1275,6 +1281,35 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
     setDeleteTargetType('');
 
     try {
+      if (type === 'bulkDocumentRequests') {
+        if (selectedRequestIds.length === 0) return;
+        setLoading(true);
+        try {
+          const deletePromises = selectedRequestIds.map(rid =>
+            resilientFetch(`${API_BASE}/document-requests/${rid}`, {
+              method: 'DELETE',
+              headers: { 'Authorization': `Bearer ${authToken}` }
+            })
+          );
+          const results = await Promise.all(deletePromises);
+          const successfulIds = [];
+          results.forEach((res, index) => {
+            if (res.ok) {
+              successfulIds.push(selectedRequestIds[index]);
+            }
+          });
+          setDocRequests(prev => prev.filter(item => !successfulIds.includes(item.id)));
+          setSelectedRequestIds([]);
+          showStatus(`Successfully deleted ${successfulIds.length} request(s).`);
+        } catch (err) {
+          console.error(err);
+          showStatus('Failed to delete some document requests.', true);
+        } finally {
+          setLoading(false);
+        }
+        return;
+      }
+
       if (type === 'messages') {
         if (selectedMsgIds.length === 0) return;
         setLoading(true);
@@ -2690,38 +2725,12 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
     }
   };
 
-  const handleBulkDeleteDocRequests = async () => {
+  const handleBulkDeleteDocRequests = () => {
     if (selectedRequestIds.length === 0) {
       showStatus('No requests selected for deletion.', true);
       return;
     }
-    if (!window.confirm(`Are you sure you want to delete ${selectedRequestIds.length} selected request(s)?`)) {
-      return;
-    }
-    setLoading(true);
-    try {
-      const deletePromises = selectedRequestIds.map(id =>
-        fetch(`${API_BASE}/document-requests/${id}`, {
-          method: 'DELETE',
-          headers: { 'Authorization': `Bearer ${authToken}` }
-        })
-      );
-      const results = await Promise.all(deletePromises);
-      const successfulIds = [];
-      results.forEach((res, index) => {
-        if (res.ok) {
-          successfulIds.push(selectedRequestIds[index]);
-        }
-      });
-      setDocRequests(prev => prev.filter(item => !successfulIds.includes(item.id)));
-      setSelectedRequestIds([]);
-      showStatus(`Successfully deleted ${successfulIds.length} request(s).`);
-    } catch (err) {
-      console.error(err);
-      showStatus('Failed to delete some document requests.', true);
-    } finally {
-      setLoading(false);
-    }
+    requestDelete(null, 'bulkDocumentRequests');
   };
 
   return (
