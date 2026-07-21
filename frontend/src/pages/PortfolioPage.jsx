@@ -945,13 +945,15 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, onLogout
                 <Send size={17} /> Hire Me
               </button>
               {resumeUrl ? (
-                <button 
-                  onClick={() => handleOpenPublicDocument(resumeUrl, 'Resume / CV', { type: 'resume' })} 
+                <a 
+                  href={`${API_BASE}/documents/download?type=resume`} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
                   className="glass-btn-secondary pf-cta-btn"
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', textDecoration: 'none' }}
                 >
                   <Download size={17} style={{ color: '#00ff88' }} /> View Resume
-                </button>
+                </a>
               ) : (
                 <button
                   className="glass-btn-secondary pf-cta-btn"
@@ -1050,13 +1052,15 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, onLogout
                 <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.8rem', flexWrap: 'wrap' }}>
                   {edu.degree === '10th' && edu.certificate_10th && (
                     edu.access_cert10 === 1 || edu.access_cert10 === 'true' || edu.access_cert10 === true ? (
-                       <button 
-                        onClick={() => handleOpenPublicDocument(edu.certificate_10th, `${edu.school} - 10th Certificate`, { type: 'education', id: edu.id, field: 'certificate_10th' })}
+                      <a 
+                        href={`${API_BASE}/documents/download?type=education&id=${edu.id}&field=certificate_10th`}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="glass-btn" 
-                        style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', gap: '0.4rem', height: 'auto', display: 'flex', alignItems: 'center' }}
+                        style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', gap: '0.4rem', height: 'auto', display: 'flex', alignItems: 'center', textDecoration: 'none' }}
                       >
                         <Eye size={12} /> View 10th Certificate
-                      </button>
+                      </a>
                     ) : (
                       <button 
                         onClick={() => handleOpenPermissionRequest(`edu_${edu.id}_cert10`, '10th Certificate')} 
@@ -1071,13 +1075,15 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, onLogout
                     <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                       {edu.certificate_12th && (
                         edu.access_cert12 === 1 || edu.access_cert12 === 'true' || edu.access_cert12 === true ? (
-                          <button 
-                            onClick={() => handleOpenPublicDocument(edu.certificate_12th, `${edu.school} - 12th Certificate`, { type: 'education', id: edu.id, field: 'certificate_12th' })}
+                          <a 
+                            href={`${API_BASE}/documents/download?type=education&id=${edu.id}&field=certificate_12th`}
+                            target="_blank"
+                            rel="noopener noreferrer"
                             className="glass-btn" 
-                            style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', gap: '0.4rem', height: 'auto', display: 'flex', alignItems: 'center' }}
+                            style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', gap: '0.4rem', height: 'auto', display: 'flex', alignItems: 'center', textDecoration: 'none' }}
                           >
                             <Eye size={12} /> View 12th Certificate
-                          </button>
+                          </a>
                         ) : (
                           <button 
                             onClick={() => handleOpenPermissionRequest(`edu_${edu.id}_cert12`, '12th Certificate')} 
@@ -1091,13 +1097,15 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, onLogout
 
                       {edu.marksheet_12th && (
                         edu.access_cert12 === 1 || edu.access_cert12 === 'true' || edu.access_cert12 === true ? (
-                          <button 
-                            onClick={() => handleOpenPublicDocument(edu.marksheet_12th, `${edu.school} - 12th Marksheet`, { type: 'education', id: edu.id, field: 'marksheet_12th' })}
+                          <a 
+                            href={`${API_BASE}/documents/download?type=education&id=${edu.id}&field=marksheet_12th`}
+                            target="_blank"
+                            rel="noopener noreferrer"
                             className="glass-btn" 
-                            style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', gap: '0.4rem', height: 'auto', display: 'flex', alignItems: 'center' }}
+                            style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', gap: '0.4rem', height: 'auto', display: 'flex', alignItems: 'center', textDecoration: 'none' }}
                           >
                             <Eye size={12} /> View 12th Marksheet
-                          </button>
+                          </a>
                         ) : (
                           <button 
                             onClick={() => handleOpenPermissionRequest(`edu_${edu.id}_marks12`, '12th Marksheet')} 
@@ -1112,13 +1120,15 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, onLogout
                   )}
                   {edu.degree === 'Bachelor' && edu.certificate_bachelor && (
                     edu.access_certbach === 1 || edu.access_certbach === 'true' || edu.access_certbach === true ? (
-                      <button 
-                        onClick={() => handleOpenPublicDocument(edu.certificate_bachelor, `${edu.school} - Bachelor Degree Certificate`, { type: 'education', id: edu.id, field: 'certificate_bachelor' })}
+                      <a 
+                        href={`${API_BASE}/documents/download?type=education&id=${edu.id}&field=certificate_bachelor`}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="glass-btn" 
-                        style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', gap: '0.4rem', height: 'auto', display: 'flex', alignItems: 'center' }}
+                        style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', gap: '0.4rem', height: 'auto', display: 'flex', alignItems: 'center', textDecoration: 'none' }}
                       >
                         <Eye size={12} /> View Degree Certificate
-                      </button>
+                      </a>
                     ) : (
                       <button 
                         onClick={() => handleOpenPermissionRequest(`edu_${edu.id}_certbach`, 'Consolidated Degree Certificate')} 
@@ -1563,7 +1573,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, onLogout
                   const hasAccess = cert.access_cert === 1 || cert.access_cert === 'true' || cert.access_cert === true;
                   if (hasAccess) {
                     if (cert.certificate_file) {
-                      handleOpenPublicDocument(cert.certificate_file, cert.name, { type: 'certificates', id: cert.id, field: 'certificate_file' });
+                      window.open(`${API_BASE}/documents/download?type=certificates&id=${cert.id}&field=certificate_file`, '_blank');
                     } else if (cert.credential_url) {
                       window.open(cert.credential_url, '_blank');
                     }
@@ -2132,24 +2142,28 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, onLogout
 
                     {/* Certificate */}
                     {selectedExperience.certificate_file && (
-                      <button 
-                        onClick={() => handleOpenPublicDocument(selectedExperience.certificate_file, `${selectedExperience.company} - Certificate`, { type: 'experience', id: selectedExperience.id, field: 'certificate_file' })}
+                      <a 
+                        href={`${API_BASE}/documents/download?type=experience&id=${selectedExperience.id}&field=certificate_file`}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="glass-btn" 
-                        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.85rem', textDecoration: 'none' }}
                       >
                         <Award size={16} /> Certificate
-                      </button>
+                      </a>
                     )}
 
                     {/* LOR */}
                     {selectedExperience.lor_file && (
-                      <button 
-                        onClick={() => handleOpenPublicDocument(selectedExperience.lor_file, `${selectedExperience.company} - LOR Letter`, { type: 'experience', id: selectedExperience.id, field: 'lor_file' })}
+                      <a 
+                        href={`${API_BASE}/documents/download?type=experience&id=${selectedExperience.id}&field=lor_file`}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="glass-btn glass-btn-lor" 
-                        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.85rem', textDecoration: 'none' }}
                       >
                         <Award size={16} /> LOR Letter
-                      </button>
+                      </a>
                     )}
 
                   </div>
