@@ -70,6 +70,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, onLogout
   const [selectedExperience, setSelectedExperience] = useState(null);
   const [selectedProject, setSelectedProject] = useState(null);
   const [selectedCourse, setSelectedCourse] = useState(null);
+  const [showAvatarPopup, setShowAvatarPopup] = useState(false);
 
   // Document Access Permission and Viewer states
   const [showRequestModal, setShowRequestModal] = useState(false);
@@ -733,6 +734,12 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, onLogout
             {/* Profile Avatar Section at top of mobile menu */}
             <div style={{ textAlign: 'center', paddingBottom: '1.25rem', borderBottom: '1px solid rgba(0, 255, 136, 0.1)', marginBottom: '0.5rem' }}>
               <div
+                onClick={() => {
+                  if (avatar && !avatarError) {
+                    setMobileMenuOpen(false);
+                    setTimeout(() => setShowAvatarPopup(true), 200);
+                  }
+                }}
                 style={{
                   width: '72px',
                   height: '72px',
@@ -743,14 +750,19 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, onLogout
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  background: 'rgba(255,255,255,0.02)'
+                  backgroundColor: 'rgba(255,255,255,0.05)',
+                  cursor: (avatar && !avatarError) ? 'pointer' : 'default',
+                  transition: 'all 0.2s ease',
+                  boxShadow: '0 0 16px rgba(0,255,136,0.15)'
                 }}
+                title={avatar && !avatarError ? "Click to view profile picture" : undefined}
               >
-                {avatar ? (
+                {avatar && !avatarError ? (
                   <img
                     src={avatar}
                     alt="Avatar"
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    onError={() => setAvatarError(true)}
                   />
                 ) : (
                   <User size={30} className="text-green" style={{ opacity: 0.8 }} />
@@ -2562,6 +2574,81 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, onLogout
         >
           <CheckCircle size={18} className="text-green" />
           <span>{toast.message}</span>
+        </div>
+      )}
+
+      {/* Profile Picture circular popup modal */}
+      {showAvatarPopup && (
+        <div 
+          onClick={() => setShowAvatarPopup(false)}
+          className="pf-modal-overlay"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.85)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 99999,
+            backdropFilter: 'blur(10px)',
+            animation: 'fadeIn 0.25s ease'
+          }}
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              position: 'relative',
+              width: 'min(380px, 85vw)',
+              height: 'min(380px, 85vw)',
+              borderRadius: '50%',
+              border: '4px solid var(--accent-green)',
+              boxShadow: '0 0 40px rgba(0, 255, 136, 0.4)',
+              background: 'rgba(4, 12, 8, 0.95)',
+              overflow: 'hidden',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              animation: 'scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
+            }}
+          >
+            {avatar && !avatarError ? (
+              <img 
+                src={avatar} 
+                alt="owner large" 
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+                <User size={120} style={{ color: 'var(--accent-green)' }} />
+                <span style={{ fontSize: '0.9rem', color: '#fff', fontWeight: 600 }}>No profile picture set</span>
+              </div>
+            )}
+            <button 
+              onClick={() => setShowAvatarPopup(false)}
+              style={{
+                position: 'absolute',
+                top: '20px',
+                right: '20px',
+                background: 'rgba(0,0,0,0.6)',
+                border: '1px solid rgba(255,255,255,0.2)',
+                color: '#fff',
+                borderRadius: '50%',
+                width: '32px',
+                height: '32px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                zIndex: 10
+              }}
+            >
+              <X size={16} />
+            </button>
+          </div>
         </div>
       )}
 
