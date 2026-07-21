@@ -117,6 +117,28 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
     }
   }, [secureDocUrl]);
   const [secureDocName, setSecureDocName] = useState('');
+  const [legacyFileNotFound, setLegacyFileNotFound] = useState(false);
+
+  useEffect(() => {
+    setLegacyFileNotFound(false);
+    if (!secureDocUrl) return;
+
+    if (secureDocUrl.includes('/uploads/')) {
+      // It is a legacy file path. Let's check if it exists on the server!
+      fetch(secureDocUrl, { method: 'HEAD' })
+        .then(res => {
+          if (res.status === 404) {
+            setLegacyFileNotFound(true);
+          } else {
+            setLegacyFileNotFound(false);
+          }
+        })
+        .catch(() => {
+          // Fallback if HEAD check fails/is blocked
+          setLegacyFileNotFound(true);
+        });
+    }
+  }, [secureDocUrl]);
 
   // Projects Slider and View Mode states
   const [projectSliderActiveIndex, setProjectSliderActiveIndex] = useState(0);
@@ -203,6 +225,14 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
   const [contactSuccess, setContactSuccess] = useState('');
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   const [avatarError, setAvatarError] = useState(false);
+
+  // Recruiter modal-specific states
+  const [hireRecruiterName, setHireRecruiterName] = useState('');
+  const [hireRecruiterEmail, setHireRecruiterEmail] = useState('');
+  const [hireRecruiterCompany, setHireRecruiterCompany] = useState('');
+  const [hireRecruiterDesignation, setHireRecruiterDesignation] = useState('');
+  const [hireRecruiterHiringRole, setHireRecruiterHiringRole] = useState('');
+  const [hireRecruiterMsg, setHireRecruiterMsg] = useState('');
 
   // New state variables for dynamic message form
   const [contactUserType, setContactUserType] = useState('viewer'); // 'viewer' | 'recruiter'
@@ -313,28 +343,9 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
   const handleOpenPublicDocument = (url, name) => {
     if (!url) return;
     const fullUrl = resolveFileUrl(url);
-    if (fullUrl.startsWith('data:')) {
-      try {
-        const parts = fullUrl.split(',');
-        const mime = parts[0].match(/:(.*?);/)[1];
-        const b64 = parts[1];
-        
-        const byteCharacters = atob(b64);
-        const byteNumbers = new Array(byteCharacters.length);
-        for (let i = 0; i < byteCharacters.length; i++) {
-          byteNumbers[i] = byteCharacters.charCodeAt(i);
-        }
-        const byteArray = new Uint8Array(byteNumbers);
-        const blob = new Blob([byteArray], { type: mime });
-        const blobUrl = URL.createObjectURL(blob);
-        window.open(blobUrl, '_blank');
-      } catch (err) {
-        console.error("Error opening base64 document:", err);
-        window.open(fullUrl, '_blank');
-      }
-    } else {
-      window.open(fullUrl, '_blank');
-    }
+    setSecureDocUrl(fullUrl);
+    setSecureDocName(name);
+    setShowSecureDocModal(true);
   };
 
   const handleSendPermissionRequest = async (e) => {
@@ -418,29 +429,42 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
 
   const handleHireSubmit = async (e) => {
     e.preventDefault();
-    if (!viewerEmail || !description) { setErrorMsg('Email and description are required.'); return; }
+    if (!hireRecruiterName || !hireRecruiterEmail || !hireRecruiterCompany || !hireRecruiterDesignation || !hireRecruiterHiringRole) {
+      setErrorMsg('Please fill in all recruiter fields marked with *.');
+      return;
+    }
     setIsSending(true); setErrorMsg('');
     try {
-      // 0.5 seconds delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
+      // Compile message body
+      const finalDesc = `💼 RECRUITER INQUIRY\n━━━━━━━━━━━━━━━━━━━━━━\n• Name: ${hireRecruiterName}\n• Email: ${hireRecruiterEmail}\n• Company: ${hireRecruiterCompany}\n• Current Role: ${hireRecruiterDesignation}\n• Hiring for: ${hireRecruiterHiringRole}\n\n• Message:\n${hireRecruiterMsg || 'No additional message provided.'}`;
+
       const res = await fetch(`${API_BASE}/messages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sender_email: viewerEmail, purpose, description })
+        body: JSON.stringify({ sender_email: hireRecruiterEmail, purpose: 'hire', description: finalDesc })
       });
       if (res.ok) {
         setToast({ show: true, message: "Message sent successfully! Navy will get back to you soon.", type: 'success' });
-        setViewerEmail(''); setDescription('');
+        setHireRecruiterName('');
+        setHireRecruiterEmail('');
+        setHireRecruiterCompany('');
+        setHireRecruiterDesignation('');
+        setHireRecruiterHiringRole('');
+        setHireRecruiterMsg('');
         setShowHireModal(false);
         setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 1500);
       } else {
         const err = await res.json();
         setErrorMsg(err.message || 'Failed to send message.');
       }
-    } catch {
+    } catch (err) {
       setToast({ show: true, message: 'Message sent successfully! Navy will get back to you soon.', type: 'success' });
-      setViewerEmail(''); setDescription('');
+      setHireRecruiterName('');
+      setHireRecruiterEmail('');
+      setHireRecruiterCompany('');
+      setHireRecruiterDesignation('');
+      setHireRecruiterHiringRole('');
+      setHireRecruiterMsg('');
       setShowHireModal(false);
       setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 1500);
     } finally { setIsSending(false); }
@@ -1642,51 +1666,104 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
       {/* ── HIRE ME MODAL ── */}
       {showHireModal && (
         <div className="pf-modal-overlay" onClick={e => { if (e.target === e.currentTarget) setShowHireModal(false); }}>
-          <div className="glass-panel pf-modal-card">
+          <div 
+            className="glass-panel pf-modal-card"
+            style={{ maxHeight: '90vh', overflowY: 'auto', maxWidth: '550px' }}
+          >
             <button onClick={() => setShowHireModal(false)} className="pf-modal-close-btn">
               <X size={22} />
             </button>
-            <h3 className="pf-modal-title">
-              <Send size={22} className="text-green" /> Let's <span className="text-green">Connect</span>
+            <h3 className="pf-modal-title" style={{ fontSize: '1.3rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
+              <Briefcase size={22} className="text-green" /> Recruiter Information
             </h3>
-            <form onSubmit={handleHireSubmit} className="pf-modal-form">
-              <input
-                type="email"
-                required
-                className="glass-input"
-                placeholder="your@email.com"
-                value={viewerEmail}
-                onChange={e => setViewerEmail(e.target.value)}
-              />
-              <div className="pf-modal-radio-group">
-                {['hire', 'review'].map(p => (
-                  <label key={p} className="pf-modal-radio-label">
-                    <input
-                      type="radio"
-                      name="hpurp"
-                      checked={purpose === p}
-                      onChange={() => setPurpose(p)}
-                      style={{ accentColor: '#00ff88' }}
-                    />
-                    {p === 'hire' ? 'Hire for Project' : 'Send Review'}
-                  </label>
-                ))}
+            <form onSubmit={handleHireSubmit} className="pf-modal-form" style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                  Your Name <span style={{ color: '#ff5252' }}>*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  className="glass-input"
+                  placeholder="Enter your full name"
+                  value={hireRecruiterName}
+                  onChange={e => setHireRecruiterName(e.target.value)}
+                />
               </div>
-              <textarea
-                rows={4}
-                required
-                className="glass-input"
-                placeholder="Describe your project or feedback..."
-                value={description}
-                onChange={e => setDescription(e.target.value)}
-              />
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                  Your Professional Email <span style={{ color: '#ff5252' }}>*</span>
+                </label>
+                <input
+                  type="email"
+                  required
+                  className="glass-input"
+                  placeholder="Enter your work email address"
+                  value={hireRecruiterEmail}
+                  onChange={e => setHireRecruiterEmail(e.target.value)}
+                />
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                  Company Name <span style={{ color: '#ff5252' }}>*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  className="glass-input"
+                  placeholder="Enter your company name"
+                  value={hireRecruiterCompany}
+                  onChange={e => setHireRecruiterCompany(e.target.value)}
+                />
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                  Designation / Job Role in Company <span style={{ color: '#ff5252' }}>*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  className="glass-input"
+                  placeholder="Enter your designation (e.g. Talent Acquisition, Lead Developer)"
+                  value={hireRecruiterDesignation}
+                  onChange={e => setHireRecruiterDesignation(e.target.value)}
+                />
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                  Hiring position / Job Role <span style={{ color: '#ff5252' }}>*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  className="glass-input"
+                  placeholder="Enter position you are hiring for (e.g. MERN Stack Engineer)"
+                  value={hireRecruiterHiringRole}
+                  onChange={e => setHireRecruiterHiringRole(e.target.value)}
+                />
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                  Additional Message / Guidelines (Optional)
+                </label>
+                <textarea
+                  rows={3}
+                  className="glass-input"
+                  placeholder="Write details about the opportunity..."
+                  value={hireRecruiterMsg}
+                  onChange={e => setHireRecruiterMsg(e.target.value)}
+                />
+              </div>
+
               {errorMsg && <p className="pf-modal-error">{errorMsg}</p>}
-              {successMsg && (
-                <p className="pf-modal-success">
-                  <CheckCircle size={16} /> {successMsg}
-                </p>
-              )}
-              <div className="pf-modal-btn-group">
+              
+              <div className="pf-modal-btn-group" style={{ marginTop: '0.5rem' }}>
                 <button
                   type="button"
                   onClick={() => setShowHireModal(false)}
@@ -1699,7 +1776,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
                   disabled={isSending}
                   className="glass-btn pf-modal-btn"
                 >
-                  {isSending ? 'Sending...' : 'Send Message'}
+                  <Send size={16} /> Send Message
                 </button>
               </div>
             </form>
@@ -2090,7 +2167,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom }) {
                 WebkitUserSelect: 'none'
               }}
             >
-              {secureDocUrl.includes('/uploads/') ? (
+              {legacyFileNotFound ? (
                 <div style={{ textAlign: 'center', color: '#ffaa00', padding: '2.5rem 1.5rem', maxWidth: '500px' }}>
                   <ShieldCheck size={48} style={{ margin: '0 auto 1.25rem', display: 'block', color: '#ffaa00' }} />
                   <p style={{ fontWeight: 700, fontSize: '1.1rem', color: '#fff', marginBottom: '0.75rem' }}>Legacy File Not Found</p>
