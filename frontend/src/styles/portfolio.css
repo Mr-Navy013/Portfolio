@@ -739,9 +739,9 @@
 .pf-cert-title {
   font-size: 1rem;
   font-weight: 700;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  word-wrap: break-word;
+  word-break: break-word;
   margin-bottom: 0.25rem;
 }
 
