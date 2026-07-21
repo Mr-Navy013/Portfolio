@@ -4213,12 +4213,34 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                     gap: '1rem'
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <input 
-                        type="checkbox"
-                        checked={docRequests.length > 0 && selectedRequestIds.length === docRequests.length}
-                        onChange={handleToggleSelectAllRequests}
-                        style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: 'var(--accent-green)' }}
-                      />
+                      <div 
+                        onClick={handleToggleSelectAllRequests}
+                        style={{ 
+                          width: '18px', 
+                          height: '18px', 
+                          border: `2px solid ${docRequests.length > 0 && selectedRequestIds.length === docRequests.length ? 'var(--accent-green)' : 'rgba(255, 255, 255, 0.4)'}`,
+                          borderRadius: '50%',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          background: docRequests.length > 0 && selectedRequestIds.length === docRequests.length ? 'var(--accent-green)' : 'transparent',
+                          flexShrink: 0,
+                          transition: 'all 0.2s ease',
+                          boxShadow: docRequests.length > 0 && selectedRequestIds.length === docRequests.length ? '0 0 8px rgba(0, 255, 136, 0.4)' : 'none'
+                        }}
+                      >
+                        {docRequests.length > 0 && selectedRequestIds.length === docRequests.length && (
+                          <div style={{
+                            width: '5px',
+                            height: '9px',
+                            border: 'solid #000',
+                            borderWidth: '0 2px 2px 0',
+                            transform: 'rotate(45deg)',
+                            marginBottom: '2px'
+                          }} />
+                        )}
+                      </div>
                       <span style={{ fontSize: '0.9rem', color: '#fff', fontWeight: 600 }}>
                         {selectedRequestIds.length === docRequests.length ? 'Deselect All' : 'Select All'} ({selectedRequestIds.length} selected)
                       </span>
@@ -4249,19 +4271,35 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                         transition: 'all 0.3s ease'
                       }}
                     >
-                      <input 
-                        type="checkbox"
-                        checked={selectedRequestIds.includes(req.id)}
-                        onChange={() => handleToggleSelectRequest(req.id)}
+                      <div 
+                        onClick={() => handleToggleSelectRequest(req.id)}
                         style={{ 
+                          width: '18px', 
+                          height: '18px', 
+                          border: `2px solid ${selectedRequestIds.includes(req.id) ? 'var(--accent-green)' : 'rgba(255, 255, 255, 0.4)'}`,
+                          borderRadius: '50%',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          background: selectedRequestIds.includes(req.id) ? 'var(--accent-green)' : 'transparent',
                           marginTop: '0.25rem',
-                          width: '16px', 
-                          height: '16px', 
-                          cursor: 'pointer', 
-                          accentColor: 'var(--accent-green)',
-                          flexShrink: 0
+                          flexShrink: 0,
+                          transition: 'all 0.2s ease',
+                          boxShadow: selectedRequestIds.includes(req.id) ? '0 0 8px rgba(0, 255, 136, 0.4)' : 'none'
                         }}
-                      />
+                      >
+                        {selectedRequestIds.includes(req.id) && (
+                          <div style={{
+                            width: '5px',
+                            height: '9px',
+                            border: 'solid #000',
+                            borderWidth: '0 2px 2px 0',
+                            transform: 'rotate(45deg)',
+                            marginBottom: '2px'
+                          }} />
+                        )}
+                      </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', flex: 1 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem' }}>
                           <div>
