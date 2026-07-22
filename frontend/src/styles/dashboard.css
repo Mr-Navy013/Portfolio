@@ -345,6 +345,13 @@
   gap: 1rem;
 }
 
+@media (max-width: 768px) {
+  .dashboard-form-grid-2,
+  .dashboard-profile-socials-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .dashboard-form-input-wrap {
   display: flex;
   flex-direction: column;

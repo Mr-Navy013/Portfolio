@@ -3126,6 +3126,10 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
             max-width: 1280px;
             margin: auto;
             width: 100%;
+            box-sizing: border-box !important;
+          }
+          .dashboard-grid > div {
+            min-width: 0 !important;
           }
           @media (min-width: 768px) {
             .dashboard-grid {
@@ -3165,9 +3169,11 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
             -webkit-backdrop-filter: none !important;
             box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6) !important;
           }
-          @media (max-width: 649px) {
+          @media (max-width: 767px) {
             .dashboard-grid {
               grid-template-columns: 1fr !important;
+              padding: 0.75rem 1rem !important;
+              gap: 1rem !important;
             }
             .dashboard-grid > div:first-child {
               display: none !important;
@@ -3177,6 +3183,23 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
             }
             .dashboard-nav-btn {
               display: none !important;
+            }
+            .glass-panel {
+              padding: 1.25rem !important;
+              box-sizing: border-box !important;
+              max-width: 100% !important;
+            }
+            .dashboard-form-grid-2,
+            .dashboard-profile-socials-grid {
+              grid-template-columns: 1fr !important;
+            }
+          }
+          @media (max-width: 480px) {
+            .dashboard-grid {
+              padding: 0.5rem 0.75rem !important;
+            }
+            .glass-panel {
+              padding: 1rem !important;
             }
           }
           @keyframes slideInFromLeft {
@@ -3439,156 +3462,156 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
               <form onSubmit={handleUpdateProfileData} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                 <h3 style={{ fontSize: '1.1rem', color: '#fff', marginBottom: '0.5rem' }}>Profiles Details</h3>
 
-                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                     <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Display Name <span style={{ color: '#ff5252' }}>*</span></label>
-                     <input type="text" className="glass-input" placeholder="Enter display name" value={displayName} onChange={(e) => setDisplayName(e.target.value)} required />
-                   </div>
-                   
-                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                     <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Login Username <span style={{ color: '#ff5252' }}>*</span></label>
-                     <input type="text" className="glass-input" placeholder="Enter username " value={username} onChange={(e) => setUsername(e.target.value)} required />
-                   </div>
-                 </div>
+                  <div className="dashboard-form-grid-2">
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                      <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Display Name <span style={{ color: '#ff5252' }}>*</span></label>
+                      <input type="text" className="glass-input" placeholder="Enter display name" value={displayName} onChange={(e) => setDisplayName(e.target.value)} required />
+                    </div>
+                    
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                      <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Login Username <span style={{ color: '#ff5252' }}>*</span></label>
+                      <input type="text" className="glass-input" placeholder="Enter username " value={username} onChange={(e) => setUsername(e.target.value)} required />
+                    </div>
+                  </div>
 
-                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  <div className="dashboard-form-grid-2">
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                      <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>New Password</label>
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        <div style={{ position: 'relative', flex: 1 }}>
+                          <input 
+                            type={showPasswordText ? "text" : "password"} 
+                            className="glass-input" 
+                            placeholder="Enter new password" 
+                            value={newPassword} 
+                            onChange={(e) => setNewPassword(e.target.value)} 
+                            style={{ paddingRight: '2.5rem', width: '100%' }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPasswordText(!showPasswordText)}
+                            style={{
+                              position: 'absolute',
+                              right: '0.8rem',
+                              top: '50%',
+                              transform: 'translateY(-50%)',
+                              background: 'none',
+                              border: 'none',
+                              cursor: 'pointer',
+                              color: '#00ff88',
+                              display: 'flex',
+                              alignItems: 'center',
+                              padding: 0
+                            }}
+                            title={showPasswordText ? "Hide password" : "Show password"}
+                          >
+                            {showPasswordText ? <EyeOff size={18} /> : <Eye size={18} />}
+                          </button>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleSavePasswordOnly}
+                          className="glass-btn"
+                          style={{
+                            padding: '0.75rem',
+                            height: '46px',
+                            width: '46px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            borderRadius: '8px',
+                            border: '1px solid var(--accent-green)',
+                            background: 'rgba(0, 255, 136, 0.1)',
+                            color: 'var(--accent-green)',
+                            cursor: 'pointer',
+                            transition: 'var(--transition-smooth)',
+                            flexShrink: 0
+                          }}
+                          title="Set Password"
+                        >
+                          <Check size={18} />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                      <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>About Profile Summary</label>
+                      <input type="text" className="glass-input" value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Describe about your profession..." style={{ height: '46px' }} />
+                    </div>
+                  </div>
+
+                 <div className="dashboard-profile-socials-grid">
+                   
+                   {/* LinkedIn link (Mandatory**) */}
                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                     <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>New Password</label>
-                     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                       <div style={{ position: 'relative', flex: 1 }}>
-                         <input 
-                           type={showPasswordText ? "text" : "password"} 
-                           className="glass-input" 
-                           placeholder="Enter new password" 
-                           value={newPassword} 
-                           onChange={(e) => setNewPassword(e.target.value)} 
-                           style={{ paddingRight: '2.5rem', width: '100%' }}
-                         />
-                         <button
-                           type="button"
-                           onClick={() => setShowPasswordText(!showPasswordText)}
-                           style={{
-                             position: 'absolute',
-                             right: '0.8rem',
-                             top: '50%',
-                             transform: 'translateY(-50%)',
-                             background: 'none',
-                             border: 'none',
-                             cursor: 'pointer',
-                             color: '#00ff88',
-                             display: 'flex',
-                             alignItems: 'center',
-                             padding: 0
-                           }}
-                           title={showPasswordText ? "Hide password" : "Show password"}
-                         >
-                           {showPasswordText ? <EyeOff size={18} /> : <Eye size={18} />}
-                         </button>
-                       </div>
-                       <button
-                         type="button"
-                         onClick={handleSavePasswordOnly}
-                         className="glass-btn"
-                         style={{
-                           padding: '0.75rem',
-                           height: '46px',
-                           width: '46px',
-                           display: 'flex',
-                           alignItems: 'center',
-                           justifyContent: 'center',
-                           borderRadius: '8px',
-                           border: '1px solid var(--accent-green)',
-                           background: 'rgba(0, 255, 136, 0.1)',
-                           color: 'var(--accent-green)',
-                           cursor: 'pointer',
-                           transition: 'var(--transition-smooth)',
-                           flexShrink: 0
-                         }}
-                         title="Set Password"
-                       >
-                         <Check size={18} />
-                       </button>
+                     <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>LinkedIn Link <span style={{ color: '#ff5252' }}>*</span></label>
+                     <div style={{ position: 'relative' }}>
+                       <Linkedin size={18} className="text-green" style={{ position: 'absolute', left: '0.8rem', top: '50%', transform: 'translateY(-50%)' }} />
+                       <input 
+                         type="url" 
+                         required
+                         className="glass-input" 
+                         style={{ width: '100%', paddingLeft: '2.5rem' }} 
+                         placeholder="LinkedIn Link"
+                         value={linkedin}
+                         onChange={(e) => setLinkedin(e.target.value)}
+                       />
                      </div>
                    </div>
 
+                   {/* GitHub link (Mandatory**) */}
                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                     <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>About Profile Summary</label>
-                     <input type="text" className="glass-input" value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Describe about your profession..." style={{ height: '46px' }} />
+                     <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>GitHub Link <span style={{ color: '#ff5252' }}>*</span></label>
+                     <div style={{ position: 'relative' }}>
+                       <Github size={18} className="text-green" style={{ position: 'absolute', left: '0.8rem', top: '50%', transform: 'translateY(-50%)' }} />
+                       <input 
+                         type="url" 
+                         required
+                         className="glass-input" 
+                         style={{ width: '100%', paddingLeft: '2.5rem' }} 
+                         placeholder="GitHub Link"
+                         value={github}
+                         onChange={(e) => setGithub(e.target.value)}
+                       />
+                     </div>
                    </div>
+
+                   {/* Instagram (Optional) */}
+                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                     <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Instagram Link (Optional)</label>
+                     <div style={{ position: 'relative' }}>
+                       <Instagram size={18} className="text-green" style={{ position: 'absolute', left: '0.8rem', top: '50%', transform: 'translateY(-50%)' }} />
+                       <input 
+                         type="url" 
+                         className="glass-input" 
+                         style={{ width: '100%', paddingLeft: '2.5rem' }} 
+                         placeholder="Instagram Link"
+                         value={instagram}
+                         onChange={(e) => setInstagram(e.target.value)}
+                       />
+                     </div>
+                   </div>
+
+                   {/* Facebook (Optional) */}
+                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                     <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Facebook Link (Optional)</label>
+                     <div style={{ position: 'relative' }}>
+                       <Facebook size={18} className="text-green" style={{ position: 'absolute', left: '0.8rem', top: '50%', transform: 'translateY(-50%)' }} />
+                       <input 
+                         type="url" 
+                         className="glass-input" 
+                         style={{ width: '100%', paddingLeft: '2.5rem' }} 
+                         placeholder="Facebook Link"
+                         value={facebook}  
+                         onChange={(e) => setFacebook(e.target.value)}
+                       />
+                     </div>
+                   </div>
+
                  </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-                  
-                  {/* LinkedIn link (Mandatory**) */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                    <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>LinkedIn Link <span style={{ color: '#ff5252' }}>*</span></label>
-                    <div style={{ position: 'relative' }}>
-                      <Linkedin size={18} className="text-green" style={{ position: 'absolute', left: '0.8rem', top: '50%', transform: 'translateY(-50%)' }} />
-                      <input 
-                        type="url" 
-                        required
-                        className="glass-input" 
-                        style={{ width: '100%', paddingLeft: '2.5rem' }} 
-                        placeholder="LinkedIn Link"
-                        value={linkedin}
-                        onChange={(e) => setLinkedin(e.target.value)}
-                      />
-                    </div>
-                  </div>
-
-                  {/* GitHub link (Mandatory**) */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                    <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>GitHub Link <span style={{ color: '#ff5252' }}>*</span></label>
-                    <div style={{ position: 'relative' }}>
-                      <Github size={18} className="text-green" style={{ position: 'absolute', left: '0.8rem', top: '50%', transform: 'translateY(-50%)' }} />
-                      <input 
-                        type="url" 
-                        required
-                        className="glass-input" 
-                        style={{ width: '100%', paddingLeft: '2.5rem' }} 
-                        placeholder="GitHub Link"
-                        value={github}
-                        onChange={(e) => setGithub(e.target.value)}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Instagram (Optional) */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                    <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Instagram Link (Optional)</label>
-                    <div style={{ position: 'relative' }}>
-                      <Instagram size={18} className="text-green" style={{ position: 'absolute', left: '0.8rem', top: '50%', transform: 'translateY(-50%)' }} />
-                      <input 
-                        type="url" 
-                        className="glass-input" 
-                        style={{ width: '100%', paddingLeft: '2.5rem' }} 
-                        placeholder="Instagram Link"
-                        value={instagram}
-                        onChange={(e) => setInstagram(e.target.value)}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Facebook (Optional) */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                    <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Facebook Link (Optional)</label>
-                    <div style={{ position: 'relative' }}>
-                      <Facebook size={18} className="text-green" style={{ position: 'absolute', left: '0.8rem', top: '50%', transform: 'translateY(-50%)' }} />
-                      <input 
-                        type="url" 
-                        className="glass-input" 
-                        style={{ width: '100%', paddingLeft: '2.5rem' }} 
-                        placeholder="Facebook Link"
-                        value={facebook}  
-                        onChange={(e) => setFacebook(e.target.value)}
-                      />
-                    </div>
-                  </div>
-
-                </div>
-
                 {/* Availability Status (presets + custom) */}
-                <div style={{ display: 'grid', gridTemplateColumns: availability === 'Custom' ? '1fr 1fr' : '1fr', gap: '1.5rem', marginTop: '0.5rem' }}>
+                <div className={availability === 'Custom' ? "dashboard-form-grid-2" : ""} style={{ display: 'grid', gridTemplateColumns: availability === 'Custom' ? undefined : '1fr', gap: '1.5rem', marginTop: '0.5rem' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                     <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Availability Status <span style={{ color: '#ff5252' }}>*</span></label>
                     <CustomDropdown
