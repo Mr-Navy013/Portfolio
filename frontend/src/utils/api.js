@@ -45,3 +45,42 @@ export const setApiBase = (url) => {
     localStorage.setItem('custom_api_base', cleaned);
   }
 };
+
+export const fetchWithFallback = async (endpoint, options = {}, onStatusUpdate = null) => {
+  const currentBase = getApiBase();
+  const prodBase = 'https://portfolio-f4os.onrender.com/api';
+  
+  try {
+    const res = await fetch(`${currentBase}${endpoint}`, options);
+    return res;
+  } catch (primaryErr) {
+    console.warn(`[API Fallback] Primary fetch to ${currentBase}${endpoint} failed:`, primaryErr);
+
+    // If local API was used and failed, try production backend as fallback
+    if (currentBase !== prodBase && (currentBase.includes('localhost') || currentBase.includes('127.0.0.1') || currentBase.includes('192.168.'))) {
+      if (onStatusUpdate) onStatusUpdate('Local server unavailable. Connecting to production server...');
+      try {
+        const prodRes = await fetch(`${prodBase}${endpoint}`, options);
+        if (prodRes) {
+          setApiBase(prodBase);
+          return prodRes;
+        }
+      } catch (prodErr) {
+        console.warn(`[API Fallback] Production fetch to ${prodBase}${endpoint} failed:`, prodErr);
+      }
+    }
+
+    // Cold-start retries for Render backend
+    const targetBase = getApiBase();
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      if (onStatusUpdate) onStatusUpdate(`Server warming up, retrying connection (${attempt}/3)...`);
+      await new Promise((r) => setTimeout(r, 3500));
+      try {
+        const retryRes = await fetch(`${targetBase}${endpoint}`, options);
+        if (retryRes) return retryRes;
+      } catch (_) {}
+    }
+
+    throw new Error('Unable to connect to backend server. Please check your internet connection or start the local backend server.');
+  }
+};

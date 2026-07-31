@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Lock, User, Mail, ShieldCheck, ArrowLeft, KeyRound, CheckCircle, Eye, EyeOff } from 'lucide-react';
 import '../styles/login.css';
-import { getApiBase, setApiBase } from '../utils/api';
+import { getApiBase, setApiBase, fetchWithFallback } from '../utils/api';
 
 const API_BASE = getApiBase();
 
@@ -78,11 +78,11 @@ function LoginPage({ navigateTo, onLoginSuccess }) {
     setLoading(true);
     clearMessages();
     try {
-      const res = await fetch(`${API_BASE}/auth/forgot-password`, {
+      const res = await fetchWithFallback('/auth/forgot-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: forgotEmail })
-      });
+      }, (status) => setInfoMsg(status));
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data.message || 'Failed to send OTP code');
@@ -146,11 +146,11 @@ function LoginPage({ navigateTo, onLoginSuccess }) {
     }, 1000);
 
     try {
-      const res = await fetch(`${API_BASE}/auth/login`, {
+      const res = await fetchWithFallback('/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: formUsername, password: formPassword })
-      });
+      }, (status) => setInfoMsg(status));
 
       const data = await res.json();
       if (!res.ok) {
@@ -194,11 +194,11 @@ function LoginPage({ navigateTo, onLoginSuccess }) {
     clearMessages();
 
     try {
-      const res = await fetch(`${API_BASE}/auth/verify-otp`, {
+      const res = await fetchWithFallback('/auth/verify-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: otpEmail, otp: loginOtp })
-      });
+      }, (status) => setInfoMsg(status));
 
       const data = await res.json();
       if (!res.ok) {
@@ -221,11 +221,11 @@ function LoginPage({ navigateTo, onLoginSuccess }) {
     clearMessages();
 
     try {
-      const res = await fetch(`${API_BASE}/auth/forgot-password`, {
+      const res = await fetchWithFallback('/auth/forgot-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: forgotEmail })
-      });
+      }, (status) => setInfoMsg(status));
 
       const data = await res.json();
       if (!res.ok) {
@@ -259,7 +259,7 @@ function LoginPage({ navigateTo, onLoginSuccess }) {
     clearMessages();
 
     try {
-      const res = await fetch(`${API_BASE}/auth/reset-password`, {
+      const res = await fetchWithFallback('/auth/reset-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -267,7 +267,7 @@ function LoginPage({ navigateTo, onLoginSuccess }) {
           otp: resetOtp,
           newPassword
         })
-      });
+      }, (status) => setInfoMsg(status));
 
       const data = await res.json();
       if (!res.ok) {
