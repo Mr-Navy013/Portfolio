@@ -48,39 +48,49 @@ export const setApiBase = (url) => {
 
 export const fetchWithFallback = async (endpoint, options = {}, onStatusUpdate = null) => {
   const currentBase = getApiBase();
+  const localBase = 'http://localhost:5000/api';
   const prodBase = 'https://portfolio-f4os.onrender.com/api';
   
+  // Fast health check: If local backend server is running, prioritize local base
+  let primaryBase = currentBase;
   try {
-    const res = await fetch(`${currentBase}${endpoint}`, options);
-    return res;
-  } catch (primaryErr) {
-    console.warn(`[API Fallback] Primary fetch to ${currentBase}${endpoint} failed:`, primaryErr);
+    const localCheck = await fetch(`${localBase}/health`, { signal: AbortSignal.timeout(1500) });
+    if (localCheck.ok) {
+      primaryBase = localBase;
+      if (currentBase !== localBase) setApiBase(localBase);
+    }
+  } catch (_) {}
 
-    // If local API was used and failed, try production backend as fallback
-    if (currentBase !== prodBase && (currentBase.includes('localhost') || currentBase.includes('127.0.0.1') || currentBase.includes('192.168.'))) {
-      if (onStatusUpdate) onStatusUpdate('Local server unavailable. Connecting to production server...');
-      try {
-        const prodRes = await fetch(`${prodBase}${endpoint}`, options);
-        if (prodRes) {
-          setApiBase(prodBase);
-          return prodRes;
-        }
-      } catch (prodErr) {
-        console.warn(`[API Fallback] Production fetch to ${prodBase}${endpoint} failed:`, prodErr);
+  // 1. Primary Attempt
+  try {
+    const res = await fetch(`${primaryBase}${endpoint}`, options);
+    if (res) return res;
+  } catch (primaryErr) {
+    console.warn(`[API Fallback] Fetch to ${primaryBase}${endpoint} failed:`, primaryErr);
+
+    // 2. Alternate Fallback Attempt
+    const alternateBase = primaryBase === localBase ? prodBase : localBase;
+    if (onStatusUpdate) onStatusUpdate(`Connecting to alternate server (${alternateBase.includes('localhost') ? 'Localhost' : 'Production'})...`);
+    try {
+      const altRes = await fetch(`${alternateBase}${endpoint}`, options);
+      if (altRes) {
+        setApiBase(alternateBase);
+        return altRes;
       }
+    } catch (altErr) {
+      console.warn(`[API Fallback] Alternate fetch to ${alternateBase}${endpoint} failed:`, altErr);
     }
 
-    // Cold-start retries for Render backend
-    const targetBase = getApiBase();
+    // 3. Cold-start Retries
     for (let attempt = 1; attempt <= 3; attempt++) {
-      if (onStatusUpdate) onStatusUpdate(`Server warming up, retrying connection (${attempt}/3)...`);
-      await new Promise((r) => setTimeout(r, 3500));
+      if (onStatusUpdate) onStatusUpdate(`Server warming up, retrying (${attempt}/3)...`);
+      await new Promise((r) => setTimeout(r, 3000));
       try {
-        const retryRes = await fetch(`${targetBase}${endpoint}`, options);
+        const retryRes = await fetch(`${primaryBase}${endpoint}`, options);
         if (retryRes) return retryRes;
       } catch (_) {}
     }
 
-    throw new Error('Unable to connect to backend server. Please check your internet connection or start the local backend server.');
+    throw new Error('Unable to connect to backend server. Please start local backend (`cd backend && npm start`).');
   }
 };
