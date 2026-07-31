@@ -56,17 +56,98 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, onLogout
     try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch { return fallback; }
   };
 
+  // Default fallback data for initial fast render before server fetch completes
+  const DEFAULT_PROJECTS = [
+    {
+      id: 1,
+      title: "Music Player",
+      summary: "I build the music player using HTML,Css,JavaScript.Its a mobile friendly fully responisve Design Its special features is playing music , track a music according to the user perspective.",
+      repo_link: "https://github.com/Mr-Navy013/CodeAlpha_Music-Player",
+      live_link: "https://mr-navy013.github.io/CodeAlpha_Music-Player/",
+      is_deployed: 1,
+      thumbnail: "/uploads/thumbnail-1782467545894-524330629.jpeg",
+      created_at: "2026-06-26T09:52:25.906Z"
+    },
+    {
+      id: 2,
+      title: "Nova Voice assistant",
+      summary: "Voice assistant application built with modern web technologies.",
+      repo_link: "https://github.com/Mr-Navy013",
+      live_link: null,
+      is_deployed: 0,
+      thumbnail: null,
+      created_at: "2026-07-06T05:33:24.988Z"
+    }
+  ];
+
+  const DEFAULT_EDUCATION = [
+    {
+      id: 1,
+      school: "Parama Hanshan sanskrit bidyapitha",
+      degree: "10th",
+      field_of_study: "Secondary School (10th)",
+      start_date: "2021",
+      end_date: "2021",
+      description: "SSC 10th complete at Parama Hanshan sanskrit bidyapitha. Full Marks: 700, Obtained: 490, Percentage: 70.00%",
+      passing_year: "2021",
+      full_marks: 700,
+      marks_obtained: 490,
+      percentage: 70,
+      certificate_10th: "/uploads/certificate_10th-1783400391215-352878758.pdf"
+    }
+  ];
+
+  const DEFAULT_SKILLS = [
+    { id: 1, name: "C++", category: "Programming Language", proficiency: 100 },
+    { id: 2, name: "Python", category: "Programming Language", proficiency: 100 },
+    { id: 3, name: "MySQL", category: "Database", proficiency: 100 },
+    { id: 4, name: "JavaScript", category: "Programming Language", proficiency: 100 },
+    { id: 5, name: "Git", category: "Tool", proficiency: 100, knowledge_level: "basic" }
+  ];
+
+  const DEFAULT_EXPERIENCE = [
+    {
+      id: 1,
+      company: "CTTC",
+      role: "Data Analytics Intern",
+      start_date: "05/01/2026",
+      end_date: "05/02/2026",
+      description: "Interned at CTTC under OUTR as Data Analytics.",
+      exp_type: "internship",
+      program_name: "OUTR",
+      org_name: "CTTC",
+      certificate_file: "/uploads/certificate_file-1783316930241-201798335.pdf",
+      skills_learned: "Improve python skills,excel,powerBI,"
+    }
+  ];
+
+  const DEFAULT_CERTIFICATES = [
+    {
+      id: 1,
+      name: "Frontend",
+      organization: "Code alpha",
+      issue_date: "24/12/2025",
+      credential_url: null,
+      certificate_file: "/uploads/certificate_file-1783316756616-965922644.pdf"
+    }
+  ];
+
+  const DEFAULT_COURSES = [
+    {
+      id: 1,
+      name: "OOPS",
+      description: "Constructer,destructor,ineheritance etc"
+    }
+  ];
+
   const [showHireModal, setShowHireModal] = useState(false);
-  const [loadingData, setLoadingData] = useState(() => {
-    // If we have cached data, don't show the loading spinner
-    try { return !localStorage.getItem('cache_projects'); } catch { return true; }
-  });
-  const [projects, setProjects] = useState(() => getCached('cache_projects', []));
-  const [education, setEducation] = useState(() => getCached('cache_education', []));
-  const [skills, setSkills] = useState(() => getCached('cache_skills', []));
-  const [experience, setExperience] = useState(() => getCached('cache_experience', []));
-  const [certificates, setCertificates] = useState(() => getCached('cache_certificates', []));
-  const [courses, setCourses] = useState(() => getCached('cache_courses', []));
+  const [loadingData, setLoadingData] = useState(false);
+  const [projects, setProjects] = useState(() => getCached('cache_projects', DEFAULT_PROJECTS));
+  const [education, setEducation] = useState(() => getCached('cache_education', DEFAULT_EDUCATION));
+  const [skills, setSkills] = useState(() => getCached('cache_skills', DEFAULT_SKILLS));
+  const [experience, setExperience] = useState(() => getCached('cache_experience', DEFAULT_EXPERIENCE));
+  const [certificates, setCertificates] = useState(() => getCached('cache_certificates', DEFAULT_CERTIFICATES));
+  const [courses, setCourses] = useState(() => getCached('cache_courses', DEFAULT_COURSES));
   const [selectedExperience, setSelectedExperience] = useState(null);
   const [selectedProject, setSelectedProject] = useState(null);
   const [selectedCourse, setSelectedCourse] = useState(null);
@@ -322,12 +403,12 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, onLogout
     try {
       const t = Date.now();
       const [pRes, eRes, sRes, expRes, cRes, courseRes] = await Promise.all([
-        fetch(`${API_BASE}/projects?t=${t}`,      { signal: AbortSignal.timeout(6000) }),
-        fetch(`${API_BASE}/education?t=${t}`,     { signal: AbortSignal.timeout(6000) }),
-        fetch(`${API_BASE}/skills?t=${t}`,        { signal: AbortSignal.timeout(6000) }),
-        fetch(`${API_BASE}/experience?t=${t}`,    { signal: AbortSignal.timeout(6000) }),
-        fetch(`${API_BASE}/certificates?t=${t}`,  { signal: AbortSignal.timeout(6000) }),
-        fetch(`${API_BASE}/courses?t=${t}`,       { signal: AbortSignal.timeout(6000) })
+        fetch(`${API_BASE}/projects?t=${t}`,      { signal: AbortSignal.timeout(30000) }),
+        fetch(`${API_BASE}/education?t=${t}`,     { signal: AbortSignal.timeout(30000) }),
+        fetch(`${API_BASE}/skills?t=${t}`,        { signal: AbortSignal.timeout(30000) }),
+        fetch(`${API_BASE}/experience?t=${t}`,    { signal: AbortSignal.timeout(30000) }),
+        fetch(`${API_BASE}/certificates?t=${t}`,  { signal: AbortSignal.timeout(30000) }),
+        fetch(`${API_BASE}/courses?t=${t}`,       { signal: AbortSignal.timeout(30000) })
       ]);
       if (pRes.ok)      { const d = await pRes.json(); setProjects(d); try { localStorage.setItem('cache_projects', JSON.stringify(d)); } catch {} }
       if (eRes.ok)      { const d = await eRes.json(); setEducation(d); try { localStorage.setItem('cache_education', JSON.stringify(d)); } catch {} }
@@ -340,17 +421,16 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, onLogout
       if (sectionPollRef.current) { clearInterval(sectionPollRef.current); sectionPollRef.current = null; }
       return true;
     } catch (_) {
-      // Backend unreachable — keep loadingData=true, retry every 3s
+      // Backend unreachable — retry quietly every 5s
       if (!sectionPollRef.current) {
         sectionPollRef.current = setInterval(async () => {
           const ok = await fetchData();
           if (ok && sectionPollRef.current) { clearInterval(sectionPollRef.current); sectionPollRef.current = null; }
-        }, 3000);
-        // Stop polling after 2 min (show empty sections as last resort)
+        }, 5000);
         setTimeout(() => {
           if (sectionPollRef.current) { clearInterval(sectionPollRef.current); sectionPollRef.current = null; }
           setLoadingData(false);
-        }, 120000);
+        }, 60000);
       }
       return false;
     }

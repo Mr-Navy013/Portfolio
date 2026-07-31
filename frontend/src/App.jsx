@@ -18,14 +18,29 @@ function App() {
   const [previousPage, setPreviousPage] = useState('welcome');
   const [authToken, setAuthToken] = useState(localStorage.getItem('ownerToken') || null);
 
+  // Default fallback profile so application renders instantly without spinning loader
+  const DEFAULT_PROFILE = {
+    id: 1,
+    username: "rugha",
+    display_name: "Navy",
+    bio: "Welcome to my portfolio! I am a passionate developer skilled in building robust full-stack applications.",
+    profile_picture: "/uploads/profile_picture-1782366940013-212164627.jpg",
+    availability: "Available for Work",
+    linkedin: "",
+    github: "https://github.com/Mr-Navy013",
+    instagram: "",
+    facebook: "",
+    resume_url: null
+  };
+
   // SWR: load profile from cache instantly — no spinner on return visits
   const getCachedProfile = () => {
     try { const v = localStorage.getItem('cache_profile'); return v ? JSON.parse(v) : null; } catch { return null; }
   };
   const cachedProfile = getCachedProfile();
-  const [profileData, setProfileData] = useState(cachedProfile || null);
-  const [loadingProfile, setLoadingProfile] = useState(!cachedProfile); // false = skip loading screen if cached
-  const [warmingUp, setWarmingUp] = useState(false); // shows "warming up" message after first fail
+  const [profileData, setProfileData] = useState(cachedProfile || DEFAULT_PROFILE);
+  const [loadingProfile, setLoadingProfile] = useState(false); // false = never block page rendering with spinner
+  const [warmingUp, setWarmingUp] = useState(false);
 
   const retryTimerRef = useRef(null);
   const fallbackTimerRef = useRef(null);
@@ -38,7 +53,7 @@ function App() {
 
   const attemptFetch = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/profile`, { signal: AbortSignal.timeout(6000) });
+      const res = await fetch(`${API_BASE}/profile`, { signal: AbortSignal.timeout(30000) });
       if (res.ok) {
         const data = await res.json();
         setProfileData(data);
@@ -55,31 +70,25 @@ function App() {
   }, []);
 
   const fetchProfile = useCallback(async (showLoader = false) => {
-    if (showLoader) setLoadingProfile(true);
+    if (showLoader && !profileData) setLoadingProfile(true);
     gotRealData.current = false;
     clearTimers();
 
-    // First attempt — fast (backend should be awake via UptimeRobot)
     const ok = await attemptFetch();
     if (ok) return;
 
-    // Backend is cold-starting — show spinner + "warming up" text, retry every 3s
-    setWarmingUp(true);
+    // Retry quietly in background every 5s if backend is cold-starting
     retryTimerRef.current = setInterval(async () => {
       if (gotRealData.current) { clearTimers(); return; }
       await attemptFetch();
-    }, 3000);
+    }, 5000);
 
-    // After 2 minutes, give up — show empty state (backend is genuinely down)
     fallbackTimerRef.current = setTimeout(() => {
       clearTimers();
-      if (!gotRealData.current) {
-        setProfileData({ username: '', bio: '', linkedin: '', github: '', instagram: '', facebook: '', profile_picture: null, resume_url: null });
-        setLoadingProfile(false);
-        setWarmingUp(false);
-      }
-    }, 120000);
-  }, [attemptFetch]);
+      setLoadingProfile(false);
+      setWarmingUp(false);
+    }, 60000);
+  }, [attemptFetch, profileData]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -89,7 +98,7 @@ function App() {
       localStorage.setItem('currentPage', 'login');
       window.history.replaceState({}, document.title, window.location.pathname);
     }
-    fetchProfile(true);
+    fetchProfile(false);
     return clearTimers;
   }, []);
 
