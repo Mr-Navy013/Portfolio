@@ -88,33 +88,50 @@ function writeJsonDb(data) {
 
 async function initializeDatabase() {
   const config = {
-    host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || 'Navy@0013',
-    port: process.env.DB_PORT || 3306,
+    host: process.env.DB_HOST || process.env.MYSQLHOST || process.env.MYSQL_HOST || 'localhost',
+    user: process.env.DB_USER || process.env.MYSQLUSER || process.env.MYSQL_USER || 'root',
+    password: process.env.DB_PASSWORD || process.env.MYSQLPASSWORD || process.env.MYSQL_PASSWORD || 'Navy@0013',
+    port: parseInt(process.env.DB_PORT || process.env.MYSQLPORT || process.env.MYSQL_PORT || '3306'),
+    database: process.env.DB_NAME || process.env.MYSQLDATABASE || process.env.MYSQL_DATABASE || 'my_portfolio'
   };
 
+  const connectionString = process.env.MYSQL_URL || process.env.DATABASE_URL;
+  if (connectionString && connectionString.startsWith('mysql://')) {
+    try {
+      const dbUrl = new URL(connectionString);
+      config.host = dbUrl.hostname;
+      config.user = dbUrl.username;
+      config.password = dbUrl.password;
+      config.port = dbUrl.port ? parseInt(dbUrl.port) : 3306;
+      if (dbUrl.pathname && dbUrl.pathname.length > 1) {
+        config.database = dbUrl.pathname.substring(1);
+      }
+    } catch (e) {
+      console.log('[DATABASE CONFIG] Could not parse connection URL, using standard env vars.');
+    }
+  }
+
   try {
-    // Attempt connecting to local MySQL
+    // Attempt connecting to MySQL
     const connection = await mysql.createConnection(config);
-    await connection.query(`CREATE DATABASE IF NOT EXISTS \`${process.env.DB_NAME || 'Portfolio'}\`;`);
+    await connection.query(`CREATE DATABASE IF NOT EXISTS \`${config.database}\`;`);
     await connection.end();
 
     pool = mysql.createPool({
       ...config,
-      database: process.env.DB_NAME || 'Portfolio',
       waitForConnections: true,
       connectionLimit: 10,
       queueLimit: 0
     });
 
-    console.log('Connected to MySQL Database: ' + (process.env.DB_NAME || 'Portfolio'));
+    console.log('Connected to MySQL Database: ' + config.database);
     await createTables();
   } catch (error) {
     console.log(`[DATABASE INFO] MySQL connection failed: ${error.message}`);
     await initJsonDb();
   }
 }
+
 
 async function createTables() {
   // Create tables if they do not exist
@@ -390,22 +407,26 @@ async function handleJsonQuery(sql, params = []) {
   const hasWhereId = sqlClean.includes('WHERE id = ?') || sqlClean.includes('WHERE id=?');
   const targetId = hasWhereId ? parseInt(params[0]) : null;
 
-  // 1. SELECT owner_profile LIMIT 1
-  if (sqlClean.includes('owner_profile LIMIT 1')) {
-    return [db.owner_profile];
+  // 1. SELECT * FROM owner_profile WHERE conditions
+  if (sqlClean.includes('owner_profile WHERE') || sqlClean.includes('WHERE LOWER(username)')) {
+    if (params.length > 0) {
+      const searchVal = (params[0] || '').toLowerCase();
+      const user = db.owner_profile.find(u => 
+        (u.username && u.username.toLowerCase() === searchVal) ||
+        (u.email && u.email.toLowerCase() === searchVal) ||
+        (u.display_name && u.display_name.toLowerCase() === searchVal)
+      );
+      return [user ? [user] : []];
+    }
   }
 
-  // 2. SELECT * FROM owner_profile WHERE username = ?
-  if (sqlClean.includes('SELECT * FROM owner_profile WHERE username = ?')) {
-    const user = db.owner_profile.find(u => u.username.toLowerCase() === params[0].toLowerCase());
-    return [user ? [user] : []];
+  // 2. Generic SELECT owner_profile LIMIT 1 / SELECT * FROM owner_profile
+  if (sqlClean.includes('owner_profile')) {
+    if (sqlClean.startsWith('SELECT')) {
+      return [db.owner_profile];
+    }
   }
 
-  // 3. SELECT * FROM owner_profile WHERE email = ?
-  if (sqlClean.includes('SELECT * FROM owner_profile WHERE email = ?')) {
-    const user = db.owner_profile.find(u => u.email.toLowerCase() === params[0].toLowerCase());
-    return [user ? [user] : []];
-  }
 
   // 4. SELECT * FROM projects ORDER BY created_at
   if (sqlClean.includes('FROM projects')) {
