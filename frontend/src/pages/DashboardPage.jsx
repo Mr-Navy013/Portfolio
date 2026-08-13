@@ -3,7 +3,7 @@ import {
   User, Code, GraduationCap, Briefcase, Award, Mail, 
   LogOut, Upload, Plus, 
   Trash2, Edit, Save, ShieldCheck, CheckCircle, ExternalLink, X, FileText, Bell,
-  Download, Menu, Eye, EyeOff, Check
+  Download, Menu, Eye, EyeOff, Check, MapPin
 } from 'lucide-react';
 import { Linkedin, Github, Instagram, Facebook } from '../components/BrandIcons';
 import '../styles/dashboard.css';
@@ -1148,6 +1148,8 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
   const [eduSemSgpas, setEduSemSgpas] = useState({
     sem1: '', sem2: '', sem3: '', sem4: '', sem5: '', sem6: '', sem7: '', sem8: ''
   });
+  const [eduState, setEduState] = useState('');
+  const [eduDistrict, setEduDistrict] = useState('');
   const [edu10thCert, setEdu10thCert] = useState(null);
   const [edu12thCert, setEdu12thCert] = useState(null);
   const [edu12thMarksheet, setEdu12thMarksheet] = useState(null);
@@ -2227,6 +2229,8 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       setEduAccess10th(edu.access_cert10 === 1 || edu.access_cert10 === true || edu.access_cert10 === '1');
       setEduAccess12th(edu.access_cert12 === 1 || edu.access_cert12 === true || edu.access_cert12 === '1');
       setEduAccessBach(edu.access_certbach === 1 || edu.access_certbach === true || edu.access_certbach === '1');
+      setEduState(edu.state || '');
+      setEduDistrict(edu.district || '');
     } else {
       setEditingEdu(null);
       setEduType('10th');
@@ -2249,6 +2253,8 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       setEduAccess10th(true);
       setEduAccess12th(true);
       setEduAccessBach(true);
+      setEduState('');
+      setEduDistrict('');
     }
     setShowEduModal(true);
   };
@@ -2466,6 +2472,8 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       formData.append('access_cert12', eduAccess12th ? '1' : '0');
       formData.append('access_certbach', eduAccessBach ? '1' : '0');
       formData.append('board', selectedBoard || '');
+      formData.append('state', eduState || '');
+      formData.append('district', eduDistrict || '');
 
       const url = editingEdu ? `${API_BASE}/education/${editingEdu.id}` : `${API_BASE}/education`;
       const method = editingEdu ? 'PUT' : 'POST';
@@ -2501,6 +2509,8 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       setEduAccessBach(false);
       setEduBoard('CBSE');
       setCustomEduBoard('');
+      setEduState('');
+      setEduDistrict('');
       setEditingEdu(null);
     } catch (err) {
       console.error(err);
@@ -3783,6 +3793,15 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                         <span style={{ color: 'var(--text-secondary)', display: 'block', fontSize: '0.75rem' }}>Pass out Year</span>
                         <span>{formatDateStr(edu.passing_year || edu.end_date)}</span>
                       </div>
+                      {(edu.district || edu.state) && (
+                        <div>
+                          <span style={{ color: 'var(--text-secondary)', display: 'block', fontSize: '0.75rem' }}>Location</span>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', color: 'var(--accent-green)' }}>
+                            <MapPin size={13} />
+                            {[edu.district, edu.state].filter(Boolean).join(', ')}
+                          </span>
+                        </div>
+                      )}
                       
                       {(edu.degree === '10th' || edu.degree === '12th') && (
                         <>
@@ -4604,6 +4623,29 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                   required 
                   value={eduPassingYear}
                   onChange={(e) => setEduPassingYear(e.target.value)} 
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>State</label>
+                <input 
+                  type="text" 
+                  placeholder="e.g. Odisha" 
+                  className="glass-input" 
+                  value={eduState}
+                  onChange={(e) => setEduState(e.target.value)} 
+                />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>District</label>
+                <input 
+                  type="text" 
+                  placeholder="e.g. Khordha" 
+                  className="glass-input" 
+                  value={eduDistrict}
+                  onChange={(e) => setEduDistrict(e.target.value)} 
                 />
               </div>
             </div>

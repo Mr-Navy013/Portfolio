@@ -310,7 +310,9 @@ async function createTables() {
     'ALTER TABLE education ADD COLUMN access_cert10 BOOLEAN DEFAULT FALSE',
     'ALTER TABLE education ADD COLUMN access_cert12 BOOLEAN DEFAULT FALSE',
     'ALTER TABLE education ADD COLUMN access_certbach BOOLEAN DEFAULT FALSE',
-    'ALTER TABLE education ADD COLUMN board VARCHAR(255) NULL'
+    'ALTER TABLE education ADD COLUMN board VARCHAR(255) NULL',
+    'ALTER TABLE education ADD COLUMN state VARCHAR(255) NULL',
+    'ALTER TABLE education ADD COLUMN district VARCHAR(255) NULL'
   ];
   for (const colQuery of addEduColumns) {
     try {
@@ -734,8 +736,10 @@ async function handleJsonQuery(sql, params = []) {
       edu.access_cert12 = params[15] ? 1 : 0;
       edu.access_certbach = params[16] ? 1 : 0;
       edu.board = params[17] || null;
+      edu.state = params[18] || null;
+      edu.district = params[19] || null;
 
-      let paramIndex = 18;
+      let paramIndex = 20;
       if (sqlClean.includes('certificate_10th = ?')) { edu.certificate_10th = params[paramIndex++]; }
       if (sqlClean.includes('certificate_12th = ?')) { edu.certificate_12th = params[paramIndex++]; }
       if (sqlClean.includes('marksheet_12th = ?')) { edu.marksheet_12th = params[paramIndex++]; }
@@ -852,6 +856,8 @@ async function handleJsonQuery(sql, params = []) {
       newEdu.access_cert12 = params[22] ? 1 : 0;
       newEdu.access_certbach = params[23] ? 1 : 0;
       newEdu.board = params[24] || null;
+      newEdu.state = params[25] || null;
+      newEdu.district = params[26] || null;
     }
     db.education.push(newEdu);
     writeJsonDb(db);

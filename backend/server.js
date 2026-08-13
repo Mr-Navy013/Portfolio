@@ -953,7 +953,8 @@ app.post('/api/education', authenticateToken, educationUploadFields, async (req,
     school, degree, field_of_study, start_date, end_date, description,
     passing_year, full_marks, marks_obtained, percentage, course, branch,
     semester_sgpa, cgpa,
-    access_cert10, access_cert12, access_certbach, board
+    access_cert10, access_cert12, access_certbach, board,
+    state, district
   } = req.body;
 
   school = ensureString(school);
@@ -974,6 +975,8 @@ app.post('/api/education', authenticateToken, educationUploadFields, async (req,
   access_cert12 = ensureString(access_cert12);
   access_certbach = ensureString(access_certbach);
   board = ensureString(board);
+  state = ensureString(state);
+  district = ensureString(district);
 
   if (!school || !degree || !start_date || !end_date) {
     return res.status(400).json({ message: 'School, Degree, and Dates are required' });
@@ -1009,8 +1012,8 @@ app.post('/api/education', authenticateToken, educationUploadFields, async (req,
         passing_year, full_marks, marks_obtained, percentage, course, branch,
         semester_sgpa, cgpa, certificate_10th, certificate_12th, marksheet_12th,
         gradesheet_bachelor, certificate_bachelor, certificate_others, marksheet_others,
-        access_cert10, access_cert12, access_certbach, board
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        access_cert10, access_cert12, access_certbach, board, state, district
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
       school, degree, field_of_study || null, start_date, end_date, description || null,
       passing_year || null, 
@@ -1024,7 +1027,9 @@ app.post('/api/education', authenticateToken, educationUploadFields, async (req,
       parseBoolParam(access_cert10),
       parseBoolParam(access_cert12),
       parseBoolParam(access_certbach),
-      board || null
+      board || null,
+      state || null,
+      district || null
     ]);
     res.status(201).json({ success: true, message: 'Education history added!' });
   } catch (error) {
@@ -1038,7 +1043,8 @@ app.put('/api/education/:id', authenticateToken, educationUploadFields, async (r
     school, degree, field_of_study, start_date, end_date, description,
     passing_year, full_marks, marks_obtained, percentage, course, branch,
     semester_sgpa, cgpa,
-    access_cert10, access_cert12, access_certbach, board
+    access_cert10, access_cert12, access_certbach, board,
+    state, district
   } = req.body;
 
   school = ensureString(school);
@@ -1059,6 +1065,8 @@ app.put('/api/education/:id', authenticateToken, educationUploadFields, async (r
   access_cert12 = ensureString(access_cert12);
   access_certbach = ensureString(access_certbach);
   board = ensureString(board);
+  state = ensureString(state);
+  district = ensureString(district);
 
   const getBase64File = (fieldname) => {
     if (req.files && req.files[fieldname] && req.files[fieldname][0]) {
@@ -1106,7 +1114,9 @@ app.put('/api/education/:id', authenticateToken, educationUploadFields, async (r
           \`access_cert10\` = ?, 
           \`access_cert12\` = ?, 
           \`access_certbach\` = ?, 
-          \`board\` = ?
+          \`board\` = ?,
+          \`state\` = ?,
+          \`district\` = ?
     `;
     let params = [
       school, degree, field_of_study || null, start_date, end_date, description || null,
@@ -1120,7 +1130,9 @@ app.put('/api/education/:id', authenticateToken, educationUploadFields, async (r
       parseBoolParam(access_cert10),
       parseBoolParam(access_cert12),
       parseBoolParam(access_certbach),
-      board || null
+      board || null,
+      state || null,
+      district || null
     ];
 
     if (newCert10th) { q += `, \`certificate_10th\` = ?`; params.push(newCert10th); }
@@ -1158,7 +1170,9 @@ app.put('/api/education/:id', authenticateToken, educationUploadFields, async (r
           'ALTER TABLE education ADD COLUMN access_cert10 BOOLEAN DEFAULT FALSE',
           'ALTER TABLE education ADD COLUMN access_cert12 BOOLEAN DEFAULT FALSE',
           'ALTER TABLE education ADD COLUMN access_certbach BOOLEAN DEFAULT FALSE',
-          'ALTER TABLE education ADD COLUMN board VARCHAR(255) NULL'
+          'ALTER TABLE education ADD COLUMN board VARCHAR(255) NULL',
+          'ALTER TABLE education ADD COLUMN state VARCHAR(255) NULL',
+          'ALTER TABLE education ADD COLUMN district VARCHAR(255) NULL'
         ];
         for (const colQuery of addEduColumns) {
           try { await query(colQuery); } catch (e) {}

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Menu, X, Mail, Phone,
   ExternalLink, Code, GraduationCap, Briefcase, Award, Send,
-  Download, FileText, CheckCircle, LogOut, User, Lock, ShieldCheck, Eye, EyeOff
+  Download, FileText, CheckCircle, LogOut, User, Lock, ShieldCheck, Eye, EyeOff, MapPin
 } from 'lucide-react';
 import { Linkedin, Github, Instagram, Facebook } from '../components/BrandIcons';
 import '../styles/portfolio.css';
@@ -1122,6 +1122,12 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, onLogout
                   <h3 className="pf-timeline-title">{edu.school}</h3>
                   <div className="text-green pf-timeline-date" style={{ marginTop: '0.2rem', fontSize: '0.85rem' }}>{formatDateStr(edu.end_date)}</div>
                 </div>
+                {(edu.district || edu.state) && (
+                  <div style={{ fontSize: '0.8rem', color: '#a0aec0', marginTop: '-0.2rem', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                    <MapPin size={13} className="text-green" />
+                    <span>{[edu.district, edu.state].filter(Boolean).join(', ')}</span>
+                  </div>
+                )}
                 <p className="pf-timeline-sub">
                   {edu.degree === '10th' ? '10th (Secondary School - SSC)' : 
                    edu.degree === '12th' ? '12th (Intermediate)' : 
