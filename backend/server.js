@@ -1118,21 +1118,24 @@ app.put('/api/education/:id', authenticateToken, educationUploadFields, async (r
           \`state\` = ?,
           \`district\` = ?
     `;
+    const finalStartDate = start_date || passing_year || (oldEdu ? oldEdu.start_date : null) || 'N/A';
+    const finalEndDate = end_date || passing_year || (oldEdu ? oldEdu.end_date : null) || 'N/A';
+
     let params = [
-      school, degree, field_of_study || null, start_date, end_date, description || null,
-      passing_year || null, 
-      full_marks ? parseFloat(full_marks) : null, 
-      marks_obtained ? parseFloat(marks_obtained) : null, 
-      percentage ? parseFloat(percentage) : null, 
+      school, degree, field_of_study || (oldEdu ? oldEdu.field_of_study : null), finalStartDate, finalEndDate, description || (oldEdu ? oldEdu.description : null),
+      passing_year || (oldEdu ? oldEdu.passing_year : null), 
+      full_marks ? parseFloat(full_marks) : (oldEdu && oldEdu.full_marks ? parseFloat(oldEdu.full_marks) : null), 
+      marks_obtained ? parseFloat(marks_obtained) : (oldEdu && oldEdu.marks_obtained ? parseFloat(oldEdu.marks_obtained) : null), 
+      percentage ? parseFloat(percentage) : (oldEdu && oldEdu.percentage ? parseFloat(oldEdu.percentage) : null), 
       course || null, branch || null,
       semester_sgpa || null, 
       cgpa ? parseFloat(cgpa) : null,
       parseBoolParam(access_cert10),
       parseBoolParam(access_cert12),
       parseBoolParam(access_certbach),
-      board || null,
-      state || null,
-      district || null
+      board || (oldEdu ? oldEdu.board : null),
+      state || (oldEdu ? oldEdu.state : null),
+      district || (oldEdu ? oldEdu.district : null)
     ];
 
     if (newCert10th) { q += `, \`certificate_10th\` = ?`; params.push(newCert10th); }

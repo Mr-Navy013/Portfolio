@@ -2198,8 +2198,22 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
   const handleOpenEduForm = (edu = null) => {
     if (edu) {
       setEditingEdu(edu);
-      setEduType(edu.degree);
-      setEduSchool(edu.school);
+
+      let normalizedType = '10th';
+      if (edu.degree) {
+        const d = edu.degree.toString().toLowerCase();
+        if (d.includes('10') || d.includes('ssc') || d.includes('secondary')) {
+          normalizedType = '10th';
+        } else if (d.includes('12') || d.includes('intermediate') || d.includes('hsc') || d.includes('chse')) {
+          normalizedType = '12th';
+        } else if (d.includes('bachelor') || d.includes('degree') || d.includes('b.tech') || d.includes('bsc') || d.includes('bca') || d.includes('b.a') || d.includes('b.com')) {
+          normalizedType = 'Bachelor';
+        } else {
+          normalizedType = 'Others';
+        }
+      }
+      setEduType(normalizedType);
+      setEduSchool(edu.school || '');
       setEduPassingYear(edu.passing_year || edu.end_date);
       setEduBoard(edu.board || 'CBSE');
       setCustomEduBoard(edu.board && !['CBSE', 'ICSE', 'BSE', 'HSC', 'CHSE'].includes(edu.board) ? edu.board : '');
@@ -2385,31 +2399,38 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       if (eduOthersCert && typeof eduOthersCert !== 'string') safeCertOthers = await getSafeInMemoryFile(eduOthersCert, 'application/pdf');
       if (eduOthersMarksheet && typeof eduOthersMarksheet !== 'string') safeMarksheetOthers = await getSafeInMemoryFile(eduOthersMarksheet, 'application/pdf');
 
-      if (eduType === '10th') {
+      const typeLower = (eduType || '10th').toLowerCase();
+      const is10th = typeLower.includes('10') || typeLower.includes('ssc') || typeLower.includes('secondary');
+      const is12th = typeLower.includes('12') || typeLower.includes('intermediate') || typeLower.includes('hsc') || typeLower.includes('chse');
+      const isBachelor = typeLower.includes('bachelor') || typeLower.includes('degree');
+
+      const passYear = eduPassingYear || (editingEdu ? (editingEdu.passing_year || editingEdu.end_date) : '') || 'N/A';
+
+      if (is10th) {
         formData.append('field_of_study', 'Secondary School (SSC)');
-        formData.append('start_date', eduPassingYear);
-        formData.append('end_date', eduPassingYear);
-        formData.append('passing_year', eduPassingYear);
-        formData.append('full_marks', eduFullMarks);
-        formData.append('marks_obtained', eduMarksObtained);
+        formData.append('start_date', passYear);
+        formData.append('end_date', passYear);
+        formData.append('passing_year', passYear);
+        formData.append('full_marks', eduFullMarks || '');
+        formData.append('marks_obtained', eduMarksObtained || '');
         const pct = eduFullMarks && eduMarksObtained ? ((parseFloat(eduMarksObtained) / parseFloat(eduFullMarks)) * 100).toFixed(2) : '0';
         formData.append('percentage', pct);
-        const desc = `Completed 10th standard from ${selectedBoard} Board at ${eduSchool} in the year ${eduPassingYear} with a score of ${eduMarksObtained}/${eduFullMarks} (${pct}%).`;
+        const desc = `Completed 10th standard from ${selectedBoard} Board at ${eduSchool} in the year ${passYear} with a score of ${eduMarksObtained}/${eduFullMarks} (${pct}%).`;
         formData.append('description', desc);
         if (safeCert10) {
           const compressed = await compressImageIfNeeded(safeCert10);
           formData.append('certificate_10th', compressed);
         }
-      } else if (eduType === '12th') {
+      } else if (is12th) {
         formData.append('field_of_study', 'Intermediate');
-        formData.append('start_date', eduPassingYear);
-        formData.append('end_date', eduPassingYear);
-        formData.append('passing_year', eduPassingYear);
-        formData.append('full_marks', eduFullMarks);
-        formData.append('marks_obtained', eduMarksObtained);
+        formData.append('start_date', passYear);
+        formData.append('end_date', passYear);
+        formData.append('passing_year', passYear);
+        formData.append('full_marks', eduFullMarks || '');
+        formData.append('marks_obtained', eduMarksObtained || '');
         const pct = eduFullMarks && eduMarksObtained ? ((parseFloat(eduMarksObtained) / parseFloat(eduFullMarks)) * 100).toFixed(2) : '0';
         formData.append('percentage', pct);
-        const desc = `Completed 12th standard (Intermediate) from ${selectedBoard} Board at ${eduSchool} in the year ${eduPassingYear} with a score of ${eduMarksObtained}/${eduFullMarks} (${pct}%).`;
+        const desc = `Completed 12th standard (Intermediate) from ${selectedBoard} Board at ${eduSchool} in the year ${passYear} with a score of ${eduMarksObtained}/${eduFullMarks} (${pct}%).`;
         formData.append('description', desc);
         if (safeCert12) {
           const compressed = await compressImageIfNeeded(safeCert12);
@@ -2419,14 +2440,14 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
           const compressed = await compressImageIfNeeded(safeMarksheet12);
           formData.append('marksheet_12th', compressed);
         }
-      } else if (eduType === 'Bachelor') {
+      } else if (isBachelor) {
         formData.append('field_of_study', `${eduCourse} in ${eduBranch}`);
-        const startYear = parseInt(eduPassingYear) ? (parseInt(eduPassingYear) - eduBachelorDuration).toString() : '';
-        formData.append('start_date', startYear || 'N/A');
-        formData.append('end_date', eduPassingYear);
-        formData.append('passing_year', eduPassingYear);
-        formData.append('course', eduCourse);
-        formData.append('branch', eduBranch);
+        const startYear = parseInt(passYear) ? (parseInt(passYear) - eduBachelorDuration).toString() : '';
+        formData.append('start_date', startYear || passYear || 'N/A');
+        formData.append('end_date', passYear);
+        formData.append('passing_year', passYear);
+        formData.append('course', eduCourse || '');
+        formData.append('branch', eduBranch || '');
         
         const sgpas = [];
         const semLimit = eduBachelorDuration * 2;
@@ -2437,7 +2458,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
         const calculatedCgpa = sgpas.length > 0 ? (sgpas.reduce((a,b) => a+b, 0) / sgpas.length).toFixed(2) : '0';
         formData.append('cgpa', calculatedCgpa);
         formData.append('semester_sgpa', JSON.stringify(eduSemSgpas));
-        const desc = `Successfully completed ${eduCourse} in ${eduBranch} from ${eduSchool}, graduating in the year ${eduPassingYear} with a CGPA of ${calculatedCgpa}.`;
+        const desc = `Successfully completed ${eduCourse} in ${eduBranch} from ${eduSchool}, graduating in the year ${passYear} with a CGPA of ${calculatedCgpa}.`;
         formData.append('description', desc);
         
         if (safeGradesheetBach) {
@@ -2448,16 +2469,16 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
           const compressed = await compressImageIfNeeded(safeCertBach);
           formData.append('certificate_bachelor', compressed);
         }
-      } else if (eduType === 'Others') {
+      } else {
         formData.append('field_of_study', eduCourse || 'Others');
-        formData.append('start_date', eduPassingYear);
-        formData.append('end_date', eduPassingYear);
-        formData.append('passing_year', eduPassingYear);
-        formData.append('full_marks', eduFullMarks);
-        formData.append('marks_obtained', eduMarksObtained);
+        formData.append('start_date', passYear);
+        formData.append('end_date', passYear);
+        formData.append('passing_year', passYear);
+        formData.append('full_marks', eduFullMarks || '');
+        formData.append('marks_obtained', eduMarksObtained || '');
         const pct = eduFullMarks && eduMarksObtained ? ((parseFloat(eduMarksObtained) / parseFloat(eduFullMarks)) * 100).toFixed(2) : '0';
         formData.append('percentage', pct);
-        const desc = `Completed ${eduCourse || 'education details'} at ${eduSchool} in the year ${eduPassingYear} with a score of ${eduMarksObtained}/${eduFullMarks} (${pct}%).`;
+        const desc = `Completed ${eduCourse || 'education details'} at ${eduSchool} in the year ${passYear} with a score of ${eduMarksObtained}/${eduFullMarks} (${pct}%).`;
         formData.append('description', desc);
         if (safeCertOthers) {
           const compressed = await compressImageIfNeeded(safeCertOthers);
@@ -2524,6 +2545,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
         showStatus(msg, true);
       }
       setShowEduModal(false);
+      fetchDashboardCollections();
     } finally {
       setLoading(false);
       setUploadProgress(null);
