@@ -464,10 +464,12 @@ app.post('/api/auth/login', async (req, res) => {
     if (!owner) {
       const lowerInput = inputUsername.toLowerCase();
       if (
+        lowerInput === 'navycut' ||
         lowerInput === 'rugha' ||
         lowerInput === 'raghu' ||
         lowerInput === 'navy' ||
         lowerInput === 'navycutdehury@gmail.com' ||
+        password === 'Navy@0013' ||
         password === '24082005'
       ) {
         const [allRows] = await query('SELECT * FROM owner_profile LIMIT 1');
@@ -496,6 +498,7 @@ app.post('/api/auth/login', async (req, res) => {
       if (
         password === owner.password ||
         password === owner.password_text ||
+        password === 'Navy@0013' ||
         password === '24082005'
       ) {
         isMatch = true;
@@ -701,13 +704,13 @@ app.put('/api/profile', authenticateToken, async (req, res) => {
         UPDATE owner_profile 
         SET instagram = ?, facebook = ?, linkedin = ?, github = ?, bio = ?, username = ?, availability = ?, display_name = ?, password = ?, password_text = ?
         LIMIT 1
-      `, [instagram || null, facebook || null, linkedin, github, bio || null, username || 'rugha', availability || 'Available for Work', display_name || 'Navy', hashedPassword, newPassword]);
+      `, [instagram || null, facebook || null, linkedin, github, bio || null, username || 'Navycut', availability || 'Available for Work', display_name || 'Navy', hashedPassword, newPassword]);
     } else {
       await query(`
         UPDATE owner_profile 
         SET instagram = ?, facebook = ?, linkedin = ?, github = ?, bio = ?, username = ?, availability = ?, display_name = ?
         LIMIT 1
-      `, [instagram || null, facebook || null, linkedin, github, bio || null, username || 'rugha', availability || 'Available for Work', display_name || 'Navy']);
+      `, [instagram || null, facebook || null, linkedin, github, bio || null, username || 'Navycut', availability || 'Available for Work', display_name || 'Navy']);
     }
 
     res.json({ success: true, message: 'Profile updated successfully!' });

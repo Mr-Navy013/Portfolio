@@ -21,7 +21,7 @@ function App() {
   // Default fallback profile so application renders instantly without spinning loader
   const DEFAULT_PROFILE = {
     id: 1,
-    username: "rugha",
+    username: "Navycut",
     display_name: "Navy",
     bio: "Welcome to my portfolio! I am a passionate developer skilled in building robust full-stack applications.",
     profile_picture: "/uploads/profile_picture-1782366940013-212164627.jpg",

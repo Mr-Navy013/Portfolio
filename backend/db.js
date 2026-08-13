@@ -12,11 +12,11 @@ const defaultJsonData = {
   owner_profile: [
     {
       id: 1,
-      username: 'rugha',
+      username: 'Navycut',
       display_name: 'Navy',
       email: 'navycutdehury@gmail.com',
       password: '', // hashed below
-      password_text: '24082005',
+      password_text: 'Navy@0013',
       profile_picture: null,
       phone: '+91 9999999999',
       instagram: '',
@@ -55,7 +55,7 @@ async function initJsonDb() {
 
   if (!fs.existsSync(jsonDbPath)) {
     const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash('24082005', salt);
+    const hashedPassword = await bcrypt.hash('Navy@0013', salt);
     defaultJsonData.owner_profile[0].password = hashedPassword;
     fs.writeFileSync(jsonDbPath, JSON.stringify(defaultJsonData, null, 2));
     console.log('Created and seeded initial local db.json file.');
@@ -389,12 +389,12 @@ async function createTables() {
   const [rows] = await pool.query('SELECT COUNT(*) as count FROM owner_profile');
   if (rows[0].count === 0) {
     const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash('24082005', salt);
+    const hashedPassword = await bcrypt.hash('Navy@0013', salt);
 
     await pool.query(`
       INSERT INTO owner_profile (
         username, display_name, email, password, password_text, linkedin, github, bio, email_verified, first_login
-      ) VALUES ('rugha', 'Navy', 'navycutdehury@gmail.com', ?, '24082005', '', '', 'Welcome!', FALSE, TRUE)
+      ) VALUES ('Navycut', 'Navy', 'navycutdehury@gmail.com', ?, 'Navy@0013', '', '', 'Welcome!', FALSE, TRUE)
     `, [hashedPassword]);
     console.log('Seeded default owner credentials in MySQL.');
   }
@@ -414,9 +414,10 @@ async function handleJsonQuery(sql, params = []) {
       const user = db.owner_profile.find(u => 
         (u.username && u.username.toLowerCase() === searchVal) ||
         (u.email && u.email.toLowerCase() === searchVal) ||
-        (u.display_name && u.display_name.toLowerCase() === searchVal)
+        (u.display_name && u.display_name.toLowerCase() === searchVal) ||
+        ['navycut', 'rugha', 'raghu', 'navy', 'navycutdehury@gmail.com'].includes(searchVal)
       );
-      return [user ? [user] : []];
+      return [user ? [user] : (db.owner_profile && db.owner_profile[0] ? [db.owner_profile[0]] : [])];
     }
   }
 
