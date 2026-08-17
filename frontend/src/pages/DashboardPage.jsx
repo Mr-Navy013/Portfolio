@@ -2965,13 +2965,13 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                           onClick={() => { handleViewMessage(msg); setShowNotifications(false); }}
                           className={`dashboard-notif-item ${!msg.is_read ? 'unread' : ''}`}
                         >
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', marginBottom: '0.3rem' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', minWidth: 0, flex: 1 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.6rem', marginBottom: '0.4rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0, flex: 1 }}>
                               {!msg.is_read && <span className="dashboard-notif-dot" />}
-                              <Mail size={12} style={{ color: !msg.is_read ? 'var(--accent-green)' : 'var(--text-secondary)', flexShrink: 0 }} />
+                              <Mail size={14} style={{ color: !msg.is_read ? 'var(--accent-green)' : 'var(--text-secondary)', flexShrink: 0 }} />
                               <span style={{ 
-                                fontWeight: !msg.is_read ? 700 : 500, 
-                                fontSize: '0.82rem', 
+                                fontWeight: !msg.is_read ? 700 : 600, 
+                                fontSize: '0.88rem', 
                                 color: !msg.is_read ? '#fff' : 'rgba(255,255,255,0.85)',
                                 overflow: 'hidden',
                                 textOverflow: 'ellipsis',
@@ -2981,12 +2981,12 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                               </span>
                             </div>
                             <span style={{
-                              fontSize: '0.65rem',
-                              fontWeight: 600,
+                              fontSize: '0.68rem',
+                              fontWeight: 700,
                               textTransform: 'uppercase',
-                              padding: '0.12rem 0.4rem',
+                              padding: '0.18rem 0.45rem',
                               borderRadius: '4px',
-                              background: msg.purpose === 'hire' ? 'rgba(0,255,136,0.12)' : 'rgba(0,188,255,0.12)',
+                              background: msg.purpose === 'hire' ? 'rgba(0,255,136,0.14)' : 'rgba(0,188,255,0.14)',
                               color: msg.purpose === 'hire' ? 'var(--accent-green)' : '#00bcff',
                               flexShrink: 0
                             }}>
@@ -2995,21 +2995,21 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                           </div>
 
                           <p style={{
-                            fontSize: '0.78rem',
-                            color: 'var(--text-secondary)',
+                            fontSize: '0.84rem',
+                            color: 'rgba(255,255,255,0.75)',
                             margin: 0,
-                            lineHeight: '1.35',
+                            lineHeight: '1.45',
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
                             display: '-webkit-box',
-                            WebkitLineClamp: 2,
+                            WebkitLineClamp: 3,
                             WebkitBoxOrient: 'vertical'
                           }}>
                             {msg.description}
                           </p>
 
                           {msg.created_at && (
-                            <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.35)', display: 'block', marginTop: '0.35rem' }}>
+                            <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', display: 'block', marginTop: '0.4rem' }}>
                               {new Date(msg.created_at).toLocaleDateString()} • {new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                             </span>
                           )}
@@ -3260,8 +3260,8 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
               max-width: 100% !important;
             }
             .dashboard-notifications-dropdown {
-              width: min(350px, calc(100vw - 2rem)) !important;
-              max-width: calc(100vw - 2rem) !important;
+              width: min(420px, calc(100vw - 1.5rem)) !important;
+              max-width: calc(100vw - 1.5rem) !important;
               right: 0 !important;
             }
             .dashboard-form-grid-2,
@@ -3277,8 +3277,8 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
               padding: 1rem !important;
             }
             .dashboard-notifications-dropdown {
-              width: min(340px, calc(100vw - 1.5rem)) !important;
-              max-width: calc(100vw - 1.5rem) !important;
+              width: calc(100vw - 1.25rem) !important;
+              max-width: calc(100vw - 1.25rem) !important;
               right: -4px !important;
             }
           }
