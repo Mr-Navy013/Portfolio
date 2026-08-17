@@ -389,3 +389,144 @@
     max-width: 90% !important;
   }
 }
+
+/* Notification Dropdown & Box Styles */
+.dashboard-notifications-dropdown {
+  position: absolute !important;
+  top: calc(100% + 0.6rem) !important;
+  right: 0 !important;
+  width: 360px !important;
+  max-width: calc(100vw - 1.5rem) !important;
+  max-height: 480px !important;
+  padding: 1.1rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.75rem !important;
+  background: rgba(10, 16, 12, 0.98) !important;
+  border: 1px solid rgba(0, 255, 136, 0.25) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 16px 45px rgba(0, 0, 0, 0.75), 0 0 25px rgba(0, 255, 136, 0.12) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  z-index: 1000 !important;
+  box-sizing: border-box !important;
+  animation: notifDropdownFade 0.2s ease-out;
+}
+
+@keyframes notifDropdownFade {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.dashboard-notif-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 0.6rem;
+  margin-bottom: 0.2rem;
+}
+
+.dashboard-notif-unread-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.15rem 0.55rem;
+  border-radius: 12px;
+  background: rgba(0, 255, 136, 0.15);
+  color: var(--accent-green);
+  border: 1px solid rgba(0, 255, 136, 0.35);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.dashboard-notif-empty {
+  padding: 2.25rem 1rem;
+  text-align: center;
+}
+
+.dashboard-notif-empty-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: rgba(0, 255, 136, 0.08);
+  border: 1px solid rgba(0, 255, 136, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 0.85rem auto;
+}
+
+.dashboard-notif-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  overflow-y: auto;
+  max-height: 290px;
+  padding-right: 3px;
+}
+
+.dashboard-notif-item {
+  padding: 0.8rem 0.9rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 9px;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dashboard-notif-item:hover {
+  background: rgba(0, 255, 136, 0.09);
+  border-color: rgba(0, 255, 136, 0.35);
+  transform: translateY(-1px);
+}
+
+.dashboard-notif-item.unread {
+  background: rgba(0, 255, 136, 0.07);
+  border-color: rgba(0, 255, 136, 0.3);
+}
+
+.dashboard-notif-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: var(--accent-green);
+  box-shadow: 0 0 6px var(--accent-green);
+  flex-shrink: 0;
+}
+
+.dashboard-notif-footer {
+  display: flex;
+  gap: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+@media (max-width: 768px) {
+  .dashboard-notifications-dropdown {
+    width: min(350px, calc(100vw - 2rem)) !important;
+    max-width: calc(100vw - 2rem) !important;
+    right: 0 !important;
+    padding: 0.9rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-notifications-dropdown {
+    width: min(340px, calc(100vw - 1.5rem)) !important;
+    max-width: calc(100vw - 1.5rem) !important;
+    right: -4px !important;
+    padding: 0.85rem !important;
+    border-radius: 12px !important;
+  }
+}
+

@@ -1118,9 +1118,11 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
     };
     if (showNotifications) {
       document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside);
     }
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
     };
   }, [showNotifications]);
 
@@ -2927,84 +2929,120 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
             </button>
 
             {showNotifications && (
-              <div className="glass-panel" style={{
-                position: 'absolute',
-                top: '100%',
-                right: 0,
-                marginTop: '0.5rem',
-                width: '320px',
-                maxHeight: '400px',
-                overflowY: 'auto',
-                padding: '1rem',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '0.75rem',
-                boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
-                zIndex: 100,
-                background: 'rgba(10, 15, 12, 0.95)'
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '0.5rem', marginBottom: '0.25rem' }}>
-                  <span style={{ fontWeight: 700, fontSize: '0.9rem' }}>Recent Notifications</span>
-                  {messages.filter(m => !m.is_read).length > 0 && <span style={{ fontSize: '0.75rem', color: 'var(--accent-green)' }}>{messages.filter(m => !m.is_read).length} unread</span>}
+              <div className="glass-panel dashboard-notifications-dropdown">
+                {/* Header */}
+                <div className="dashboard-notif-header">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Bell size={16} className="text-green" />
+                    <span style={{ fontWeight: 700, fontSize: '0.92rem', color: '#fff' }}>Notifications</span>
+                  </div>
+                  {messages.filter(m => !m.is_read).length > 0 ? (
+                    <span className="dashboard-notif-unread-badge">
+                      {messages.filter(m => !m.is_read).length} unread
+                    </span>
+                  ) : (
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>All caught up</span>
+                  )}
                 </div>
 
-                {messages.filter(m => !m.is_read).length === 0 ? (
-                  <div style={{ padding: '1.5rem 0', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-                    No new notifications.
+                {/* Body Content */}
+                {messages.length === 0 ? (
+                  <div className="dashboard-notif-empty">
+                    <div className="dashboard-notif-empty-icon">
+                      <Bell size={22} style={{ color: 'var(--accent-green)', opacity: 0.85 }} />
+                    </div>
+                    <div style={{ fontWeight: 600, color: '#fff', fontSize: '0.9rem', marginBottom: '0.25rem' }}>No notifications yet</div>
+                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.78rem', lineHeight: '1.4' }}>
+                      Messages submitted on your portfolio will show up here.
+                    </div>
                   </div>
                 ) : (
                   <>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', overflowY: 'auto', maxHeight: '250px' }}>
-                      {messages.filter(m => !m.is_read).slice(0, 5).map((msg) => (
+                    <div className="dashboard-notif-list">
+                      {messages.slice(0, 8).map((msg) => (
                         <div 
                           key={msg.id} 
                           onClick={() => { handleViewMessage(msg); setShowNotifications(false); }}
-                          style={{ 
-                            padding: '0.6rem', 
-                            background: msg.is_read ? 'rgba(255,255,255,0.02)' : 'rgba(0,255,136,0.08)', 
-                            border: msg.is_read ? '1px solid rgba(255,255,255,0.05)' : '1px solid rgba(0,255,136,0.3)', 
-                            borderRadius: '6px', 
-                            display: 'flex', 
-                            flexDirection: 'column', 
-                            gap: '0.25rem',
-                            cursor: 'pointer',
-                            position: 'relative'
-                          }}
+                          className={`dashboard-notif-item ${!msg.is_read ? 'unread' : ''}`}
                         >
-                          {!msg.is_read && (
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', marginBottom: '0.3rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', minWidth: 0, flex: 1 }}>
+                              {!msg.is_read && <span className="dashboard-notif-dot" />}
+                              <Mail size={12} style={{ color: !msg.is_read ? 'var(--accent-green)' : 'var(--text-secondary)', flexShrink: 0 }} />
+                              <span style={{ 
+                                fontWeight: !msg.is_read ? 700 : 500, 
+                                fontSize: '0.82rem', 
+                                color: !msg.is_read ? '#fff' : 'rgba(255,255,255,0.85)',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap'
+                              }}>
+                                {msg.sender_email}
+                              </span>
+                            </div>
                             <span style={{
-                              position: 'absolute',
-                              top: '6px',
-                              right: '6px',
-                              width: '6px',
-                              height: '6px',
-                              borderRadius: '50%',
-                              backgroundColor: '#00ff88'
-                            }} />
-                          )}
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontWeight: 600, fontSize: '0.75rem', color: 'var(--accent-green)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '160px' }}>
-                              {msg.sender_email}
-                            </span>
-                            <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>
-                              {msg.purpose === 'hire' ? '💼 Hire' : '💬 Review'}
+                              fontSize: '0.65rem',
+                              fontWeight: 600,
+                              textTransform: 'uppercase',
+                              padding: '0.12rem 0.4rem',
+                              borderRadius: '4px',
+                              background: msg.purpose === 'hire' ? 'rgba(0,255,136,0.12)' : 'rgba(0,188,255,0.12)',
+                              color: msg.purpose === 'hire' ? 'var(--accent-green)' : '#00bcff',
+                              flexShrink: 0
+                            }}>
+                              {msg.purpose === 'hire' ? '💼 Hire' : msg.purpose === 'review' ? '💬 Review' : msg.purpose || 'Inquiry'}
                             </span>
                           </div>
-                          <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: '1.3' }}>
+
+                          <p style={{
+                            fontSize: '0.78rem',
+                            color: 'var(--text-secondary)',
+                            margin: 0,
+                            lineHeight: '1.35',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical'
+                          }}>
                             {msg.description}
                           </p>
+
+                          {msg.created_at && (
+                            <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.35)', display: 'block', marginTop: '0.35rem' }}>
+                              {new Date(msg.created_at).toLocaleDateString()} • {new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                            </span>
+                          )}
                         </div>
                       ))}
                     </div>
-                    <button 
-                      onClick={async () => {
-                        await handleMarkAllMessagesAsRead();
-                      }}
-                      className="glass-btn"
-                      style={{ width: '100%', padding: '0.4rem', fontSize: '0.8rem', justifyContent: 'center' }}
-                    >
-                      Clear All
-                    </button>
+
+                    <div className="dashboard-notif-footer">
+                      {messages.filter(m => !m.is_read).length > 0 && (
+                        <button 
+                          type="button"
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            await handleMarkAllMessagesAsRead();
+                          }}
+                          className="glass-btn-secondary"
+                          style={{ flex: 1, padding: '0.45rem 0.6rem', fontSize: '0.78rem', justifyContent: 'center' }}
+                        >
+                          <Check size={13} style={{ marginRight: '0.3rem' }} /> Mark all read
+                        </button>
+                      )}
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          setActiveTab('messages');
+                          setShowNotifications(false);
+                        }}
+                        className="glass-btn"
+                        style={{ flex: 1, padding: '0.45rem 0.6rem', fontSize: '0.78rem', justifyContent: 'center' }}
+                      >
+                        View inbox ({messages.length})
+                      </button>
+                    </div>
                   </>
                 )}
               </div>
@@ -3216,10 +3254,15 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
             .dashboard-nav-btn {
               display: none !important;
             }
-            .glass-panel {
+            .glass-panel:not(.dashboard-notifications-dropdown) {
               padding: 1.25rem !important;
               box-sizing: border-box !important;
               max-width: 100% !important;
+            }
+            .dashboard-notifications-dropdown {
+              width: min(350px, calc(100vw - 2rem)) !important;
+              max-width: calc(100vw - 2rem) !important;
+              right: 0 !important;
             }
             .dashboard-form-grid-2,
             .dashboard-profile-socials-grid {
@@ -3230,8 +3273,13 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
             .dashboard-grid {
               padding: 0.5rem 0.75rem !important;
             }
-            .glass-panel {
+            .glass-panel:not(.dashboard-notifications-dropdown) {
               padding: 1rem !important;
+            }
+            .dashboard-notifications-dropdown {
+              width: min(340px, calc(100vw - 1.5rem)) !important;
+              max-width: calc(100vw - 1.5rem) !important;
+              right: -4px !important;
             }
           }
           @keyframes slideInFromLeft {
