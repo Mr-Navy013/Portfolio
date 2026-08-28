@@ -5572,7 +5572,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
               background: 'rgba(10, 15, 12, 0.98)', 
               borderRight: '1px solid rgba(0, 255, 136, 0.2)', 
               zIndex: 1001, 
-              padding: '2rem 1.25rem 6.5rem 1.25rem', 
+              padding: '2rem 1.25rem 1.5rem 1.25rem', 
               display: 'flex', 
               flexDirection: 'column', 
               gap: '0.5rem', 
@@ -5679,7 +5679,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
             </div>
 
             {/* Quick Actions (shifted to sidebar on mobile) */}
-            <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', flexDirection: 'column', gap: '0.75rem', paddingBottom: '2rem' }}>
+            <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               <button 
                 onClick={() => { handleOpenProjectForm(); setMobileMenuOpen(false); }} 
                 className="glass-btn" 
@@ -5702,8 +5702,6 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                 <LogOut size={18} /> Logout
               </button>
             </div>
-            {/* Bottom spacer to prevent mobile browser navigation bars from cutting off Logout */}
-            <div style={{ minHeight: '3.5rem', width: '100%', flexShrink: 0 }} />
           </div>
         </div>
       )}
