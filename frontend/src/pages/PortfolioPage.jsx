@@ -721,7 +721,14 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, authToke
   const BACKEND_BASE = API_BASE.replace('/api', '');
   const name = profile?.display_name || profile?.username || 'Navy';
   const email = profile?.email || 'navycutdehury@gmail.com';
-  const phone = profile?.phone || '+91 9999999999';
+  const formatPhoneWithCountryCode = (p) => {
+    if (!p) return '';
+    const digits = p.replace(/\D/g, '');
+    if (digits.length === 10) return `+91 ${digits}`;
+    if (digits.length > 10 && digits.startsWith('91')) return `+91 ${digits.slice(2)}`;
+    return p.startsWith('+') ? p : `+91 ${p}`;
+  };
+  const phone = formatPhoneWithCountryCode(profile?.phone || '+91 9999999999');
   const rawBio = profile?.bio ? profile.bio.trim() : '';
   const isSampleBio = rawBio.toLowerCase().includes('i am a frontend developer and aspiring data analyst') || rawBio.toLowerCase() === 'welcome!' || rawBio.toLowerCase().startsWith('welcome to my portfolio');
   const bio = isSampleBio ? '' : rawBio;
@@ -1914,7 +1921,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, authToke
                   </p>
                   {phone && (
                     <p className="pf-footer-contact-info" style={{ margin: '0.3rem 0' }}>
-                      <strong>Phone:</strong> <a href={`tel:${phone}`}>{phone}</a>
+                      <strong>Phone:</strong> <a href={`tel:${phone.replace(/\s+/g, '')}`}>{phone}</a>
                     </p>
                   )}
                 </div>

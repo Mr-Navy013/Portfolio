@@ -1003,7 +1003,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       setBio(profile.bio || '');
       setNewPassword(profile.password_text || '');
       setTargetEmailValue(profile.email || '');
-      setTargetPhoneValue(profile.phone || '');
+      setTargetPhoneValue(profile?.phone ? profile.phone.replace(/\D/g, '').slice(-10) : '');
       
       const presets = ['Available for Work', 'Not Available', 'Freshers', 'Available for Part Time', 'Available for Half Time'];
       if (profile.availability) {
@@ -1029,7 +1029,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
   const [verifyType, setVerifyType] = useState(null); // 'email' | 'phone'
   const [targetValue, setTargetValue] = useState(''); // email/phone input string
   const [targetEmailValue, setTargetEmailValue] = useState(profile?.email || '');
-  const [targetPhoneValue, setTargetPhoneValue] = useState(profile?.phone || '');
+  const [targetPhoneValue, setTargetPhoneValue] = useState(profile?.phone ? profile.phone.replace(/\D/g, '').slice(-10) : '');
   const [otpSent, setOtpSent] = useState(false);
   const [otpCode, setOtpCode] = useState('');
   const [isEditingEmail, setIsEditingEmail] = useState(false);
@@ -1715,10 +1715,18 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
      OTP VERIFICATION FLOW FOR EMAIL / PHONE
      ========================================== */
   const handleInitiateVerify = async (type) => {
-    const value = type === 'email' ? targetEmailValue : targetPhoneValue;
+    let value = type === 'email' ? targetEmailValue : targetPhoneValue;
     if (!value) {
       showStatus(`Please specify a valid value for ${type} input!`, true);
       return;
+    }
+    if (type === 'phone') {
+      const cleanDigits = value.replace(/\D/g, '').slice(-10);
+      if (cleanDigits.length < 10) {
+        showStatus('Please enter a valid 10-digit phone number!', true);
+        return;
+      }
+      value = `+91 ${cleanDigits}`;
     }
     setTargetValue(value);
     setVerifyType(type);
@@ -3510,13 +3518,15 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0, 255, 136, 0.04)', padding: '0.85rem 1.25rem', borderRadius: '8px', border: '1px solid rgba(0, 255, 136, 0.15)', flexWrap: 'wrap', gap: '0.8rem' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
                           <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Phone number</span>
-                          <span style={{ fontSize: '0.9rem', color: '#fff', fontWeight: 600 }}>{profile?.phone}</span>
+                          <span style={{ fontSize: '0.9rem', color: '#fff', fontWeight: 600 }}>
+                            {profile.phone.startsWith('+91') ? profile.phone : `+91 ${profile.phone.replace(/\D/g, '').slice(-10)}`}
+                          </span>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
                           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', color: 'var(--accent-green)', fontWeight: 600, fontSize: '0.85rem' }}>
                             <CheckCircle size={16} /> Verified
                           </span>
-                          <button onClick={() => { setIsEditingPhone(true); setTargetPhoneValue(profile?.phone || ''); }} className="glass-btn-secondary" style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem' }}>
+                          <button onClick={() => { setIsEditingPhone(true); setTargetPhoneValue(profile?.phone ? profile.phone.replace(/\D/g, '').slice(-10) : ''); }} className="glass-btn-secondary" style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem' }}>
                             Change
                           </button>
                           <button onClick={handleRemovePhone} className="glass-btn-danger" style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem' }}>
@@ -3526,16 +3536,35 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                       </div>
                     ) : (
                       <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
-                        <div style={{ flex: 1, minWidth: '200px', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                        <div style={{ flex: 1, minWidth: '220px', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                           <label style={{ fontSize: '0.85rem' }}>Update & Verify Phone number <span style={{ color: '#ff5252' }}>*</span></label>
-                          <input 
-                            type="text" 
-                            required
-                            className="glass-input" 
-                            placeholder="10 digit number"
-                            value={targetPhoneValue}
-                            onChange={(e) => setTargetPhoneValue(e.target.value)}
-                          />
+                          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                            <span style={{
+                              position: 'absolute',
+                              left: '0.85rem',
+                              color: 'rgba(255, 255, 255, 0.45)',
+                              fontWeight: 600,
+                              fontSize: '0.9rem',
+                              pointerEvents: 'none',
+                              userSelect: 'none',
+                              letterSpacing: '0.5px'
+                            }}>
+                              +91
+                            </span>
+                            <input 
+                              type="tel" 
+                              required
+                              maxLength={10}
+                              className="glass-input" 
+                              placeholder="10 digit number"
+                              value={targetPhoneValue}
+                              onChange={(e) => {
+                                const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                setTargetPhoneValue(val);
+                              }}
+                              style={{ paddingLeft: '3.2rem' }}
+                            />
+                          </div>
                         </div>
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
                           <button onClick={() => handleInitiateVerify('phone')} className="glass-btn">
