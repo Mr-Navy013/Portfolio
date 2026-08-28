@@ -23,7 +23,7 @@ function App() {
     id: 1,
     username: "Navycut",
     display_name: "Navy",
-    bio: "Welcome to my portfolio! I am a passionate developer skilled in building robust full-stack applications.",
+    bio: "",
     profile_picture: "/uploads/profile_picture-1782366940013-212164627.jpg",
     availability: "Available for Work",
     linkedin: "",

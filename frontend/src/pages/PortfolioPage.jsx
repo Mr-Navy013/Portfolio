@@ -722,7 +722,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, onLogout
   const name = profile?.display_name || profile?.username || 'Navy';
   const email = profile?.email || 'navycutdehury@gmail.com';
   const phone = profile?.phone || '+91 9999999999';
-  const bio = profile?.bio || 'I craft modular, fast-loading, state-of-the-art full-stack applications with clean code and premium UI/UX.';
+  const bio = profile?.bio || '';
   const isAvatarPublic = profile?.is_avatar_public !== 0 && profile?.is_avatar_public !== false;
   const avatar = (profile?.profile_picture && isAvatarPublic) ? resolveFileUrl(profile.profile_picture) : null;
   const linkedin = profile?.linkedin || '';
@@ -848,27 +848,31 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, onLogout
         >
           <div 
             onClick={(e) => e.stopPropagation()}
-            className="glass-panel slide-in-left" 
+            className="glass-panel slide-in-left pf-mobile-sidebar-panel" 
             style={{ 
               position: 'fixed', 
               top: 0, 
               left: 0, 
-              width: '280px', 
+              width: '290px', 
+              maxWidth: '85vw',
               height: '100vh', 
+              height: '100dvh',
+              maxHeight: '100dvh',
               background: 'rgba(10, 15, 12, 0.98)', 
-              borderRight: '1px solid rgba(0, 255, 136, 0.15)', 
+              borderRight: '1px solid rgba(0, 255, 136, 0.2)', 
               zIndex: 1001, 
-              padding: '2rem 1.5rem 4.5rem 1.5rem', 
+              padding: '2rem 1.25rem 6.5rem 1.25rem', 
               display: 'flex', 
               flexDirection: 'column', 
               gap: '0.5rem', 
-              boxShadow: '12px 0 40px rgba(0, 0, 0, 0.6)', 
+              boxShadow: '12px 0 40px rgba(0, 0, 0, 0.7)', 
               overflowY: 'auto',
+              WebkitOverflowScrolling: 'touch',
               boxSizing: 'border-box',
               overscrollBehavior: 'contain'
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', paddingBottom: '1rem', borderBottom: '1px solid rgba(0, 255, 136, 0.1)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', paddingBottom: '0.8rem', borderBottom: '1px solid rgba(0, 255, 136, 0.1)' }}>
               <span style={{ fontWeight: 800, color: '#00ff88', fontSize: '0.85rem', letterSpacing: '3px' }}>MENU</span>
               <button 
                 type="button"
@@ -953,7 +957,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, onLogout
               ))}
             </nav>
 
-            <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', flexDirection: 'column', gap: '0.75rem', paddingBottom: '2rem' }}>
               <button
                 onClick={() => { setMobileMenuOpen(false); setShowHireModal(true); }}
                 className="glass-btn"
@@ -978,6 +982,8 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, onLogout
                 </button>
               )}
             </div>
+            {/* Bottom spacer to prevent mobile browser navigation bars from cutting off Logout */}
+            <div style={{ minHeight: '3.5rem', width: '100%', flexShrink: 0 }} />
           </div>
         </div>
       )}
@@ -993,7 +999,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, onLogout
             <h1 className="pf-hero-title">
               I'm <span className="portfolio-owner-name">{name}</span>
             </h1>
-            <p className="pf-hero-bio">{bio}</p>
+            {bio ? <p className="pf-hero-bio">{bio}</p> : null}
 
             {/* Social links */}
             <div className="pf-socials">

@@ -23,7 +23,7 @@ const defaultJsonData = {
       facebook: '',
       linkedin: '',
       github: '',
-      bio: 'Welcome to my portfolio! I am a passionate developer skilled in building robust full-stack applications.',
+      bio: '',
       resume_url: null,
       is_resume_public: 1,
       is_avatar_public: 1,

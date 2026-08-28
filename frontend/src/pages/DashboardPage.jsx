@@ -2986,37 +2986,13 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                     <Bell size={16} className="text-green" />
                     <span style={{ fontWeight: 700, fontSize: '0.92rem', color: '#fff' }}>Notifications</span>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    {activeNotifications.length > 0 && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleClearNotifications();
-                        }}
-                        className="glass-btn-secondary"
-                        style={{
-                          padding: '0.2rem 0.55rem',
-                          fontSize: '0.72rem',
-                          borderRadius: '6px',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.3rem',
-                          color: 'var(--text-secondary)'
-                        }}
-                        title="Clear all notifications from box"
-                      >
-                        <Trash2 size={12} /> Clear all
-                      </button>
-                    )}
-                    {activeNotifications.filter(m => !m.is_read).length > 0 ? (
-                      <span className="dashboard-notif-unread-badge">
-                        {activeNotifications.filter(m => !m.is_read).length} unread
-                      </span>
-                    ) : (
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>All caught up</span>
-                    )}
-                  </div>
+                  {activeNotifications.filter(m => !m.is_read).length > 0 ? (
+                    <span className="dashboard-notif-unread-badge">
+                      {activeNotifications.filter(m => !m.is_read).length} unread
+                    </span>
+                  ) : (
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>All caught up</span>
+                  )}
                 </div>
 
                 {/* Body Content */}
@@ -3113,19 +3089,6 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                     </div>
 
                     <div className="dashboard-notif-footer">
-                      {activeNotifications.filter(m => !m.is_read).length > 0 && (
-                        <button 
-                          type="button"
-                          onClick={async (e) => {
-                            e.stopPropagation();
-                            await handleMarkAllMessagesAsRead();
-                          }}
-                          className="glass-btn-secondary"
-                          style={{ flex: 1, padding: '0.45rem 0.6rem', fontSize: '0.78rem', justifyContent: 'center' }}
-                        >
-                          <Check size={13} style={{ marginRight: '0.3rem' }} /> Mark all read
-                        </button>
-                      )}
                       <button 
                         type="button"
                         onClick={(e) => {
@@ -3133,9 +3096,9 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                           handleClearNotifications();
                         }}
                         className="glass-btn-secondary"
-                        style={{ flex: 1, padding: '0.45rem 0.6rem', fontSize: '0.78rem', justifyContent: 'center' }}
+                        style={{ flex: 1, padding: '0.5rem 0.75rem', fontSize: '0.8rem', justifyContent: 'center' }}
                       >
-                        <Trash2 size={13} style={{ marginRight: '0.3rem' }} /> Clear all
+                        <Trash2 size={14} style={{ marginRight: '0.35rem' }} /> Clear all
                       </button>
                       <button 
                         type="button"
@@ -3144,7 +3107,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                           setShowNotifications(false);
                         }}
                         className="glass-btn"
-                        style={{ flex: 1, padding: '0.45rem 0.6rem', fontSize: '0.78rem', justifyContent: 'center' }}
+                        style={{ flex: 1, padding: '0.5rem 0.75rem', fontSize: '0.8rem', justifyContent: 'center' }}
                       >
                         View inbox ({messages.length})
                       </button>
@@ -3360,15 +3323,21 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
             .dashboard-nav-btn {
               display: none !important;
             }
-            .glass-panel:not(.dashboard-notifications-dropdown) {
+            .glass-panel:not(.dashboard-notifications-dropdown):not(.dashboard-mobile-drawer) {
               padding: 1.25rem !important;
               box-sizing: border-box !important;
               max-width: 100% !important;
             }
             .dashboard-notifications-dropdown {
+              position: fixed !important;
+              top: 70px !important;
+              left: 50% !important;
+              right: auto !important;
+              transform: translateX(-50%) !important;
               width: min(420px, calc(100vw - 1.5rem)) !important;
               max-width: calc(100vw - 1.5rem) !important;
-              right: 0 !important;
+              max-height: calc(100dvh - 85px) !important;
+              margin: 0 auto !important;
             }
             .dashboard-form-grid-2,
             .dashboard-profile-socials-grid {
@@ -3379,13 +3348,19 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
             .dashboard-grid {
               padding: 0.5rem 0.75rem !important;
             }
-            .glass-panel:not(.dashboard-notifications-dropdown) {
+            .glass-panel:not(.dashboard-notifications-dropdown):not(.dashboard-mobile-drawer) {
               padding: 1rem !important;
             }
             .dashboard-notifications-dropdown {
+              position: fixed !important;
+              top: 65px !important;
+              left: 50% !important;
+              right: auto !important;
+              transform: translateX(-50%) !important;
               width: calc(100vw - 1.25rem) !important;
               max-width: calc(100vw - 1.25rem) !important;
-              right: -4px !important;
+              max-height: calc(100dvh - 75px) !important;
+              margin: 0 auto !important;
             }
           }
           @keyframes slideInFromLeft {
@@ -5580,31 +5555,35 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       {mobileMenuOpen && (
         <div 
           onClick={() => setMobileMenuOpen(false)}
-          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.3)', zIndex: 1000 }}
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.4)', zIndex: 1000 }}
         >
           <div 
             onClick={(e) => e.stopPropagation()}
-            className="glass-panel slide-in-left" 
+            className="glass-panel slide-in-left dashboard-mobile-drawer" 
             style={{ 
               position: 'fixed', 
               top: 0, 
               left: 0, 
-              width: '280px', 
+              width: '290px', 
+              maxWidth: '85vw',
               height: '100vh', 
+              height: '100dvh',
+              maxHeight: '100dvh',
               background: 'rgba(10, 15, 12, 0.98)', 
-              borderRight: '1px solid rgba(0, 255, 136, 0.15)', 
+              borderRight: '1px solid rgba(0, 255, 136, 0.2)', 
               zIndex: 1001, 
-              padding: '2rem 1.5rem 4.5rem 1.5rem', 
+              padding: '2rem 1.25rem 6.5rem 1.25rem', 
               display: 'flex', 
               flexDirection: 'column', 
               gap: '0.5rem', 
-              boxShadow: '12px 0 40px rgba(0, 0, 0, 0.6)', 
+              boxShadow: '12px 0 40px rgba(0, 0, 0, 0.7)', 
               overflowY: 'auto',
+              WebkitOverflowScrolling: 'touch',
               boxSizing: 'border-box',
               overscrollBehavior: 'contain'
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', paddingBottom: '1rem', borderBottom: '1px solid rgba(0, 255, 136, 0.1)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', paddingBottom: '0.8rem', borderBottom: '1px solid rgba(0, 255, 136, 0.1)' }}>
               <span style={{ fontWeight: 800, color: '#00ff88', fontSize: '0.85rem', letterSpacing: '3px' }}>MENU</span>
               <button 
                 type="button"
@@ -5700,7 +5679,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
             </div>
 
             {/* Quick Actions (shifted to sidebar on mobile) */}
-            <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', flexDirection: 'column', gap: '0.75rem', paddingBottom: '2rem' }}>
               <button 
                 onClick={() => { handleOpenProjectForm(); setMobileMenuOpen(false); }} 
                 className="glass-btn" 
@@ -5723,6 +5702,8 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                 <LogOut size={18} /> Logout
               </button>
             </div>
+            {/* Bottom spacer to prevent mobile browser navigation bars from cutting off Logout */}
+            <div style={{ minHeight: '3.5rem', width: '100%', flexShrink: 0 }} />
           </div>
         </div>
       )}
