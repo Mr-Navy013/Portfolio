@@ -1072,14 +1072,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
   const [errorMsg, setErrorMsg] = useState('');
   const [loading, setLoading] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [clearedNotifIds, setClearedNotifIds] = useState(() => {
-    try {
-      const stored = localStorage.getItem('dashboard_cleared_notif_ids');
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [clearedNotifIds, setClearedNotifIds] = useState([]);
   const [showAvatarPopup, setShowAvatarPopup] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
 
@@ -1891,25 +1884,13 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
 
   const handleClearNotifications = async () => {
     const allIds = messages.map(m => m.id);
-    const updatedClearedIds = Array.from(new Set([...clearedNotifIds, ...allIds]));
-    setClearedNotifIds(updatedClearedIds);
-    try {
-      localStorage.setItem('dashboard_cleared_notif_ids', JSON.stringify(updatedClearedIds));
-    } catch (e) {
-      console.error("Failed to persist cleared notifications:", e);
-    }
+    setClearedNotifIds(allIds);
     await handleMarkAllMessagesAsRead();
     showStatus('Notifications cleared.');
   };
 
   const handleDismissNotification = (id) => {
-    const updated = Array.from(new Set([...clearedNotifIds, id]));
-    setClearedNotifIds(updated);
-    try {
-      localStorage.setItem('dashboard_cleared_notif_ids', JSON.stringify(updated));
-    } catch (e) {
-      console.error("Failed to persist dismissed notification:", e);
-    }
+    setClearedNotifIds(prev => Array.from(new Set([...prev, id])));
   };
 
   /* ==========================================
@@ -4297,106 +4278,91 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                     gap: '1rem', 
                     width: '100%'
                   }}>
-                    {messages.map((msg) => {
-                      const isSelected = selectedMsgIds.includes(msg.id);
-                      return (
-                        <div 
-                          key={msg.id} 
-                          onClick={(e) => {
-                            if (selectedMsgIds.length > 0) {
-                              setSelectedMsgIds(prev => {
-                                if (prev.includes(msg.id)) {
-                                  return prev.filter(msgId => msgId !== msg.id);
-                                } else {
-                                  return [...prev, msg.id];
-                                }
-                              });
-                            } else {
-                              handleViewMessage(msg);
-                            }
-                          }}
-                          className="glass-card" 
-                          style={{ 
-                            borderLeft: msg.purpose === 'hire' ? '3px solid var(--accent-green)' : '3px solid #00bcff',
-                            cursor: 'pointer',
-                            background: msg.is_read ? 'rgba(255,255,255,0.02)' : 'rgba(0, 255, 136, 0.05)',
-                            minHeight: '115px',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            justifyContent: 'space-between',
-                            padding: '1rem',
-                            transition: 'all 0.2s ease',
-                            position: 'relative'
-                          }}
-                        >
-                          {/* Checkbox and Delete Action Top Right */}
-                          <div 
-                            style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 10, display: 'flex', alignItems: 'center', gap: '0.4rem' }}
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                requestDelete(msg.id, 'message');
-                              }}
-                              className="glass-btn-danger"
-                              style={{
-                                padding: '0.25rem 0.45rem',
-                                fontSize: '0.75rem',
-                                borderRadius: '6px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center'
-                              }}
-                              title="Delete message"
+                    {messages.map((msg) => (
+                      <div 
+                        key={msg.id} 
+                        onClick={() => handleViewMessage(msg)}
+                        className="glass-card" 
+                        style={{ 
+                          borderLeft: msg.purpose === 'hire' ? '3px solid var(--accent-green)' : '3px solid #00bcff',
+                          cursor: 'pointer',
+                          background: msg.is_read ? 'rgba(255,255,255,0.02)' : 'rgba(0, 255, 136, 0.05)',
+                          minHeight: '110px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'space-between',
+                          padding: '1rem 1.25rem',
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        <div>
+                          {/* Card Top Row: Sender email on Left, Purpose Badge + Delete Button on Right */}
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', gap: '0.75rem', flexWrap: 'wrap' }}>
+                            <span 
+                              style={{ fontWeight: 700, color: '#fff', fontSize: '0.92rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '65%' }} 
+                              title={msg.sender_email}
                             >
-                              <Trash2 size={13} />
-                            </button>
-                            <input 
-                              type="checkbox" 
-                              checked={isSelected}
-                              onChange={(e) => handleToggleSelectMsg(e, msg.id)}
-                              className="circular-checkbox"
-                            />
-                          </div>
-
-                          <div style={{ marginRight: '1.5rem' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem', fontSize: '0.85rem', flexWrap: 'wrap', gap: '0.25rem' }}>
-                              <span style={{ fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '280px' }} title={msg.sender_email}>{msg.sender_email}</span>
+                              {msg.sender_email}
+                            </span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexShrink: 0 }}>
                               <span style={{
                                 textTransform: 'uppercase', 
-                                fontWeight: 'bold', 
-                                fontSize: '0.65rem',
-                                padding: '0.1rem 0.35rem',
+                                fontWeight: 700, 
+                                fontSize: '0.68rem',
+                                letterSpacing: '0.5px',
+                                padding: '0.2rem 0.5rem',
                                 borderRadius: '4px',
-                                background: msg.purpose === 'hire' ? 'rgba(0, 255, 136, 0.1)' : 'rgba(0, 188, 255, 0.1)',
+                                background: msg.purpose === 'hire' ? 'rgba(0, 255, 136, 0.12)' : 'rgba(0, 188, 255, 0.12)',
                                 color: msg.purpose === 'hire' ? 'var(--accent-green)' : '#00bcff',
-                                marginRight: '1rem'
+                                border: msg.purpose === 'hire' ? '1px solid rgba(0, 255, 136, 0.25)' : '1px solid rgba(0, 188, 255, 0.25)',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.25rem'
                               }}>
-                                {msg.purpose}
+                                {msg.purpose === 'hire' ? '💼 HIRE' : msg.purpose === 'review' ? '💬 REVIEW' : msg.purpose?.toUpperCase() || 'INQUIRY'}
                               </span>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  requestDelete(msg.id, 'message');
+                                }}
+                                className="glass-btn-danger"
+                                style={{
+                                  padding: '0.3rem 0.5rem',
+                                  fontSize: '0.75rem',
+                                  borderRadius: '6px',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center'
+                                }}
+                                title="Delete message"
+                              >
+                                <Trash2 size={14} />
+                              </button>
                             </div>
-                            <p style={{ 
-                              fontSize: '0.85rem', 
-                              color: 'rgba(255,255,255,0.75)', 
-                              lineHeight: '1.4',
-                              margin: '0.25rem 0 0 0',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              display: '-webkit-box',
-                              WebkitLineClamp: 2,
-                              WebkitBoxOrient: 'vertical'
-                            }}>
-                              {msg.description}
-                            </p>
                           </div>
-                          <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', display: 'block', marginTop: '0.5rem' }}>
-                            {new Date(msg.created_at).toLocaleDateString()} {new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                          </span>
+
+                          <p style={{ 
+                            fontSize: '0.85rem', 
+                            color: 'rgba(255,255,255,0.75)', 
+                            lineHeight: '1.45',
+                            margin: '0.25rem 0 0 0',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical'
+                          }}>
+                            {msg.description}
+                          </p>
                         </div>
-                      );
-                    })}
+
+                        <span style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', display: 'block', marginTop: '0.5rem' }}>
+                          {new Date(msg.created_at).toLocaleDateString()} {new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               ) : (
