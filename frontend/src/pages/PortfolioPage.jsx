@@ -735,10 +735,10 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, authToke
   const isOwnerView = Boolean(authToken) || Boolean(localStorage.getItem('ownerToken')) || cameFrom === 'dashboard' || localStorage.getItem('previousPage') === 'dashboard';
   const isAvatarPublic = profile?.is_avatar_public !== 0 && profile?.is_avatar_public !== false;
   const avatar = (profile?.profile_picture && isAvatarPublic) ? resolveFileUrl(profile.profile_picture) : null;
-  const linkedin = profile?.linkedin || 'https://www.linkedin.com/in/navycut';
-  const github = profile?.github || 'https://github.com/Mr-Navy013';
-  const instagram = profile?.instagram || '';
-  const facebook = profile?.facebook || '';
+  const linkedin = profile?.linkedin ? profile.linkedin.trim() : '';
+  const github = profile?.github ? profile.github.trim() : '';
+  const instagram = profile?.instagram ? profile.instagram.trim() : '';
+  const facebook = profile?.facebook ? profile.facebook.trim() : '';
   const isResumePublic = profile?.is_resume_public !== 0 && profile?.is_resume_public !== false;
   const resumeUrl = (profile?.resume_url && isResumePublic) ? resolveFileUrl(profile.resume_url) : null;
   const resumeExistsButPrivate = profile?.resume_url && !isResumePublic;
@@ -1009,29 +1009,21 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, authToke
             </h1>
             {bio ? <p className="pf-hero-bio">{bio}</p> : null}
 
-            {/* Social links */}
-            <div className="pf-socials">
-              {linkedin && (
-                <a href={linkedin} target="_blank" rel="noreferrer" className="glass-btn-secondary pf-social-btn">
-                  <Linkedin size={16} style={{ color: '#00ff88' }} /> LinkedIn
-                </a>
-              )}
-              {github && (
-                <a href={github} target="_blank" rel="noreferrer" className="glass-btn-secondary pf-social-btn">
-                  <Github size={16} style={{ color: '#00ff88' }} /> GitHub
-                </a>
-              )}
-              {profile?.instagram && (
-                <a href={profile.instagram} target="_blank" rel="noreferrer" className="glass-btn-secondary pf-social-btn">
-                  <Instagram size={16} style={{ color: '#00ff88' }} /> Instagram
-                </a>
-              )}
-              {profile?.facebook && (
-                <a href={profile.facebook} target="_blank" rel="noreferrer" className="glass-btn-secondary pf-social-btn">
-                  <Facebook size={16} style={{ color: '#00ff88' }} /> Facebook
-                </a>
-              )}
-            </div>
+            {/* Social links (Only LinkedIn and GitHub in About card) */}
+            {(linkedin || github) && (
+              <div className="pf-socials">
+                {linkedin && (
+                  <a href={linkedin.startsWith('http') ? linkedin : `https://${linkedin}`} target="_blank" rel="noreferrer" className="glass-btn-secondary pf-social-btn">
+                    <Linkedin size={16} style={{ color: '#00ff88' }} /> LinkedIn
+                  </a>
+                )}
+                {github && (
+                  <a href={github.startsWith('http') ? github : `https://${github}`} target="_blank" rel="noreferrer" className="glass-btn-secondary pf-social-btn">
+                    <Github size={16} style={{ color: '#00ff88' }} /> GitHub
+                  </a>
+                )}
+              </div>
+            )}
 
             {/* CTA buttons */}
             <div className="pf-hero-cta">
@@ -1927,22 +1919,22 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, authToke
                 </div>
                 <div className="pf-footer-socials" style={{ display: 'flex', gap: '1.2rem', alignItems: 'center', justifyContent: 'flex-start', flexWrap: 'wrap' }}>
                   {linkedin && (
-                    <a href={linkedin} target="_blank" rel="noopener noreferrer" title="LinkedIn" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: '#00ff88', textDecoration: 'none', fontSize: '0.85rem' }}>
+                    <a href={linkedin.startsWith('http') ? linkedin : `https://${linkedin}`} target="_blank" rel="noopener noreferrer" title="LinkedIn" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: '#00ff88', textDecoration: 'none', fontSize: '0.85rem' }}>
                       <Linkedin size={18} /> LinkedIn
                     </a>
                   )}
                   {github && (
-                    <a href={github} target="_blank" rel="noopener noreferrer" title="GitHub" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: '#00ff88', textDecoration: 'none', fontSize: '0.85rem' }}>
+                    <a href={github.startsWith('http') ? github : `https://${github}`} target="_blank" rel="noopener noreferrer" title="GitHub" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: '#00ff88', textDecoration: 'none', fontSize: '0.85rem' }}>
                       <Github size={18} /> GitHub
                     </a>
                   )}
                   {instagram && (
-                    <a href={instagram} target="_blank" rel="noopener noreferrer" title="Instagram" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: '#00ff88', textDecoration: 'none', fontSize: '0.85rem' }}>
+                    <a href={instagram.startsWith('http') ? instagram : `https://${instagram}`} target="_blank" rel="noopener noreferrer" title="Instagram" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: '#00ff88', textDecoration: 'none', fontSize: '0.85rem' }}>
                       <Instagram size={18} /> Instagram
                     </a>
                   )}
                   {facebook && (
-                    <a href={facebook} target="_blank" rel="noopener noreferrer" title="Facebook" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: '#00ff88', textDecoration: 'none', fontSize: '0.85rem' }}>
+                    <a href={facebook.startsWith('http') ? facebook : `https://${facebook}`} target="_blank" rel="noopener noreferrer" title="Facebook" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: '#00ff88', textDecoration: 'none', fontSize: '0.85rem' }}>
                       <Facebook size={18} /> Facebook
                     </a>
                   )}
