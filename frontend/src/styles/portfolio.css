@@ -394,10 +394,14 @@
 }
 
 .pf-hero-bio {
-  color: var(--text-secondary);
+  color: rgba(255, 255, 255, 0.85);
   font-size: 1.05rem;
-  line-height: 1.8;
+  line-height: 1.85;
   margin-bottom: 2rem;
+  text-align: justify;
+  text-justify: inter-word;
+  word-break: normal;
+  hyphens: auto;
 }
 
 .portfolio-owner-name {

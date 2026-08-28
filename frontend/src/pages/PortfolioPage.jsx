@@ -722,11 +722,11 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, onLogout
   const name = profile?.display_name || profile?.username || 'Navy';
   const email = profile?.email || 'navycutdehury@gmail.com';
   const phone = profile?.phone || '+91 9999999999';
-  const bio = profile?.bio || '';
+  const bio = profile?.bio || 'I am a Frontend Developer and aspiring Data Analyst passionate about building responsive, user-friendly web applications and turning data into meaningful insights. I work with HTML, CSS, JavaScript, React, Node.js, Express.js, MySQL, Git, and GitHub, while also using Excel, SQL, Python, Power BI, and Tableau for data analysis and visualization. I enjoy creating clean, efficient, and scalable solutions that combine modern design with functionality. I am committed to continuous learning, improving my technical skills, and building impactful projects that solve real-world problems through technology and data-driven decision-making.';
   const isAvatarPublic = profile?.is_avatar_public !== 0 && profile?.is_avatar_public !== false;
   const avatar = (profile?.profile_picture && isAvatarPublic) ? resolveFileUrl(profile.profile_picture) : null;
-  const linkedin = profile?.linkedin || '';
-  const github = profile?.github || '';
+  const linkedin = profile?.linkedin || 'https://www.linkedin.com/in/navycut';
+  const github = profile?.github || 'https://github.com/Mr-Navy013';
   const instagram = profile?.instagram || '';
   const facebook = profile?.facebook || '';
   const isResumePublic = profile?.is_resume_public !== 0 && profile?.is_resume_public !== false;
