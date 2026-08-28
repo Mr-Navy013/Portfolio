@@ -2865,7 +2865,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
   };
 
   return (
-    <div style={{ background: 'radial-gradient(ellipse at top left, #04351b 0%, #01140a 45%, #000000 100%)', minHeight: '100vh', color: '#fff', position: 'relative', overflowX: 'hidden' }}>
+    <div style={{ background: 'radial-gradient(ellipse at top left, #04351b 0%, #01140a 45%, #000000 100%)', minHeight: '100vh', color: '#fff', position: 'relative', overflowX: 'clip' }}>
       
       {/* Decorative background orbs */}
       <div className="portfolio-orb portfolio-orb-1" style={{ position: 'fixed' }} />
@@ -2873,16 +2873,21 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       <div className="portfolio-orb portfolio-orb-3" style={{ position: 'fixed' }} />
       
       {/* Navbar dashboard header */}
-      <nav className="glass-panel" style={{
+      <nav className="glass-panel dashboard-navbar dashboard-nav" style={{
         position: 'sticky',
-        top: 0,
-        zIndex: 90,
+        top: '0.5rem',
+        zIndex: 900,
         margin: '0.5rem 1rem',
         padding: '0.8rem 1.5rem',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        borderRadius: '12px'
+        borderRadius: '12px',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        backgroundColor: 'rgba(10, 16, 12, 0.94)',
+        border: '1px solid rgba(0, 255, 136, 0.22)',
+        boxShadow: '0 8px 30px rgba(0, 0, 0, 0.5)'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <button

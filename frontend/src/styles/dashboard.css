@@ -6,16 +6,21 @@
   color: #fff;
 }
 
-.dashboard-nav {
-  position: sticky;
-  top: 0;
-  z-index: 90;
-  margin: 0.5rem 1rem;
-  padding: 0.8rem 1.5rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-radius: 12px;
+.dashboard-nav, .dashboard-navbar {
+  position: sticky !important;
+  top: 0.5rem !important;
+  z-index: 900 !important;
+  margin: 0.5rem 1rem !important;
+  padding: 0.8rem 1.5rem !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  border-radius: 12px !important;
+  background: rgba(10, 16, 12, 0.94) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(0, 255, 136, 0.22) !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5) !important;
 }
 
 .dashboard-nav-logo {
