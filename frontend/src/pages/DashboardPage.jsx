@@ -2872,63 +2872,40 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       <div className="portfolio-orb portfolio-orb-2" style={{ position: 'fixed' }} />
       <div className="portfolio-orb portfolio-orb-3" style={{ position: 'fixed' }} />
       
-      {/* Navbar dashboard header */}
-      <nav className="glass-panel dashboard-navbar dashboard-nav" style={{
-        position: 'sticky',
-        top: '0.5rem',
-        zIndex: 900,
-        margin: '0.5rem 1rem',
-        padding: '0.8rem 1.5rem',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        borderRadius: '12px',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        backgroundColor: 'rgba(10, 16, 12, 0.94)',
-        border: '1px solid rgba(0, 255, 136, 0.22)',
-        boxShadow: '0 8px 30px rgba(0, 0, 0, 0.5)'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+      {/* ── FIXED NAVBAR (Exact match to Viewers / Portfolio Page) ── */}
+      <nav className="dashboard-navbar pf-navbar">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <button
             type="button"
             onClick={() => setMobileMenuOpen(true)}
-            className="dashboard-hamburger-btn"
-            style={{
-              background: 'rgba(255,255,255,0.05)',
-              border: '1px solid rgba(255,255,255,0.1)',
-              color: '#fff',
-              cursor: 'pointer',
-              display: 'none',
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderRadius: '8px',
-              padding: '0.4rem',
-              transition: 'all 0.2s',
-              marginRight: '0.25rem'
-            }}
+            className="pf-menu-btn-left dashboard-hamburger-btn"
+            aria-label="Open menu"
           >
-            <Menu size={20} />
+            <Menu size={22} />
           </button>
-          <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#00ff88', boxShadow: '0 0 10px #00ff88' }} />
-          <span style={{ fontWeight: 800, fontSize: '1.1rem', letterSpacing: '1px' }}>CONTROL PANEL</span>
+          
+          {/* Logo */}
+          <div className="pf-logo" onClick={() => navigateTo('portfolio')}>
+            <span className="pf-logo-dot" />
+            <span className="pf-logo-text">
+              CONTROL PANEL<span className="text-green">.</span>
+            </span>
+          </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          
+        <div className="pf-nav-actions">
           {/* Add New Project option in header */}
           <button 
             onClick={() => handleOpenProjectForm()} 
-            className="glass-btn dashboard-nav-btn"
-            style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+            className="glass-btn pf-hire-btn dashboard-nav-btn"
           >
             <Plus size={16} /> New Project
           </button>
 
           <button 
             onClick={() => navigateTo('portfolio')}
-            className="glass-btn-secondary dashboard-nav-btn"
-            style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+            className="glass-btn-secondary pf-exit-btn dashboard-nav-btn"
+            style={{ border: '1px solid var(--glass-border)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
           >
             View Live
           </button>
@@ -3106,10 +3083,10 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
           
           <button 
             onClick={() => setShowExitModal(true)} 
-            className="glass-btn-danger dashboard-nav-btn"
-            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem' }}
+            className="glass-btn-danger pf-exit-btn dashboard-nav-btn"
+            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
           >
-            <LogOut size={16} /> Logout
+            <LogOut size={15} /> Logout
           </button>
         </div>
       </nav>
