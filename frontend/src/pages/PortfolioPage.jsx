@@ -722,7 +722,9 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, authToke
   const name = profile?.display_name || profile?.username || 'Navy';
   const email = profile?.email || 'navycutdehury@gmail.com';
   const phone = profile?.phone || '+91 9999999999';
-  const bio = profile?.bio ? profile.bio.trim() : '';
+  const rawBio = profile?.bio ? profile.bio.trim() : '';
+  const isSampleBio = rawBio.toLowerCase().includes('i am a frontend developer and aspiring data analyst') || rawBio.toLowerCase() === 'welcome!' || rawBio.toLowerCase().startsWith('welcome to my portfolio');
+  const bio = isSampleBio ? '' : rawBio;
   const isOwnerView = Boolean(authToken) || Boolean(localStorage.getItem('ownerToken')) || cameFrom === 'dashboard' || localStorage.getItem('previousPage') === 'dashboard';
   const isAvatarPublic = profile?.is_avatar_public !== 0 && profile?.is_avatar_public !== false;
   const avatar = (profile?.profile_picture && isAvatarPublic) ? resolveFileUrl(profile.profile_picture) : null;

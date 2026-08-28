@@ -37,7 +37,17 @@ function App() {
 
   // SWR: load profile from cache instantly — no spinner on return visits
   const getCachedProfile = () => {
-    try { const v = localStorage.getItem('cache_profile'); return v ? JSON.parse(v) : null; } catch { return null; }
+    try { 
+      const v = localStorage.getItem('cache_profile'); 
+      if (!v) return null;
+      const parsed = JSON.parse(v);
+      if (parsed && parsed.bio && (parsed.bio.includes('I am a Frontend Developer') || parsed.bio === 'Welcome!' || parsed.bio.startsWith('Welcome to my portfolio'))) {
+        parsed.bio = '';
+      }
+      return parsed;
+    } catch { 
+      return null; 
+    }
   };
   const cachedProfile = getCachedProfile();
   const [profileData, setProfileData] = useState(cachedProfile || DEFAULT_PROFILE);
