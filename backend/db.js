@@ -432,7 +432,7 @@ async function handleJsonQuery(sql, params = []) {
 
 
   // 4. SELECT * FROM projects ORDER BY created_at
-  if (sqlClean.includes('FROM projects')) {
+  if (sqlClean.startsWith('SELECT') && sqlClean.includes('FROM projects')) {
     if (hasWhereId && targetId) {
       const item = db.projects.find(p => p.id === targetId);
       return [item ? [item] : []];
@@ -441,7 +441,7 @@ async function handleJsonQuery(sql, params = []) {
   }
 
   // 5. SELECT * FROM experience
-  if (sqlClean.includes('FROM experience')) {
+  if (sqlClean.startsWith('SELECT') && sqlClean.includes('FROM experience')) {
     if (hasWhereId && targetId) {
       const item = db.experience.find(e => e.id === targetId);
       return [item ? [item] : []];
@@ -450,7 +450,7 @@ async function handleJsonQuery(sql, params = []) {
   }
 
   // 6. SELECT * FROM education
-  if (sqlClean.includes('FROM education')) {
+  if (sqlClean.startsWith('SELECT') && sqlClean.includes('FROM education')) {
     if (hasWhereId && targetId) {
       const item = db.education.find(e => e.id === targetId);
       return [item ? [item] : []];
@@ -459,18 +459,18 @@ async function handleJsonQuery(sql, params = []) {
   }
 
   // 7. SELECT * FROM skills
-  if (sqlClean.includes('FROM skills')) {
+  if (sqlClean.startsWith('SELECT') && sqlClean.includes('FROM skills')) {
     return [[...db.skills].sort((a,b) => a.name.localeCompare(b.name))];
   }
 
   // SELECT * FROM courses
-  if (sqlClean.includes('FROM courses')) {
+  if (sqlClean.startsWith('SELECT') && sqlClean.includes('FROM courses')) {
     if (!db.courses) db.courses = [];
     return [[...db.courses].sort((a,b) => b.id - a.id)];
   }
 
   // 8. SELECT * FROM certificates
-  if (sqlClean.includes('FROM certificates')) {
+  if (sqlClean.startsWith('SELECT') && sqlClean.includes('FROM certificates')) {
     if (hasWhereId && targetId) {
       const item = db.certificates.find(c => c.id === targetId);
       return [item ? [item] : []];
@@ -479,7 +479,11 @@ async function handleJsonQuery(sql, params = []) {
   }
 
   // 9. SELECT * FROM messages
-  if (sqlClean.includes('FROM messages')) {
+  if (sqlClean.startsWith('SELECT') && sqlClean.includes('FROM messages')) {
+    if (hasWhereId && targetId) {
+      const item = db.messages.find(m => m.id === targetId);
+      return [item ? [item] : []];
+    }
     return [[...db.messages].sort((a,b) => b.id - a.id)];
   }
 
@@ -983,16 +987,17 @@ async function handleJsonQuery(sql, params = []) {
 
   // DELETE FROM messages WHERE id IN (?)
   if (sqlClean.includes('DELETE FROM messages WHERE id IN')) {
-    const ids = Array.isArray(params[0]) ? params[0].map(id => parseInt(id)) : [parseInt(params[0])];
-    db.messages = db.messages.filter(m => !ids.includes(m.id));
+    const rawIds = Array.isArray(params[0]) ? params[0] : params;
+    const ids = (Array.isArray(rawIds) ? rawIds : [rawIds]).map(id => parseInt(id));
+    db.messages = db.messages.filter(m => !ids.includes(parseInt(m.id)));
     writeJsonDb(db);
     return [{ affectedRows: ids.length }];
   }
 
   // DELETE FROM messages WHERE id = ?
-  if (sqlClean.includes('DELETE FROM messages WHERE id = ?')) {
+  if (sqlClean.includes('DELETE FROM messages WHERE id = ?') || sqlClean.includes('DELETE FROM messages WHERE id=?')) {
     const id = parseInt(params[0]);
-    db.messages = db.messages.filter(m => m.id !== id);
+    db.messages = db.messages.filter(m => parseInt(m.id) !== id);
     writeJsonDb(db);
     return [{ affectedRows: 1 }];
   }

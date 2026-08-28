@@ -1072,6 +1072,14 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
   const [errorMsg, setErrorMsg] = useState('');
   const [loading, setLoading] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [clearedNotifIds, setClearedNotifIds] = useState(() => {
+    try {
+      const stored = localStorage.getItem('dashboard_cleared_notif_ids');
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
   const [showAvatarPopup, setShowAvatarPopup] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
 
@@ -1292,6 +1300,12 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
           message: `Are you sure you want to permanently delete the ${selectedMsgIds.length} selected messages? This action cannot be undone.`,
           confirmText: 'Delete'
         };
+      case 'message':
+        return {
+          title: 'Delete Message?',
+          message: 'Are you sure you want to permanently delete this message? This action cannot be undone.',
+          confirmText: 'Delete'
+        };
       case 'email':
         return {
           title: 'Remove Email?',
@@ -1383,7 +1397,9 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
             body: JSON.stringify({ ids: selectedMsgIds })
           });
           if (res.ok) {
-            showStatus(`${selectedMsgIds.length} messages deleted successfully.`);
+            showStatus(`${selectedMsgIds.length} message(s) deleted successfully.`);
+            setMessages(prev => prev.filter(m => !selectedMsgIds.includes(m.id)));
+            setClearedNotifIds(prev => prev.filter(id => !selectedMsgIds.includes(id)));
             setSelectedMsgIds([]);
             fetchDashboardCollections();
           } else {
@@ -1498,6 +1514,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       else if (type === 'experience') endpoint = `experience/${id}`;
       else if (type === 'certificate') endpoint = `certificates/${id}`;
       else if (type === 'documentRequest') endpoint = `document-requests/${id}`;
+      else if (type === 'message') endpoint = `messages/${id}`;
 
       const res = await resilientFetch(`${API_BASE}/${endpoint}`, {
         method: 'DELETE',
@@ -1514,6 +1531,10 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
         else if (type === 'experience') setExperience(prev => prev.filter(item => item.id !== id));
         else if (type === 'certificate') setCertificates(prev => prev.filter(item => item.id !== id));
         else if (type === 'documentRequest') setDocRequests(prev => prev.filter(item => item.id !== id));
+        else if (type === 'message') {
+          setMessages(prev => prev.filter(item => item.id !== id));
+          setClearedNotifIds(prev => prev.filter(item => item !== id));
+        }
       } else {
         showStatus(`Failed to delete ${type === 'documentRequest' ? 'document request' : type}.`, true);
       }
@@ -1528,6 +1549,10 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       else if (type === 'experience') setExperience(prev => prev.filter(item => item.id !== id));
       else if (type === 'certificate') setCertificates(prev => prev.filter(item => item.id !== id));
       else if (type === 'documentRequest') setDocRequests(prev => prev.filter(item => item.id !== id));
+      else if (type === 'message') {
+        setMessages(prev => prev.filter(item => item.id !== id));
+        setClearedNotifIds(prev => prev.filter(item => item !== id));
+      }
     }
   };
 
@@ -1859,6 +1884,31 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
     } catch (err) {
       console.error("Error marking all messages as read:", err);
       setMessages(prev => prev.map(m => ({ ...m, is_read: 1 })));
+    }
+  };
+
+  const activeNotifications = messages.filter(m => !clearedNotifIds.includes(m.id));
+
+  const handleClearNotifications = async () => {
+    const allIds = messages.map(m => m.id);
+    const updatedClearedIds = Array.from(new Set([...clearedNotifIds, ...allIds]));
+    setClearedNotifIds(updatedClearedIds);
+    try {
+      localStorage.setItem('dashboard_cleared_notif_ids', JSON.stringify(updatedClearedIds));
+    } catch (e) {
+      console.error("Failed to persist cleared notifications:", e);
+    }
+    await handleMarkAllMessagesAsRead();
+    showStatus('Notifications cleared.');
+  };
+
+  const handleDismissNotification = (id) => {
+    const updated = Array.from(new Set([...clearedNotifIds, id]));
+    setClearedNotifIds(updated);
+    try {
+      localStorage.setItem('dashboard_cleared_notif_ids', JSON.stringify(updated));
+    } catch (e) {
+      console.error("Failed to persist dismissed notification:", e);
     }
   };
 
@@ -2906,7 +2956,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
               title="Notifications"
             >
               <Bell size={18} className="text-green" />
-              {messages.filter(m => !m.is_read).length > 0 && (
+              {activeNotifications.filter(m => !m.is_read).length > 0 && (
                 <span style={{
                   position: 'absolute',
                   top: '-4px',
@@ -2923,7 +2973,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                   justifyContent: 'center',
                   boxShadow: '0 0 5px rgba(255, 82, 82, 0.5)'
                 }}>
-                  {messages.filter(m => !m.is_read).length}
+                  {activeNotifications.filter(m => !m.is_read).length}
                 </span>
               )}
             </button>
@@ -2936,17 +2986,41 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                     <Bell size={16} className="text-green" />
                     <span style={{ fontWeight: 700, fontSize: '0.92rem', color: '#fff' }}>Notifications</span>
                   </div>
-                  {messages.filter(m => !m.is_read).length > 0 ? (
-                    <span className="dashboard-notif-unread-badge">
-                      {messages.filter(m => !m.is_read).length} unread
-                    </span>
-                  ) : (
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>All caught up</span>
-                  )}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    {activeNotifications.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleClearNotifications();
+                        }}
+                        className="glass-btn-secondary"
+                        style={{
+                          padding: '0.2rem 0.55rem',
+                          fontSize: '0.72rem',
+                          borderRadius: '6px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.3rem',
+                          color: 'var(--text-secondary)'
+                        }}
+                        title="Clear all notifications from box"
+                      >
+                        <Trash2 size={12} /> Clear all
+                      </button>
+                    )}
+                    {activeNotifications.filter(m => !m.is_read).length > 0 ? (
+                      <span className="dashboard-notif-unread-badge">
+                        {activeNotifications.filter(m => !m.is_read).length} unread
+                      </span>
+                    ) : (
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>All caught up</span>
+                    )}
+                  </div>
                 </div>
 
                 {/* Body Content */}
-                {messages.length === 0 ? (
+                {activeNotifications.length === 0 ? (
                   <div className="dashboard-notif-empty">
                     <div className="dashboard-notif-empty-icon">
                       <Bell size={22} style={{ color: 'var(--accent-green)', opacity: 0.85 }} />
@@ -2959,7 +3033,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                 ) : (
                   <>
                     <div className="dashboard-notif-list">
-                      {messages.slice(0, 8).map((msg) => (
+                      {activeNotifications.slice(0, 8).map((msg) => (
                         <div 
                           key={msg.id} 
                           onClick={() => { handleViewMessage(msg); setShowNotifications(false); }}
@@ -2980,18 +3054,39 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                                 {msg.sender_email}
                               </span>
                             </div>
-                            <span style={{
-                              fontSize: '0.68rem',
-                              fontWeight: 700,
-                              textTransform: 'uppercase',
-                              padding: '0.18rem 0.45rem',
-                              borderRadius: '4px',
-                              background: msg.purpose === 'hire' ? 'rgba(0,255,136,0.14)' : 'rgba(0,188,255,0.14)',
-                              color: msg.purpose === 'hire' ? 'var(--accent-green)' : '#00bcff',
-                              flexShrink: 0
-                            }}>
-                              {msg.purpose === 'hire' ? '💼 Hire' : msg.purpose === 'review' ? '💬 Review' : msg.purpose || 'Inquiry'}
-                            </span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexShrink: 0 }}>
+                              <span style={{
+                                fontSize: '0.68rem',
+                                fontWeight: 700,
+                                textTransform: 'uppercase',
+                                padding: '0.18rem 0.45rem',
+                                borderRadius: '4px',
+                                background: msg.purpose === 'hire' ? 'rgba(0,255,136,0.14)' : 'rgba(0,188,255,0.14)',
+                                color: msg.purpose === 'hire' ? 'var(--accent-green)' : '#00bcff'
+                              }}>
+                                {msg.purpose === 'hire' ? '💼 Hire' : msg.purpose === 'review' ? '💬 Review' : msg.purpose || 'Inquiry'}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDismissNotification(msg.id);
+                                }}
+                                style={{
+                                  background: 'transparent',
+                                  border: 'none',
+                                  color: 'rgba(255,255,255,0.4)',
+                                  cursor: 'pointer',
+                                  padding: '2px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  borderRadius: '4px'
+                                }}
+                                title="Dismiss notification"
+                              >
+                                <X size={13} />
+                              </button>
+                            </div>
                           </div>
 
                           <p style={{
@@ -3018,7 +3113,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                     </div>
 
                     <div className="dashboard-notif-footer">
-                      {messages.filter(m => !m.is_read).length > 0 && (
+                      {activeNotifications.filter(m => !m.is_read).length > 0 && (
                         <button 
                           type="button"
                           onClick={async (e) => {
@@ -3031,6 +3126,17 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                           <Check size={13} style={{ marginRight: '0.3rem' }} /> Mark all read
                         </button>
                       )}
+                      <button 
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleClearNotifications();
+                        }}
+                        className="glass-btn-secondary"
+                        style={{ flex: 1, padding: '0.45rem 0.6rem', fontSize: '0.78rem', justifyContent: 'center' }}
+                      >
+                        <Trash2 size={13} style={{ marginRight: '0.3rem' }} /> Clear all
+                      </button>
                       <button 
                         type="button"
                         onClick={() => {
@@ -4248,11 +4354,30 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                             position: 'relative'
                           }}
                         >
-                          {/* Checkbox Overlay Top Right */}
+                          {/* Checkbox and Delete Action Top Right */}
                           <div 
-                            style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 10 }}
+                            style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 10, display: 'flex', alignItems: 'center', gap: '0.4rem' }}
                             onClick={(e) => e.stopPropagation()}
                           >
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                requestDelete(msg.id, 'message');
+                              }}
+                              className="glass-btn-danger"
+                              style={{
+                                padding: '0.25rem 0.45rem',
+                                fontSize: '0.75rem',
+                                borderRadius: '6px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                              }}
+                              title="Delete message"
+                            >
+                              <Trash2 size={13} />
+                            </button>
                             <input 
                               type="checkbox" 
                               checked={isSelected}
@@ -5338,7 +5463,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', gap: '1rem' }}>
+                <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
                   <button 
                     type="button" 
                     onClick={() => setShowMsgModal(false)} 
@@ -5346,6 +5471,19 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                     style={{ flex: 1, justifyContent: 'center' }}
                   >
                     Close
+                  </button>
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      const msgId = selectedMessage.id;
+                      setShowMsgModal(false);
+                      requestDelete(msgId, 'message');
+                    }}
+                    className="glass-btn-danger"
+                    style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}
+                    title="Delete message"
+                  >
+                    <Trash2 size={15} /> Delete
                   </button>
                   <button 
                     type="button"
