@@ -2956,7 +2956,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
               title="Notifications"
             >
               <Bell size={18} className="text-green" />
-              {activeNotifications.filter(m => !m.is_read).length > 0 && (
+              {activeNotifications.length > 0 && (
                 <span style={{
                   position: 'absolute',
                   top: '-4px',
@@ -2973,7 +2973,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                   justifyContent: 'center',
                   boxShadow: '0 0 5px rgba(255, 82, 82, 0.5)'
                 }}>
-                  {activeNotifications.filter(m => !m.is_read).length}
+                  {activeNotifications.length}
                 </span>
               )}
             </button>
@@ -2986,9 +2986,9 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                     <Bell size={16} className="text-green" />
                     <span style={{ fontWeight: 700, fontSize: '0.92rem', color: '#fff' }}>Notifications</span>
                   </div>
-                  {activeNotifications.filter(m => !m.is_read).length > 0 ? (
+                  {activeNotifications.length > 0 ? (
                     <span className="dashboard-notif-unread-badge">
-                      {activeNotifications.filter(m => !m.is_read).length} unread
+                      {activeNotifications.length} notification{activeNotifications.length > 1 ? 's' : ''}
                     </span>
                   ) : (
                     <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>All caught up</span>
@@ -3008,8 +3008,8 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                   </div>
                 ) : (
                   <>
-                    <div className="dashboard-notif-list">
-                      {activeNotifications.slice(0, 8).map((msg) => (
+                    <div className="dashboard-notif-list" style={{ overflowY: 'auto', maxHeight: '320px', minHeight: 0, flex: '1 1 auto' }}>
+                      {activeNotifications.map((msg) => (
                         <div 
                           key={msg.id} 
                           onClick={() => { handleViewMessage(msg); setShowNotifications(false); }}
