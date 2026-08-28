@@ -15,7 +15,9 @@ function App() {
     if (saved === 'dashboard' && !token) return 'login';
     return saved || 'welcome';
   });
-  const [previousPage, setPreviousPage] = useState('welcome');
+  const [previousPage, setPreviousPage] = useState(() => {
+    return localStorage.getItem('previousPage') || 'welcome';
+  });
   const [authToken, setAuthToken] = useState(localStorage.getItem('ownerToken') || null);
 
   // Default fallback profile so application renders instantly without spinning loader
@@ -23,7 +25,7 @@ function App() {
     id: 1,
     username: "Navycut",
     display_name: "Navy",
-    bio: "I am a Frontend Developer and aspiring Data Analyst passionate about building responsive, user-friendly web applications and turning data into meaningful insights. I work with HTML, CSS, JavaScript, React, Node.js, Express.js, MySQL, Git, and GitHub, while also using Excel, SQL, Python, Power BI, and Tableau for data analysis and visualization. I enjoy creating clean, efficient, and scalable solutions that combine modern design with functionality. I am committed to continuous learning, improving my technical skills, and building impactful projects that solve real-world problems through technology and data-driven decision-making.",
+    bio: "",
     profile_picture: "/uploads/profile_picture-1782366940013-212164627.jpg",
     availability: "Available for Work",
     linkedin: "https://www.linkedin.com/in/navycut",
@@ -132,6 +134,7 @@ function App() {
       localStorage.setItem('currentPage', 'login');
     } else {
       setPreviousPage(currentPage);
+      localStorage.setItem('previousPage', currentPage);
       setCurrentPage(page);
       localStorage.setItem('currentPage', page);
     }
@@ -177,6 +180,7 @@ function App() {
           profile={profileData}
           refreshProfile={() => fetchProfile(false)}
           cameFrom={previousPage}
+          authToken={authToken}
           onLogout={handleLogout}
         />
       )}

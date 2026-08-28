@@ -30,7 +30,7 @@ const formatDateStr = (str) => {
   return str;
 };
 
-function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, onLogout }) {
+function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, authToken, onLogout }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -722,7 +722,8 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, onLogout
   const name = profile?.display_name || profile?.username || 'Navy';
   const email = profile?.email || 'navycutdehury@gmail.com';
   const phone = profile?.phone || '+91 9999999999';
-  const bio = profile?.bio || 'I am a Frontend Developer and aspiring Data Analyst passionate about building responsive, user-friendly web applications and turning data into meaningful insights. I work with HTML, CSS, JavaScript, React, Node.js, Express.js, MySQL, Git, and GitHub, while also using Excel, SQL, Python, Power BI, and Tableau for data analysis and visualization. I enjoy creating clean, efficient, and scalable solutions that combine modern design with functionality. I am committed to continuous learning, improving my technical skills, and building impactful projects that solve real-world problems through technology and data-driven decision-making.';
+  const bio = profile?.bio ? profile.bio.trim() : '';
+  const isOwnerView = Boolean(authToken) || Boolean(localStorage.getItem('ownerToken')) || cameFrom === 'dashboard' || localStorage.getItem('previousPage') === 'dashboard';
   const isAvatarPublic = profile?.is_avatar_public !== 0 && profile?.is_avatar_public !== false;
   const avatar = (profile?.profile_picture && isAvatarPublic) ? resolveFileUrl(profile.profile_picture) : null;
   const linkedin = profile?.linkedin || 'https://www.linkedin.com/in/navycut';
@@ -808,7 +809,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, onLogout
           <button id="hire-me-nav" onClick={() => setShowHireModal(true)} className="glass-btn pf-hire-btn">
             Hire Me
           </button>
-          {cameFrom === 'dashboard' ? (
+          {isOwnerView ? (
             <>
               <button 
                 id="exit-viewer-nav" 
@@ -966,13 +967,13 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, onLogout
                 <Send size={16} /> Hire Me
               </button>
               <button
-                onClick={() => navigateTo(cameFrom === 'dashboard' ? 'dashboard' : 'welcome')}
+                onClick={() => navigateTo(isOwnerView ? 'dashboard' : 'welcome')}
                 className="glass-btn-secondary"
                 style={{ width: '100%', justifyContent: 'center', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
               >
-                {cameFrom === 'dashboard' ? '← Back' : '← Back to Home'}
+                {isOwnerView ? '← Back' : '← Back to Home'}
               </button>
-              {cameFrom === 'dashboard' && (
+              {isOwnerView && (
                 <button
                   onClick={() => { setMobileMenuOpen(false); onLogout(); }}
                   className="glass-btn-danger"

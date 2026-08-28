@@ -23,7 +23,7 @@ const defaultJsonData = {
       facebook: '',
       linkedin: 'https://www.linkedin.com/in/navycut',
       github: 'https://github.com/Mr-Navy013',
-      bio: 'I am a Frontend Developer and aspiring Data Analyst passionate about building responsive, user-friendly web applications and turning data into meaningful insights. I work with HTML, CSS, JavaScript, React, Node.js, Express.js, MySQL, Git, and GitHub, while also using Excel, SQL, Python, Power BI, and Tableau for data analysis and visualization. I enjoy creating clean, efficient, and scalable solutions that combine modern design with functionality. I am committed to continuous learning, improving my technical skills, and building impactful projects that solve real-world problems through technology and data-driven decision-making.',
+      bio: '',
       resume_url: null,
       is_resume_public: 1,
       is_avatar_public: 1,
