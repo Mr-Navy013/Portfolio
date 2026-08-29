@@ -65,7 +65,11 @@ function App() {
 
   const attemptFetch = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/profile`, { signal: AbortSignal.timeout(30000) });
+      const res = await fetch(`${API_BASE}/profile?t=${Date.now()}`, { 
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' },
+        signal: AbortSignal.timeout(30000) 
+      });
       if (res.ok) {
         const data = await res.json();
         setProfileData(data);

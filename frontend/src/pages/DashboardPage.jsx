@@ -2057,6 +2057,17 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
 
       showStatus('CV/Resume PDF file parsed and updated.');
       setResumeFile(null);
+      if (data?.resume_url) {
+        if (profile) profile.resume_url = data.resume_url;
+        try {
+          const cached = localStorage.getItem('cache_profile');
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            parsed.resume_url = data.resume_url;
+            localStorage.setItem('cache_profile', JSON.stringify(parsed));
+          }
+        } catch (e) {}
+      }
       refreshProfile();
     } catch (err) {
       console.error(err);
@@ -3431,6 +3442,18 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                       </button>
                       {profile?.resume_url && (
                         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+                          <a 
+                            href={`${API_BASE}/documents/download?type=resume&t=${Date.now()}`} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="glass-btn" 
+                            style={{ padding: '0.4rem 1.25rem', fontSize: '0.85rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
+                            onClick={(e) => {
+                              e.currentTarget.href = `${API_BASE}/documents/download?type=resume&t=${Date.now()}`;
+                            }}
+                          >
+                            <Eye size={14} /> View Current Resume
+                          </a>
                           <button 
                             onClick={handleToggleResumeVisibility} 
                             disabled={loading} 

@@ -349,7 +349,10 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, authToke
     showSecureDocModal
   ]);
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { 
+    if (typeof refreshProfile === 'function') refreshProfile();
+    fetchData(); 
+  }, []);
 
   useEffect(() => {
     if (!showSecureDocModal) return;
@@ -1032,11 +1035,14 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, authToke
               </button>
               {resumeUrl ? (
                 <a 
-                  href={`${API_BASE}/documents/download?type=resume`} 
+                  href={`${API_BASE}/documents/download?type=resume&t=${Date.now()}`} 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="glass-btn-secondary pf-cta-btn"
                   style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', textDecoration: 'none' }}
+                  onClick={(e) => {
+                    e.currentTarget.href = `${API_BASE}/documents/download?type=resume&t=${Date.now()}`;
+                  }}
                 >
                   <Download size={17} style={{ color: '#00ff88' }} /> View Resume
                 </a>
@@ -1145,11 +1151,12 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, authToke
                   {edu.degree === '10th' && edu.certificate_10th && (
                     edu.access_cert10 === 1 || edu.access_cert10 === 'true' || edu.access_cert10 === true ? (
                       <a 
-                        href={`${API_BASE}/documents/download?type=education&id=${edu.id}&field=certificate_10th`}
+                        href={`${API_BASE}/documents/download?type=education&id=${edu.id}&field=certificate_10th&t=${Date.now()}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="glass-btn" 
                         style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', gap: '0.4rem', height: 'auto', display: 'flex', alignItems: 'center', textDecoration: 'none' }}
+                        onClick={(e) => { e.currentTarget.href = `${API_BASE}/documents/download?type=education&id=${edu.id}&field=certificate_10th&t=${Date.now()}`; }}
                       >
                         <Eye size={12} /> View 10th Certificate
                       </a>
@@ -1168,11 +1175,12 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, authToke
                       {edu.certificate_12th && (
                         edu.access_cert12 === 1 || edu.access_cert12 === 'true' || edu.access_cert12 === true ? (
                           <a 
-                            href={`${API_BASE}/documents/download?type=education&id=${edu.id}&field=certificate_12th`}
+                            href={`${API_BASE}/documents/download?type=education&id=${edu.id}&field=certificate_12th&t=${Date.now()}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="glass-btn" 
                             style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', gap: '0.4rem', height: 'auto', display: 'flex', alignItems: 'center', textDecoration: 'none' }}
+                            onClick={(e) => { e.currentTarget.href = `${API_BASE}/documents/download?type=education&id=${edu.id}&field=certificate_12th&t=${Date.now()}`; }}
                           >
                             <Eye size={12} /> View 12th Certificate
                           </a>
@@ -1190,11 +1198,12 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, authToke
                       {edu.marksheet_12th && (
                         edu.access_cert12 === 1 || edu.access_cert12 === 'true' || edu.access_cert12 === true ? (
                           <a 
-                            href={`${API_BASE}/documents/download?type=education&id=${edu.id}&field=marksheet_12th`}
+                            href={`${API_BASE}/documents/download?type=education&id=${edu.id}&field=marksheet_12th&t=${Date.now()}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="glass-btn" 
                             style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', gap: '0.4rem', height: 'auto', display: 'flex', alignItems: 'center', textDecoration: 'none' }}
+                            onClick={(e) => { e.currentTarget.href = `${API_BASE}/documents/download?type=education&id=${edu.id}&field=marksheet_12th&t=${Date.now()}`; }}
                           >
                             <Eye size={12} /> View 12th Marksheet
                           </a>
@@ -1213,11 +1222,12 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, authToke
                   {edu.degree === 'Bachelor' && edu.certificate_bachelor && (
                     edu.access_certbach === 1 || edu.access_certbach === 'true' || edu.access_certbach === true ? (
                       <a 
-                        href={`${API_BASE}/documents/download?type=education&id=${edu.id}&field=certificate_bachelor`}
+                        href={`${API_BASE}/documents/download?type=education&id=${edu.id}&field=certificate_bachelor&t=${Date.now()}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="glass-btn" 
                         style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', gap: '0.4rem', height: 'auto', display: 'flex', alignItems: 'center', textDecoration: 'none' }}
+                        onClick={(e) => { e.currentTarget.href = `${API_BASE}/documents/download?type=education&id=${edu.id}&field=certificate_bachelor&t=${Date.now()}`; }}
                       >
                         <Eye size={12} /> View Degree Certificate
                       </a>
@@ -1665,7 +1675,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, authToke
                   const hasAccess = cert.access_cert === 1 || cert.access_cert === 'true' || cert.access_cert === true;
                   if (hasAccess) {
                     if (cert.certificate_file) {
-                      window.open(`${API_BASE}/documents/download?type=certificates&id=${cert.id}&field=certificate_file`, '_blank');
+                      window.open(`${API_BASE}/documents/download?type=certificates&id=${cert.id}&field=certificate_file&t=${Date.now()}`, '_blank');
                     } else if (cert.credential_url) {
                       window.open(cert.credential_url, '_blank');
                     }
@@ -2235,11 +2245,12 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, authToke
                     {/* Certificate */}
                     {selectedExperience.certificate_file && (
                       <a 
-                        href={`${API_BASE}/documents/download?type=experience&id=${selectedExperience.id}&field=certificate_file`}
+                        href={`${API_BASE}/documents/download?type=experience&id=${selectedExperience.id}&field=certificate_file&t=${Date.now()}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="glass-btn" 
                         style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.85rem', textDecoration: 'none' }}
+                        onClick={(e) => { e.currentTarget.href = `${API_BASE}/documents/download?type=experience&id=${selectedExperience.id}&field=certificate_file&t=${Date.now()}`; }}
                       >
                         <Award size={16} /> Certificate
                       </a>
@@ -2248,11 +2259,12 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, authToke
                     {/* LOR */}
                     {selectedExperience.lor_file && (
                       <a 
-                        href={`${API_BASE}/documents/download?type=experience&id=${selectedExperience.id}&field=lor_file`}
+                        href={`${API_BASE}/documents/download?type=experience&id=${selectedExperience.id}&field=lor_file&t=${Date.now()}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="glass-btn glass-btn-lor" 
                         style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.85rem', textDecoration: 'none' }}
+                        onClick={(e) => { e.currentTarget.href = `${API_BASE}/documents/download?type=experience&id=${selectedExperience.id}&field=lor_file&t=${Date.now()}`; }}
                       >
                         <Award size={16} /> LOR Letter
                       </a>
@@ -2608,7 +2620,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, authToke
         const getDownloadLink = () => {
           if (!secureDocInfo) return null;
           const { type, id, field, token } = secureDocInfo;
-          let url = `${API_BASE}/documents/download?type=${type}`;
+          let url = `${API_BASE}/documents/download?type=${type}&t=${Date.now()}`;
           if (id) url += `&id=${id}`;
           if (field) url += `&field=${field}`;
           if (token) url += `&token=${token}`;

@@ -37,6 +37,14 @@ app.use((req, res, next) => {
   next();
 });
 
+// Disable aggressive HTTP caching on all API responses so mobile browsers always receive real-time data
+app.use('/api', (req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  next();
+});
+
 // Ensure uploads folder exists
 const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) {
@@ -1910,6 +1918,9 @@ app.get('/api/documents/download', async (req, res) => {
         filename = `${type}_${field || 'file'}${ext}`;
       }
 
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
       res.setHeader('Content-Type', mime);
       res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
       return res.send(buffer);
@@ -1918,6 +1929,9 @@ app.get('/api/documents/download', async (req, res) => {
       const fileName = fileUrl.replace('/uploads/', '');
       const filePath = path.join(__dirname, 'uploads', fileName);
       if (fs.existsSync(filePath)) {
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
         res.setHeader('Content-Disposition', `inline; filename="${fileName}"`);
         return res.sendFile(filePath);
       } else {
