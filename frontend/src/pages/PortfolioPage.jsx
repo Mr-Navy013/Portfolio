@@ -150,12 +150,30 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, authToke
 
   const [showHireModal, setShowHireModal] = useState(false);
   const [loadingData, setLoadingData] = useState(false);
-  const [projects, setProjects] = useState(() => getCached('cache_projects', DEFAULT_PROJECTS));
-  const [education, setEducation] = useState(() => getCached('cache_education', DEFAULT_EDUCATION));
-  const [skills, setSkills] = useState(() => getCached('cache_skills', DEFAULT_SKILLS));
-  const [experience, setExperience] = useState(() => getCached('cache_experience', DEFAULT_EXPERIENCE));
-  const [certificates, setCertificates] = useState(() => getCached('cache_certificates', DEFAULT_CERTIFICATES));
-  const [courses, setCourses] = useState(() => getCached('cache_courses', DEFAULT_COURSES));
+  const [projects, setProjects] = useState(() => {
+    const c = getCached('cache_projects', null);
+    return (Array.isArray(c) && c.length > 0) ? c : DEFAULT_PROJECTS;
+  });
+  const [education, setEducation] = useState(() => {
+    const c = getCached('cache_education', null);
+    return (Array.isArray(c) && c.length > 0) ? c : DEFAULT_EDUCATION;
+  });
+  const [skills, setSkills] = useState(() => {
+    const c = getCached('cache_skills', null);
+    return (Array.isArray(c) && c.length > 0) ? c : DEFAULT_SKILLS;
+  });
+  const [experience, setExperience] = useState(() => {
+    const c = getCached('cache_experience', null);
+    return (Array.isArray(c) && c.length > 0) ? c : DEFAULT_EXPERIENCE;
+  });
+  const [certificates, setCertificates] = useState(() => {
+    const c = getCached('cache_certificates', null);
+    return (Array.isArray(c) && c.length > 0) ? c : DEFAULT_CERTIFICATES;
+  });
+  const [courses, setCourses] = useState(() => {
+    const c = getCached('cache_courses', null);
+    return (Array.isArray(c) && c.length > 0) ? c : DEFAULT_COURSES;
+  });
   const [selectedExperience, setSelectedExperience] = useState(null);
   const [selectedProject, setSelectedProject] = useState(null);
   const [selectedCourse, setSelectedCourse] = useState(null);
@@ -357,10 +375,79 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, authToke
     showSecureDocModal
   ]);
 
+  const sectionPollRef = useRef(null);
+
+  const fetchData = useCallback(async () => {
+    try {
+      setLoadingData(true);
+      const t = Date.now();
+      const headers = { 'Cache-Control': 'no-store' };
+
+      const [projRes, eduRes, skillRes, expRes, certRes, courseRes] = await Promise.allSettled([
+        fetch(`${API_BASE}/projects?t=${t}`, { headers }),
+        fetch(`${API_BASE}/education?t=${t}`, { headers }),
+        fetch(`${API_BASE}/skills?t=${t}`, { headers }),
+        fetch(`${API_BASE}/experience?t=${t}`, { headers }),
+        fetch(`${API_BASE}/certificates?t=${t}`, { headers }),
+        fetch(`${API_BASE}/courses?t=${t}`, { headers })
+      ]);
+
+      if (projRes.status === 'fulfilled' && projRes.value.ok) {
+        const data = await projRes.value.json();
+        const finalProjects = (Array.isArray(data) && data.length > 0) ? data : DEFAULT_PROJECTS;
+        setProjects(finalProjects);
+        try { localStorage.setItem('cache_projects', JSON.stringify(finalProjects)); } catch {}
+      }
+
+      if (eduRes.status === 'fulfilled' && eduRes.value.ok) {
+        const data = await eduRes.value.json();
+        const finalEdu = (Array.isArray(data) && data.length > 0) ? data : DEFAULT_EDUCATION;
+        setEducation(finalEdu);
+        try { localStorage.setItem('cache_education', JSON.stringify(finalEdu)); } catch {}
+      }
+
+      if (skillRes.status === 'fulfilled' && skillRes.value.ok) {
+        const data = await skillRes.value.json();
+        const finalSkills = (Array.isArray(data) && data.length > 0) ? data : DEFAULT_SKILLS;
+        setSkills(finalSkills);
+        try { localStorage.setItem('cache_skills', JSON.stringify(finalSkills)); } catch {}
+      }
+
+      if (expRes.status === 'fulfilled' && expRes.value.ok) {
+        const data = await expRes.value.json();
+        const finalExp = (Array.isArray(data) && data.length > 0) ? data : DEFAULT_EXPERIENCE;
+        setExperience(finalExp);
+        try { localStorage.setItem('cache_experience', JSON.stringify(finalExp)); } catch {}
+      }
+
+      if (certRes.status === 'fulfilled' && certRes.value.ok) {
+        const data = await certRes.value.json();
+        const finalCerts = (Array.isArray(data) && data.length > 0) ? data : DEFAULT_CERTIFICATES;
+        setCertificates(finalCerts);
+        try { localStorage.setItem('cache_certificates', JSON.stringify(finalCerts)); } catch {}
+      }
+
+      if (courseRes.status === 'fulfilled' && courseRes.value.ok) {
+        const data = await courseRes.value.json();
+        const finalCourses = (Array.isArray(data) && data.length > 0) ? data : DEFAULT_COURSES;
+        setCourses(finalCourses);
+        try { localStorage.setItem('cache_courses', JSON.stringify(finalCourses)); } catch {}
+      }
+
+      setLoadingData(false);
+      if (sectionPollRef.current) { clearInterval(sectionPollRef.current); sectionPollRef.current = null; }
+      return true;
+    } catch (err) {
+      console.error("Error fetching portfolio data:", err);
+      setLoadingData(false);
+      return false;
+    }
+  }, []);
+
   useEffect(() => { 
     if (typeof refreshProfile === 'function') refreshProfile();
     fetchData(); 
-  }, []);
+  }, [fetchData]);
 
   useEffect(() => {
     if (!showSecureDocModal) return;
@@ -407,45 +494,6 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, authToke
       window.removeEventListener('contextmenu', handleContextMenu);
     };
   }, [showSecureDocModal]);
-
-  const sectionPollRef = useRef(null);
-
-  const fetchData = useCallback(async () => {
-    try {
-      const t = Date.now();
-      const [pRes, eRes, sRes, expRes, cRes, courseRes] = await Promise.all([
-        fetch(`${API_BASE}/projects?t=${t}`,      { signal: AbortSignal.timeout(30000) }),
-        fetch(`${API_BASE}/education?t=${t}`,     { signal: AbortSignal.timeout(30000) }),
-        fetch(`${API_BASE}/skills?t=${t}`,        { signal: AbortSignal.timeout(30000) }),
-        fetch(`${API_BASE}/experience?t=${t}`,    { signal: AbortSignal.timeout(30000) }),
-        fetch(`${API_BASE}/certificates?t=${t}`,  { signal: AbortSignal.timeout(30000) }),
-        fetch(`${API_BASE}/courses?t=${t}`,       { signal: AbortSignal.timeout(30000) })
-      ]);
-      if (pRes.ok)      { const d = await pRes.json(); setProjects(d); try { localStorage.setItem('cache_projects', JSON.stringify(d)); } catch {} }
-      if (eRes.ok)      { const d = await eRes.json(); setEducation(d); try { localStorage.setItem('cache_education', JSON.stringify(d)); } catch {} }
-      if (sRes.ok)      { const d = await sRes.json(); setSkills(d); try { localStorage.setItem('cache_skills', JSON.stringify(d)); } catch {} }
-      if (expRes.ok)    { const d = await expRes.json(); setExperience(d); try { localStorage.setItem('cache_experience', JSON.stringify(d)); } catch {} }
-      if (cRes.ok)      { const d = await cRes.json(); setCertificates(d); try { localStorage.setItem('cache_certificates', JSON.stringify(d)); } catch {} }
-      if (courseRes.ok) { const d = await courseRes.json(); setCourses(d); try { localStorage.setItem('cache_courses', JSON.stringify(d)); } catch {} }
-      setLoadingData(false);
-      // Clear any retry polling on success
-      if (sectionPollRef.current) { clearInterval(sectionPollRef.current); sectionPollRef.current = null; }
-      return true;
-    } catch (_) {
-      // Backend unreachable — retry quietly every 5s
-      if (!sectionPollRef.current) {
-        sectionPollRef.current = setInterval(async () => {
-          const ok = await fetchData();
-          if (ok && sectionPollRef.current) { clearInterval(sectionPollRef.current); sectionPollRef.current = null; }
-        }, 5000);
-        setTimeout(() => {
-          if (sectionPollRef.current) { clearInterval(sectionPollRef.current); sectionPollRef.current = null; }
-          setLoadingData(false);
-        }, 60000);
-      }
-      return false;
-    }
-  }, []);
 
   const handleOpenPermissionRequest = (docId, docName) => {
     setSelectedDocId(docId);
