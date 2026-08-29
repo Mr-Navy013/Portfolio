@@ -715,9 +715,31 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, authToke
     }
   };
 
+  const packSkillsOptimally = (list) => {
+    if (!list || list.length <= 2) return list;
+    // Sort by skill name length descending
+    const sorted = [...list].sort((a, b) => (b.name || '').length - (a.name || '').length);
+    const result = [];
+    let left = 0;
+    let right = sorted.length - 1;
+    // Alternating long and short skill badges to maximize dense horizontal row filling
+    while (left <= right) {
+      if (left === right) {
+        result.push(sorted[left]);
+        break;
+      }
+      result.push(sorted[left]);
+      result.push(sorted[right]);
+      left++;
+      right--;
+    }
+    return result;
+  };
+
   const groupedSkills = skills.reduce((acc, s) => {
-    if (!acc[s.category]) acc[s.category] = [];
-    acc[s.category].push(s);
+    const cat = s.category || 'General';
+    if (!acc[cat]) acc[cat] = [];
+    acc[cat].push(s);
     return acc;
   }, {});
 
@@ -1099,7 +1121,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, authToke
               <div key={cat} className="glass-panel pf-skill-card">
                 <h3 className="pf-skill-cat-title">{cat}</h3>
                 <div className="pf-skill-list">
-                  {list.map(skill => (
+                  {packSkillsOptimally(list).map(skill => (
                     <div key={skill.id} className="pf-skill-block">
                       <span className="pf-skill-block-name">{skill.name}</span>
                       <span className="pf-skill-block-level">
