@@ -717,23 +717,29 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, authToke
 
   const packSkillsOptimally = (list) => {
     if (!list || list.length <= 2) return list;
-    // Sort by skill name length descending
-    const sorted = [...list].sort((a, b) => (b.name || '').length - (a.name || '').length);
-    const result = [];
-    let left = 0;
-    let right = sorted.length - 1;
-    // Alternating long and short skill badges to maximize dense horizontal row filling
-    while (left <= right) {
-      if (left === right) {
-        result.push(sorted[left]);
-        break;
+    // Estimate badge width in px: base padding + level pill + text width
+    const getEstWidth = (s) => 40 + ((s.name || '').length * 7);
+    const targetRowWidth = 330;
+    const items = [...list].sort((a, b) => getEstWidth(b) - getEstWidth(a));
+    const rows = [];
+
+    for (const item of items) {
+      const itemW = getEstWidth(item);
+      let placed = false;
+      for (const row of rows) {
+        if (row.currentWidth + itemW + 6 <= targetRowWidth) {
+          row.skills.push(item);
+          row.currentWidth += itemW + 6;
+          placed = true;
+          break;
+        }
       }
-      result.push(sorted[left]);
-      result.push(sorted[right]);
-      left++;
-      right--;
+      if (!placed) {
+        rows.push({ skills: [item], currentWidth: itemW });
+      }
     }
-    return result;
+
+    return rows.flatMap(r => r.skills);
   };
 
   const groupedSkills = skills.reduce((acc, s) => {
