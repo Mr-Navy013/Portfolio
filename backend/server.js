@@ -883,7 +883,7 @@ app.post('/api/projects', authenticateToken, upload.single('thumbnail'), async (
 
 app.put('/api/projects/:id', authenticateToken, upload.single('thumbnail'), async (req, res) => {
   const { id } = req.params;
-  const { title, summary, repo_link, live_link, is_deployed } = req.body;
+  const { title, summary, repo_link, live_link, is_deployed, remove_thumbnail } = req.body;
   const isDeployedBool = is_deployed === 'true' || is_deployed === true;
 
   if (!title || !summary || !repo_link) {
@@ -896,7 +896,7 @@ app.put('/api/projects/:id', authenticateToken, upload.single('thumbnail'), asyn
 
   try {
     let oldThumbnail = null;
-    if (req.file) {
+    if (req.file || remove_thumbnail === 'true' || remove_thumbnail === true) {
       const [rows] = await query('SELECT thumbnail FROM projects WHERE id = ?', [id]);
       oldThumbnail = rows && rows[0] ? rows[0].thumbnail : null;
     }
@@ -913,6 +913,9 @@ app.put('/api/projects/:id', authenticateToken, upload.single('thumbnail'), asyn
       const newThumbnailUrl = `data:${req.file.mimetype}${filenamePart};base64,${base64Data}`;
       q += `, thumbnail = ?`;
       params.push(newThumbnailUrl);
+    } else if (remove_thumbnail === 'true' || remove_thumbnail === true) {
+      q += `, thumbnail = ?`;
+      params.push(null);
     }
 
     q += ` WHERE id = ?`;

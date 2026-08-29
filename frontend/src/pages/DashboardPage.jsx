@@ -1075,6 +1075,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
   const [projLive, setProjLive] = useState('');
   const [projDeployed, setProjDeployed] = useState(false);
   const [projThumbnail, setProjThumbnail] = useState(null);
+  const [removeProjThumbnail, setRemoveProjThumbnail] = useState(false);
 
   // Dynamic status feedback
   const [statusMsg, setStatusMsg] = useState('');
@@ -2183,6 +2184,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       setProjRepo(proj.repo_link);
       setProjLive(proj.live_link || '');
       setProjDeployed(proj.is_deployed);
+      setRemoveProjThumbnail(false);
     } else {
       setEditingProject(null);
       setProjTitle('');
@@ -2190,6 +2192,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       setProjRepo('');
       setProjLive('');
       setProjDeployed(false);
+      setRemoveProjThumbnail(false);
     }
     setProjThumbnail(null);
     setShowProjModal(true);
@@ -2220,6 +2223,8 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
         const bufferedFile = await getSafeInMemoryFile(projThumbnail, 'image/jpeg');
         const compressed = await compressImageIfNeeded(bufferedFile);
         formData.append('thumbnail', compressed);
+      } else if (removeProjThumbnail) {
+        formData.append('remove_thumbnail', 'true');
       }
 
       const url = editingProject ? `${API_BASE}/projects/${editingProject.id}` : `${API_BASE}/projects`;
@@ -4760,10 +4765,52 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                 </div>
               )}
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-                <label style={{ fontSize: '0.85rem' }}>Showcase Thumbnail Image</label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <label style={{ fontSize: '0.85rem', fontWeight: 500 }}>Showcase Thumbnail Image</label>
+                  {editingProject && editingProject.thumbnail && !removeProjThumbnail && !projThumbnail && (
+                    <button
+                      type="button"
+                      onClick={() => setRemoveProjThumbnail(true)}
+                      className="glass-btn-danger"
+                      style={{ padding: '0.2rem 0.55rem', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '0.3rem', cursor: 'pointer' }}
+                    >
+                      <Trash2 size={12} /> Remove Thumbnail
+                    </button>
+                  )}
+                  {removeProjThumbnail && (
+                    <span style={{ fontSize: '0.75rem', color: '#ff5252', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                      Thumbnail removed
+                      <button
+                        type="button"
+                        onClick={() => setRemoveProjThumbnail(false)}
+                        style={{ background: 'none', border: 'none', color: '#00ff88', textDecoration: 'underline', cursor: 'pointer', fontSize: '0.75rem', padding: 0 }}
+                      >
+                        (Undo)
+                      </button>
+                    </span>
+                  )}
+                </div>
+
+                {editingProject && editingProject.thumbnail && !removeProjThumbnail && !projThumbnail && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.5rem 0.75rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                    <img 
+                      src={resolveFileUrl(editingProject.thumbnail)} 
+                      alt="Current thumbnail" 
+                      style={{ width: '48px', height: '36px', objectFit: 'cover', borderRadius: '4px', border: '1px solid rgba(0,255,136,0.3)' }} 
+                    />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: '0.8rem', color: '#fff', fontWeight: 500 }}>Current Active Thumbnail</div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Upload new below to replace or click Remove</div>
+                    </div>
+                  </div>
+                )}
+
                 <DragDropUpload
-                  onFileSelect={setProjThumbnail}
+                  onFileSelect={(file) => {
+                    setProjThumbnail(file);
+                    if (file) setRemoveProjThumbnail(false);
+                  }}
                   accept="image/*"
                   currentFile={projThumbnail}
                   placeholder="Drag & drop project thumbnail or click to upload"
