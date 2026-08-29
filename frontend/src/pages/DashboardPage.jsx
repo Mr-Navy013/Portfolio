@@ -387,7 +387,7 @@ const DragDropUpload = ({ onFileSelect, accept, currentFile, placeholder, requir
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', width: '100%', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', width: '100%', maxWidth: '100%', boxSizing: 'border-box', overflow: 'hidden' }}>
       <div
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -396,7 +396,7 @@ const DragDropUpload = ({ onFileSelect, accept, currentFile, placeholder, requir
         style={{
           border: isDragging ? '2px solid var(--accent-green)' : '1px dashed var(--glass-border)',
           borderRadius: '12px',
-          padding: '1.5rem 1rem',
+          padding: '1.25rem 0.75rem',
           textAlign: 'center',
           background: isDragging ? 'rgba(0, 255, 136, 0.08)' : 'rgba(255, 255, 255, 0.02)',
           cursor: 'pointer',
@@ -404,12 +404,15 @@ const DragDropUpload = ({ onFileSelect, accept, currentFile, placeholder, requir
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
+          justifyContent: 'center',
           gap: '0.5rem',
           boxShadow: isDragging ? '0 0 15px rgba(0, 255, 136, 0.2)' : 'none',
           marginTop: '0.25rem',
           marginBottom: '0.25rem',
           overflow: 'hidden',
-          width: '100%'
+          width: '100%',
+          maxWidth: '100%',
+          boxSizing: 'border-box'
         }}
         className="drag-drop-zone"
       >
@@ -425,16 +428,21 @@ const DragDropUpload = ({ onFileSelect, accept, currentFile, placeholder, requir
           }}
           required={required && !currentFile}
         />
-        <Upload size={24} style={{ color: isDragging ? 'var(--accent-green)' : 'rgba(255,255,255,0.4)', transition: 'color 0.2s' }} />
+        <Upload size={24} style={{ color: isDragging ? 'var(--accent-green)' : 'rgba(255,255,255,0.4)', transition: 'color 0.2s', flexShrink: 0 }} />
         <span style={{ 
           fontSize: '0.85rem', 
           color: '#fff', 
           fontWeight: 500,
           maxWidth: '100%',
+          width: '100%',
+          boxSizing: 'border-box',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-          display: 'block'
+          whiteSpace: 'normal',
+          wordBreak: 'break-word',
+          textAlign: 'center',
+          display: 'block',
+          lineHeight: 1.4
         }}>
           {currentFile ? (
             <span style={{ 
@@ -443,14 +451,15 @@ const DragDropUpload = ({ onFileSelect, accept, currentFile, placeholder, requir
               maxWidth: '100%',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
+              whiteSpace: 'normal',
+              wordBreak: 'break-word',
               display: 'inline-block'
             }}>Selected: {getDisplayFileName(currentFile)}</span>
           ) : (
             placeholder || 'Drag & drop file here or click to upload'
           )}
         </span>
-        <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
+        <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', textAlign: 'center', lineHeight: 1.3, maxWidth: '100%', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
           {accept?.includes('pdf')
             ? 'Accepted: PDF/Docs/Images | Max size: 10MB (Images compressed automatically)'
             : 'Accepted: Images | Max size: 15MB (Compressed automatically)'}
@@ -3260,13 +3269,31 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
           .profile-grid {
             display: grid;
             grid-template-columns: 1fr;
-            gap: 2rem;
+            gap: 1.5rem;
             margin-bottom: 2.5rem;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box !important;
           }
-          @media (min-width: 768px) {
+          @media (min-width: 1100px) {
             .profile-grid {
-              grid-template-columns: 1fr 1fr !important;
+              grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
             }
+          }
+          .profile-grid > div {
+            min-width: 0 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+            overflow: hidden !important;
+          }
+          .profile-grid .glass-card {
+            width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+            min-width: 0 !important;
+            overflow: hidden !important;
+            padding: 1.5rem 1.25rem !important;
           }
           .dashboard-modal-overlay {
             position: fixed !important;
@@ -3359,10 +3386,10 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
         `}</style>
 
         {/* Right Content Panel */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%', maxWidth: '100%', minWidth: 0, boxSizing: 'border-box' }}>
                   {/* TAB 1: PROFILE MANAGEMENT & OTP CONFIG */}
           {activeTab === 'profile' && (
-            <div className="glass-panel" style={{ padding: '2rem' }}>
+            <div className="glass-panel" style={{ padding: 'clamp(1rem, 2.5vw, 2rem)', width: '100%', maxWidth: '100%', boxSizing: 'border-box', overflow: 'hidden', minWidth: 0 }}>
               <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>
                 Edit Profile
               </h2>
