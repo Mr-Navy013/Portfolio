@@ -98,11 +98,19 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, authToke
   ];
 
   const DEFAULT_SKILLS = [
-    { id: 1, name: "C++", category: "Programming Language", proficiency: 100 },
-    { id: 2, name: "Python", category: "Programming Language", proficiency: 100 },
-    { id: 3, name: "MySQL", category: "Database", proficiency: 100 },
-    { id: 4, name: "JavaScript", category: "Programming Language", proficiency: 100 },
-    { id: 5, name: "Git", category: "Tool", proficiency: 100, knowledge_level: "basic" }
+    { id: 1, name: "C++", category: "Programming Language", proficiency: 100, knowledge_level: "high" },
+    { id: 2, name: "Python", category: "Programming Language", proficiency: 100, knowledge_level: "high" },
+    { id: 3, name: "MySQL", category: "Database", proficiency: 100, knowledge_level: "high" },
+    { id: 4, name: "JavaScript", category: "Programming Language", proficiency: 100, knowledge_level: "medium" },
+    { id: 5, name: "Git", category: "Tool", proficiency: 100, knowledge_level: "high" },
+    { id: 6, name: "C", category: "Programming Language", proficiency: 100, knowledge_level: "high" },
+    { id: 7, name: "CSS", category: "Programming Language", proficiency: 100, knowledge_level: "high" },
+    { id: 8, name: "HTML", category: "Programming Language", proficiency: 100, knowledge_level: "high" },
+    { id: 9, name: "Java", category: "Programming Language", proficiency: 100, knowledge_level: "medium" },
+    { id: 10, name: "Microsoft Excel(Adv.)", category: "Tool", proficiency: 100, knowledge_level: "basic" },
+    { id: 11, name: "PowerBI", category: "Tool", proficiency: 100, knowledge_level: "basic" },
+    { id: 12, name: "Tableau", category: "Tool", proficiency: 100, knowledge_level: "high" },
+    { id: 13, name: "VS Code", category: "Tool", proficiency: 100, knowledge_level: "high" }
   ];
 
   const DEFAULT_EXPERIENCE = [
