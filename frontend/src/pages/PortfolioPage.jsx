@@ -57,123 +57,21 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, authToke
   };
 
   // Default fallback data for initial fast render before server fetch completes
-  const DEFAULT_PROJECTS = [
-    {
-      id: 1,
-      title: "Music Player",
-      summary: "I build the music player using HTML,Css,JavaScript.Its a mobile friendly fully responisve Design Its special features is playing music , track a music according to the user perspective.",
-      repo_link: "https://github.com/Mr-Navy013/CodeAlpha_Music-Player",
-      live_link: "https://mr-navy013.github.io/CodeAlpha_Music-Player/",
-      is_deployed: 1,
-      thumbnail: "/uploads/thumbnail-1782467545894-524330629.jpeg",
-      created_at: "2026-06-26T09:52:25.906Z"
-    },
-    {
-      id: 2,
-      title: "Nova Voice assistant",
-      summary: "Voice assistant application built with modern web technologies.",
-      repo_link: "https://github.com/Mr-Navy013",
-      live_link: null,
-      is_deployed: 0,
-      thumbnail: null,
-      created_at: "2026-07-06T05:33:24.988Z"
-    }
-  ];
-
-  const DEFAULT_EDUCATION = [
-    {
-      id: 1,
-      school: "Parama Hanshan sanskrit bidyapitha",
-      degree: "10th",
-      field_of_study: "Secondary School (10th)",
-      start_date: "2021",
-      end_date: "2021",
-      description: "SSC 10th complete at Parama Hanshan sanskrit bidyapitha. Full Marks: 700, Obtained: 490, Percentage: 70.00%",
-      passing_year: "2021",
-      full_marks: 700,
-      marks_obtained: 490,
-      percentage: 70,
-      certificate_10th: "/uploads/certificate_10th-1783400391215-352878758.pdf"
-    }
-  ];
-
-  const DEFAULT_SKILLS = [
-    { id: 1, name: "C++", category: "Programming Language", proficiency: 100, knowledge_level: "high" },
-    { id: 2, name: "Python", category: "Programming Language", proficiency: 100, knowledge_level: "high" },
-    { id: 3, name: "MySQL", category: "Database", proficiency: 100, knowledge_level: "high" },
-    { id: 4, name: "JavaScript", category: "Programming Language", proficiency: 100, knowledge_level: "medium" },
-    { id: 5, name: "Git", category: "Tool", proficiency: 100, knowledge_level: "high" },
-    { id: 6, name: "C", category: "Programming Language", proficiency: 100, knowledge_level: "high" },
-    { id: 7, name: "CSS", category: "Programming Language", proficiency: 100, knowledge_level: "high" },
-    { id: 8, name: "HTML", category: "Programming Language", proficiency: 100, knowledge_level: "high" },
-    { id: 9, name: "Java", category: "Programming Language", proficiency: 100, knowledge_level: "medium" },
-    { id: 10, name: "Microsoft Excel(Adv.)", category: "Tool", proficiency: 100, knowledge_level: "basic" },
-    { id: 11, name: "PowerBI", category: "Tool", proficiency: 100, knowledge_level: "basic" },
-    { id: 12, name: "Tableau", category: "Tool", proficiency: 100, knowledge_level: "high" },
-    { id: 13, name: "VS Code", category: "Tool", proficiency: 100, knowledge_level: "high" }
-  ];
-
-  const DEFAULT_EXPERIENCE = [
-    {
-      id: 1,
-      company: "CTTC",
-      role: "Data Analytics Intern",
-      start_date: "05/01/2026",
-      end_date: "05/02/2026",
-      description: "Interned at CTTC under OUTR as Data Analytics.",
-      exp_type: "internship",
-      program_name: "OUTR",
-      org_name: "CTTC",
-      certificate_file: "/uploads/certificate_file-1783316930241-201798335.pdf",
-      skills_learned: "Improve python skills,excel,powerBI,"
-    }
-  ];
-
-  const DEFAULT_CERTIFICATES = [
-    {
-      id: 1,
-      name: "Frontend",
-      organization: "Code alpha",
-      issue_date: "24/12/2025",
-      credential_url: null,
-      certificate_file: "/uploads/certificate_file-1783316756616-965922644.pdf"
-    }
-  ];
-
-  const DEFAULT_COURSES = [
-    {
-      id: 1,
-      name: "OOPS",
-      description: "Constructer,destructor,ineheritance etc"
-    }
-  ];
+  const DEFAULT_PROJECTS = [];
+  const DEFAULT_EDUCATION = [];
+  const DEFAULT_SKILLS = [];
+  const DEFAULT_EXPERIENCE = [];
+  const DEFAULT_CERTIFICATES = [];
+  const DEFAULT_COURSES = [];
 
   const [showHireModal, setShowHireModal] = useState(false);
   const [loadingData, setLoadingData] = useState(false);
-  const [projects, setProjects] = useState(() => {
-    const c = getCached('cache_projects', null);
-    return (Array.isArray(c) && c.length > 0) ? c : DEFAULT_PROJECTS;
-  });
-  const [education, setEducation] = useState(() => {
-    const c = getCached('cache_education', null);
-    return (Array.isArray(c) && c.length > 0) ? c : DEFAULT_EDUCATION;
-  });
-  const [skills, setSkills] = useState(() => {
-    const c = getCached('cache_skills', null);
-    return (Array.isArray(c) && c.length > 0) ? c : DEFAULT_SKILLS;
-  });
-  const [experience, setExperience] = useState(() => {
-    const c = getCached('cache_experience', null);
-    return (Array.isArray(c) && c.length > 0) ? c : DEFAULT_EXPERIENCE;
-  });
-  const [certificates, setCertificates] = useState(() => {
-    const c = getCached('cache_certificates', null);
-    return (Array.isArray(c) && c.length > 0) ? c : DEFAULT_CERTIFICATES;
-  });
-  const [courses, setCourses] = useState(() => {
-    const c = getCached('cache_courses', null);
-    return (Array.isArray(c) && c.length > 0) ? c : DEFAULT_COURSES;
-  });
+  const [projects, setProjects] = useState(() => getCached('cache_projects', []));
+  const [education, setEducation] = useState(() => getCached('cache_education', []));
+  const [skills, setSkills] = useState(() => getCached('cache_skills', []));
+  const [experience, setExperience] = useState(() => getCached('cache_experience', []));
+  const [certificates, setCertificates] = useState(() => getCached('cache_certificates', []));
+  const [courses, setCourses] = useState(() => getCached('cache_courses', []));
   const [selectedExperience, setSelectedExperience] = useState(null);
   const [selectedProject, setSelectedProject] = useState(null);
   const [selectedCourse, setSelectedCourse] = useState(null);
@@ -394,42 +292,42 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, authToke
 
       if (projRes.status === 'fulfilled' && projRes.value.ok) {
         const data = await projRes.value.json();
-        const finalProjects = (Array.isArray(data) && data.length > 0) ? data : DEFAULT_PROJECTS;
+        const finalProjects = Array.isArray(data) ? data : [];
         setProjects(finalProjects);
         try { localStorage.setItem('cache_projects', JSON.stringify(finalProjects)); } catch {}
       }
 
       if (eduRes.status === 'fulfilled' && eduRes.value.ok) {
         const data = await eduRes.value.json();
-        const finalEdu = (Array.isArray(data) && data.length > 0) ? data : DEFAULT_EDUCATION;
+        const finalEdu = Array.isArray(data) ? data : [];
         setEducation(finalEdu);
         try { localStorage.setItem('cache_education', JSON.stringify(finalEdu)); } catch {}
       }
 
       if (skillRes.status === 'fulfilled' && skillRes.value.ok) {
         const data = await skillRes.value.json();
-        const finalSkills = (Array.isArray(data) && data.length > 0) ? data : DEFAULT_SKILLS;
+        const finalSkills = Array.isArray(data) ? data : [];
         setSkills(finalSkills);
         try { localStorage.setItem('cache_skills', JSON.stringify(finalSkills)); } catch {}
       }
 
       if (expRes.status === 'fulfilled' && expRes.value.ok) {
         const data = await expRes.value.json();
-        const finalExp = (Array.isArray(data) && data.length > 0) ? data : DEFAULT_EXPERIENCE;
+        const finalExp = Array.isArray(data) ? data : [];
         setExperience(finalExp);
         try { localStorage.setItem('cache_experience', JSON.stringify(finalExp)); } catch {}
       }
 
       if (certRes.status === 'fulfilled' && certRes.value.ok) {
         const data = await certRes.value.json();
-        const finalCerts = (Array.isArray(data) && data.length > 0) ? data : DEFAULT_CERTIFICATES;
+        const finalCerts = Array.isArray(data) ? data : [];
         setCertificates(finalCerts);
         try { localStorage.setItem('cache_certificates', JSON.stringify(finalCerts)); } catch {}
       }
 
       if (courseRes.status === 'fulfilled' && courseRes.value.ok) {
         const data = await courseRes.value.json();
-        const finalCourses = (Array.isArray(data) && data.length > 0) ? data : DEFAULT_COURSES;
+        const finalCourses = Array.isArray(data) ? data : [];
         setCourses(finalCourses);
         try { localStorage.setItem('cache_courses', JSON.stringify(finalCourses)); } catch {}
       }
