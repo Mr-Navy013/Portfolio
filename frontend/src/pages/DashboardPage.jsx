@@ -3,7 +3,7 @@ import {
   User, Code, GraduationCap, Briefcase, Award, Mail, 
   LogOut, Upload, Plus, 
   Trash2, Edit, Save, ShieldCheck, CheckCircle, ExternalLink, X, FileText, Bell,
-  Download, Menu, Eye, EyeOff, Check, MapPin
+  Download, Menu, Eye, EyeOff, Check, MapPin, AlertCircle
 } from 'lucide-react';
 import { Linkedin, Github, Instagram, Facebook } from '../components/BrandIcons';
 import '../styles/dashboard.css';
@@ -360,7 +360,21 @@ const getDisplayFileName = (file) => {
 
 const DragDropUpload = ({ onFileSelect, accept, currentFile, placeholder, required = false }) => {
   const [isDragging, setIsDragging] = useState(false);
+  const [sizeError, setSizeError] = useState('');
   const fileInputRef = useRef(null);
+
+  const validateAndSelectFile = (file) => {
+    if (!file) return;
+    const MAX_SIZE_BYTES = 1 * 1024 * 1024; // 1MB Max
+    if (file.size > MAX_SIZE_BYTES) {
+      const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+      setSizeError(`File size (${sizeMB} MB) exceeds 1MB limit! Please compress or reduce the file size below 1MB to upload.`);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+    setSizeError('');
+    onFileSelect(file);
+  };
 
   const handleDragOver = (e) => {
     e.preventDefault();
@@ -376,7 +390,7 @@ const DragDropUpload = ({ onFileSelect, accept, currentFile, placeholder, requir
     e.preventDefault();
     setIsDragging(false);
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      onFileSelect(e.dataTransfer.files[0]);
+      validateAndSelectFile(e.dataTransfer.files[0]);
     }
   };
 
@@ -394,11 +408,11 @@ const DragDropUpload = ({ onFileSelect, accept, currentFile, placeholder, requir
         onDrop={handleDrop}
         onClick={handleClick}
         style={{
-          border: isDragging ? '2px solid var(--accent-green)' : '1px dashed var(--glass-border)',
+          border: isDragging ? '2px solid var(--accent-green)' : (sizeError ? '1px dashed #ff5252' : '1px dashed var(--glass-border)'),
           borderRadius: '12px',
           padding: '1.25rem 0.75rem',
           textAlign: 'center',
-          background: isDragging ? 'rgba(0, 255, 136, 0.08)' : 'rgba(255, 255, 255, 0.02)',
+          background: isDragging ? 'rgba(0, 255, 136, 0.08)' : (sizeError ? 'rgba(255, 82, 82, 0.06)' : 'rgba(255, 255, 255, 0.02)'),
           cursor: 'pointer',
           transition: 'var(--transition-smooth)',
           display: 'flex',
@@ -423,12 +437,12 @@ const DragDropUpload = ({ onFileSelect, accept, currentFile, placeholder, requir
           style={{ display: 'none' }}
           onChange={(e) => {
             if (e.target.files && e.target.files.length > 0) {
-              onFileSelect(e.target.files[0]);
+              validateAndSelectFile(e.target.files[0]);
             }
           }}
           required={required && !currentFile}
         />
-        <Upload size={24} style={{ color: isDragging ? 'var(--accent-green)' : 'rgba(255,255,255,0.4)', transition: 'color 0.2s', flexShrink: 0 }} />
+        <Upload size={24} style={{ color: isDragging ? 'var(--accent-green)' : (sizeError ? '#ff5252' : 'rgba(255,255,255,0.4)'), transition: 'color 0.2s', flexShrink: 0 }} />
         <span style={{ 
           fontSize: '0.85rem', 
           color: '#fff', 
@@ -454,17 +468,39 @@ const DragDropUpload = ({ onFileSelect, accept, currentFile, placeholder, requir
               whiteSpace: 'normal',
               wordBreak: 'break-word',
               display: 'inline-block'
-            }}>Selected: {getDisplayFileName(currentFile)}</span>
+            }}>
+              Selected: {getDisplayFileName(currentFile)} {currentFile?.size ? `(${(currentFile.size / (1024 * 1024)).toFixed(2)} MB)` : ''}
+            </span>
           ) : (
             placeholder || 'Drag & drop file here or click to upload'
           )}
         </span>
-        <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', textAlign: 'center', lineHeight: 1.3, maxWidth: '100%', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
+        <span style={{ fontSize: '0.72rem', color: sizeError ? '#ff5252' : 'var(--text-secondary)', textAlign: 'center', lineHeight: 1.3, maxWidth: '100%', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
           {accept?.includes('pdf')
-            ? 'Accepted: PDF/Docs/Images | Max size: 10MB (Images compressed automatically)'
-            : 'Accepted: Images | Max size: 15MB (Compressed automatically)'}
+            ? 'Accepted: PDF / Docs / Images | Max size: 1MB (Max 1024 KB)'
+            : 'Accepted: Images | Max size: 1MB (Max 1024 KB)'}
         </span>
       </div>
+
+      {sizeError && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.4rem',
+          padding: '0.45rem 0.65rem',
+          borderRadius: '8px',
+          background: 'rgba(255, 82, 82, 0.12)',
+          border: '1px solid rgba(255, 82, 82, 0.35)',
+          color: '#ff5252',
+          fontSize: '0.75rem',
+          marginTop: '0.35rem',
+          marginBottom: '0.35rem',
+          lineHeight: 1.35
+        }}>
+          <AlertCircle size={15} style={{ flexShrink: 0 }} />
+          <span>{sizeError}</span>
+        </div>
+      )}
 
       {currentFile && (
         <button
@@ -472,6 +508,7 @@ const DragDropUpload = ({ onFileSelect, accept, currentFile, placeholder, requir
           onClick={(e) => {
             e.stopPropagation();
             onFileSelect(null);
+            setSizeError('');
             if (fileInputRef.current) fileInputRef.current.value = '';
           }}
           style={{
@@ -2001,6 +2038,11 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
 
   const handleUploadAvatar = async () => {
     if (!avatarFile) return;
+    if (avatarFile.size > 1 * 1024 * 1024) {
+      const sizeMB = (avatarFile.size / (1024 * 1024)).toFixed(2);
+      showStatus(`Profile picture size (${sizeMB} MB) exceeds 1MB limit! Please compress or reduce image size below 1MB.`, true);
+      return;
+    }
 
     setLoading(true);
     setUploadingType('avatar');
@@ -2043,8 +2085,9 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
 
   const handleUploadResume = async () => {
     if (!resumeFile) return;
-    if (resumeFile.size > 10 * 1024 * 1024) {
-      showStatus('Resume file size is too large! Please choose a file smaller than 10MB.', true);
+    if (resumeFile.size > 1 * 1024 * 1024) {
+      const sizeMB = (resumeFile.size / (1024 * 1024)).toFixed(2);
+      showStatus(`Resume file size (${sizeMB} MB) exceeds 1MB limit! Please compress or reduce file size below 1MB.`, true);
       return;
     }
 

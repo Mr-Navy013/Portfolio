@@ -87,6 +87,7 @@ const storage = multer.memoryStorage();
 
 const upload = multer({
   storage: storage,
+  limits: { fileSize: 1 * 1024 * 1024 }, // Max 1MB
   fileFilter: (req, file, cb) => {
     const certFields = [
       'certificate_10th', 'certificate_12th', 'marksheet_12th',
@@ -2020,6 +2021,17 @@ app.post('/api/document-requests/verify', async (req, res) => {
 
 // Global Error Handler Middleware to prevent crashes
 app.use((err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ 
+        message: 'File size exceeds maximum limit of 1MB! Please compress or reduce your file size below 1MB.' 
+      });
+    }
+    return res.status(400).json({ message: `Upload error: ${err.message}` });
+  }
+  if (err && err.message && (err.message.includes('allowed') || err.message.includes('File'))) {
+    return res.status(400).json({ message: err.message });
+  }
   console.error('[UNHANDLED ROUTE ERROR]', err.message);
   res.status(500).json({ 
     message: err.message || 'An unhandled internal server error occurred.' 
