@@ -430,10 +430,67 @@
   display: flex;
   gap: 1rem;
   flex-wrap: wrap;
+  align-items: center;
 }
 
 .pf-cta-btn {
   padding: 0.85rem 2rem !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.5rem !important;
+  box-sizing: border-box !important;
+}
+
+@media (max-width: 640px) {
+  .pf-hero-cta {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 0.6rem !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .pf-hero-cta .pf-cta-btn {
+    flex: 1 1 0% !important;
+    min-width: 0 !important;
+    padding: 0.65rem 0.5rem !important;
+    font-size: 0.82rem !important;
+    white-space: nowrap !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.35rem !important;
+    border-radius: 10px !important;
+    box-sizing: border-box !important;
+    text-align: center !important;
+  }
+
+  .pf-hero-cta .pf-cta-btn svg {
+    width: 15px !important;
+    height: 15px !important;
+    flex-shrink: 0 !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .pf-hero-cta {
+    gap: 0.4rem !important;
+  }
+
+  .pf-hero-cta .pf-cta-btn {
+    padding: 0.55rem 0.3rem !important;
+    font-size: 0.76rem !important;
+    gap: 0.25rem !important;
+  }
+
+  .pf-hero-cta .pf-cta-btn svg {
+    width: 13px !important;
+    height: 13px !important;
+  }
 }
 
 /* Avatar col */

@@ -28,8 +28,8 @@ function App() {
     bio: "",
     profile_picture: "/uploads/profile_picture-1782366940013-212164627.jpg",
     availability: "Available for Work",
-    linkedin: "",
-    github: "",
+    linkedin: "https://www.linkedin.com/in/navycut",
+    github: "https://github.com/Mr-Navy013",
     instagram: "",
     facebook: "",
     resume_url: null

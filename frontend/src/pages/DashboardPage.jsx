@@ -3427,8 +3427,34 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                       placeholder="Drag & drop resume PDF or click to select"
                     />
                     {profile?.resume_url && (
-                      <div style={{ fontSize: '0.85rem', color: (profile.is_resume_public !== 0 && profile.is_resume_public !== false) ? 'var(--accent-green)' : '#ffaa00', marginBottom: '0.5rem' }}>
-                        Status: {(profile.is_resume_public !== 0 && profile.is_resume_public !== false) ? 'Public (Visible to viewers)' : 'Private (Only you can see)'}
+                      <div style={{ fontSize: '0.85rem', color: (profile.is_resume_public !== 0 && profile.is_resume_public !== false) ? 'var(--accent-green)' : '#ffaa00', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                        <span>Status: {(profile.is_resume_public !== 0 && profile.is_resume_public !== false) ? 'Public (Visible to viewers)' : 'Private (Only you can see)'}</span>
+                        <a 
+                          href={`${API_BASE}/documents/download?type=resume&t=${Date.now()}`} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          title="View current uploaded resume PDF"
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '0.25rem 0.5rem',
+                            borderRadius: '6px',
+                            background: 'rgba(0, 255, 136, 0.12)',
+                            border: '1px solid rgba(0, 255, 136, 0.35)',
+                            color: '#00ff88',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            textDecoration: 'none',
+                            fontSize: '0.8rem',
+                            gap: '0.3rem'
+                          }}
+                          onClick={(e) => {
+                            e.currentTarget.href = `${API_BASE}/documents/download?type=resume&t=${Date.now()}`;
+                          }}
+                        >
+                          <Eye size={15} />
+                        </a>
                       </div>
                     )}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', alignItems: 'center' }}>
@@ -3442,18 +3468,6 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                       </button>
                       {profile?.resume_url && (
                         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-                          <a 
-                            href={`${API_BASE}/documents/download?type=resume&t=${Date.now()}`} 
-                            target="_blank" 
-                            rel="noopener noreferrer" 
-                            className="glass-btn" 
-                            style={{ padding: '0.4rem 1.25rem', fontSize: '0.85rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
-                            onClick={(e) => {
-                              e.currentTarget.href = `${API_BASE}/documents/download?type=resume&t=${Date.now()}`;
-                            }}
-                          >
-                            <Eye size={14} /> View Current Resume
-                          </a>
                           <button 
                             onClick={handleToggleResumeVisibility} 
                             disabled={loading} 

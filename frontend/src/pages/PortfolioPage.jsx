@@ -738,8 +738,8 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, authToke
   const isOwnerView = Boolean(authToken) || Boolean(localStorage.getItem('ownerToken')) || cameFrom === 'dashboard' || localStorage.getItem('previousPage') === 'dashboard';
   const isAvatarPublic = profile?.is_avatar_public !== 0 && profile?.is_avatar_public !== false;
   const avatar = (profile?.profile_picture && isAvatarPublic) ? resolveFileUrl(profile.profile_picture) : null;
-  const linkedin = profile?.linkedin ? profile.linkedin.trim() : '';
-  const github = profile?.github ? profile.github.trim() : '';
+  const linkedin = (profile?.linkedin && profile.linkedin.trim()) ? profile.linkedin.trim() : 'https://www.linkedin.com/in/navycut';
+  const github = (profile?.github && profile.github.trim()) ? profile.github.trim() : 'https://github.com/Mr-Navy013';
   const instagram = profile?.instagram ? profile.instagram.trim() : '';
   const facebook = profile?.facebook ? profile.facebook.trim() : '';
   const isResumePublic = profile?.is_resume_public !== 0 && profile?.is_resume_public !== false;
@@ -1039,7 +1039,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, authToke
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="glass-btn-secondary pf-cta-btn"
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', textDecoration: 'none' }}
+                  style={{ cursor: 'pointer', textDecoration: 'none' }}
                   onClick={(e) => {
                     e.currentTarget.href = `${API_BASE}/documents/download?type=resume&t=${Date.now()}`;
                   }}
