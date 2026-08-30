@@ -945,7 +945,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, authToke
                   {l.href === '#courses' && <GraduationCap size={18} className="text-green" />}
                   {l.href === '#projects' && <Code size={18} className="text-green" />}
                   {l.href === '#experience' && <Briefcase size={18} className="text-green" />}
-                  {l.href === '#certs' && <Award size={18} className="text-green" />}
+                  {(l.href === '#certificates' || l.href === '#certs') && <Award size={18} className="text-green" />}
                   {l.href === '#contact' && <Mail size={18} className="text-green" />}
                   {l.label}
                 </a>
