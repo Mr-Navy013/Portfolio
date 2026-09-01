@@ -4523,7 +4523,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
                     <div key={course.id} className="glass-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', borderLeft: '3px solid var(--accent-green)', padding: '1rem', gap: '0.75rem' }}>
                       <div>
                         <h4 style={{ fontWeight: 700, margin: 0, color: '#fff', fontSize: '1rem' }}>{course.name}</h4>
-                        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.5rem', lineHeight: '1.4', textAlign: 'center' }}>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.5rem', lineHeight: '1.4', textAlign: 'justify' }}>
                           {course.description}
                         </p>
                       </div>

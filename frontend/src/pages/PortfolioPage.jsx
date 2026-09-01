@@ -1281,7 +1281,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, authToke
                       display: '-webkit-box',
                       WebkitLineClamp: 2,
                       WebkitBoxOrient: 'vertical',
-                      textAlign: 'center'
+                      textAlign: 'justify'
                     }}
                   >
                     {course.description}
@@ -2515,7 +2515,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, authToke
             </div>
 
             <div style={{ maxHeight: '350px', overflowY: 'auto', paddingRight: '0.5rem', marginTop: '0.5rem' }}>
-              <p style={{ margin: 0, fontSize: '0.95rem', lineHeight: '1.6', color: 'var(--text-secondary)', whiteSpace: 'pre-wrap' }}>
+              <p style={{ margin: 0, fontSize: '0.95rem', lineHeight: '1.6', color: 'var(--text-secondary)', whiteSpace: 'pre-wrap', textAlign: 'justify' }}>
                 {selectedCourse.description}
               </p>
             </div>
