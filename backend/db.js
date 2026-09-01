@@ -966,8 +966,9 @@ async function handleJsonQuery(sql, params = []) {
   // INSERT INTO courses
   if (sqlClean.includes('INSERT INTO courses')) {
     if (!db.courses) db.courses = [];
+    const maxId = db.courses.reduce((max, c) => Math.max(max, Number(c.id) || 0), 0);
     const newCourse = {
-      id: db.courses.length + 1,
+      id: maxId + 1,
       name: params[0],
       description: params[1]
     };

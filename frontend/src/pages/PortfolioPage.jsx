@@ -72,6 +72,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, authToke
   const [experience, setExperience] = useState(() => getCached('cache_experience', []));
   const [certificates, setCertificates] = useState(() => getCached('cache_certificates', []));
   const [courses, setCourses] = useState(() => getCached('cache_courses', []));
+  const [showAllCourses, setShowAllCourses] = useState(false);
   const [selectedExperience, setSelectedExperience] = useState(null);
   const [selectedProject, setSelectedProject] = useState(null);
   const [selectedCourse, setSelectedCourse] = useState(null);
@@ -1236,46 +1237,61 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, authToke
 
       {/* ── COURSES ── */}
       <section id="courses" className="section-wrapper">
-        <h2 className="section-title"><span className="text-green">Courses</span></h2>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+          <h2 className="section-title" style={{ margin: 0 }}><span className="text-green">Courses</span></h2>
+          {courses.length > 3 && (
+            <button 
+              onClick={() => setShowAllCourses(prev => !prev)}
+              className="glass-btn"
+              style={{ padding: '0.4rem 1rem', fontSize: '0.85rem', cursor: 'pointer' }}
+            >
+              {showAllCourses ? 'Back' : 'View All'}
+            </button>
+          )}
+        </div>
+
         {courses.length > 0 ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
-            {courses.map(course => (
+          <div className="pf-courses-grid">
+            {(showAllCourses ? courses : courses.slice(0, 3)).map(course => (
               <div 
                 key={course.id} 
                 className="glass-panel pf-course-card" 
                 style={{ 
-                  padding: '1.5rem', 
+                  padding: '1.4rem', 
                   borderLeft: '3px solid var(--accent-green)', 
                   display: 'flex', 
                   flexDirection: 'column', 
-                  gap: '0.5rem', 
-                  transition: 'transform 0.25s ease',
+                  justifyContent: 'space-between',
+                  gap: '0.75rem', 
+                  transition: 'all 0.25s ease',
                   cursor: 'pointer'
                 }}
                 onClick={() => setSelectedCourse(course)}
               >
-                <h3 style={{ margin: 0, fontWeight: 700, fontSize: '1.1rem', color: '#fff' }}>{course.name}</h3>
-                <p 
-                  style={{ 
-                    margin: 0, 
-                    fontSize: '0.9rem', 
-                    color: 'var(--text-secondary)', 
-                    lineHeight: '1.5',
-                    height: '3em',
-                    overflow: 'hidden',
-                    display: '-webkit-box',
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: 'vertical'
-                  }}
-                >
-                  {course.description}
-                </p>
+                <div>
+                  <h3 style={{ margin: 0, fontWeight: 700, fontSize: '1.05rem', color: '#fff' }}>{course.name}</h3>
+                  <p 
+                    style={{ 
+                      margin: '0.5rem 0 0 0', 
+                      fontSize: '0.86rem', 
+                      color: 'var(--text-secondary)', 
+                      lineHeight: '1.5',
+                      height: '3em',
+                      overflow: 'hidden',
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical'
+                    }}
+                  >
+                    {course.description}
+                  </p>
+                </div>
                 <span 
                   style={{ 
                     color: 'var(--accent-green)', 
                     fontSize: '0.8rem', 
                     fontWeight: 600, 
-                    marginTop: '0.2rem',
+                    display: 'inline-block',
                     cursor: 'pointer' 
                   }}
                 >
@@ -1296,27 +1312,64 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, authToke
       {/* ── PROJECTS ── */}
       <section id="projects" className="section-wrapper">
         <style>{`
+          /* Courses Responsive Grid */
+          .pf-courses-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.25rem;
+          }
+          @media (max-width: 768px) {
+            .pf-courses-grid {
+              grid-template-columns: repeat(2, 1fr);
+              gap: 0.85rem;
+            }
+          }
+          @media (max-width: 480px) {
+            .pf-courses-grid {
+              grid-template-columns: repeat(2, 1fr);
+              gap: 0.5rem;
+            }
+            .pf-course-card {
+              padding: 0.85rem 0.75rem !important;
+            }
+            .pf-course-card h3 {
+              font-size: 0.88rem !important;
+            }
+            .pf-course-card p {
+              font-size: 0.75rem !important;
+            }
+          }
+          .pf-course-card {
+            transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease !important;
+          }
+          .pf-course-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(0, 255, 136, 0.35);
+            box-shadow: 0 8px 24px rgba(0, 255, 136, 0.1);
+          }
+
+          /* Projects Cards Compact Height & Spacing */
           .pf-project-card {
-            max-height: 380px !important;
+            max-height: 320px !important;
           }
           .pf-project-card .pf-project-thumb {
-            height: 140px !important;
+            height: 115px !important;
           }
           .pf-project-card .pf-project-thumb-placeholder {
-            height: 120px !important;
+            height: 110px !important;
           }
           .pf-project-card .pf-project-body {
-            padding: 1rem !important;
-            gap: 0.6rem !important;
+            padding: 0.85rem 1rem !important;
+            gap: 0.45rem !important;
           }
           .pf-project-card .pf-project-summary {
-            font-size: 0.82rem !important;
+            font-size: 0.8rem !important;
             line-height: 1.35 !important;
-            height: 52px !important;
+            height: 36px !important;
             overflow: hidden;
             text-overflow: ellipsis;
             display: -webkit-box;
-            -webkit-line-clamp: 3;
+            -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
           }
           .pf-projects-all-grid {
@@ -1335,6 +1388,8 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, authToke
             .pf-projects-all-grid { grid-template-columns: repeat(5, 1fr); }
           }
           .pf-project-card-small {
+            height: 280px !important;
+            max-height: 280px !important;
             transform: none !important;
             box-shadow: none !important;
             border: 1px solid var(--glass-border) !important;
@@ -1346,33 +1401,40 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, authToke
             box-shadow: 0 8px 24px rgba(0, 255, 136, 0.08) !important;
           }
           .pf-project-card-small .pf-project-image-wrap {
-            height: 110px !important;
+            height: 100px !important;
+          }
+          .pf-project-card-small .pf-project-thumb {
+            height: 100px !important;
+          }
+          .pf-project-card-small .pf-project-thumb-placeholder {
+            height: 100px !important;
           }
           .pf-project-card-small .pf-project-title {
-            font-size: 0.9rem !important;
+            font-size: 0.95rem !important;
+            margin: 0 0 0.25rem 0 !important;
           }
           .pf-project-card-small .pf-project-summary {
-            font-size: 0.72rem !important;
-            line-height: 1.3 !important;
-            height: 48px !important;
+            font-size: 0.76rem !important;
+            line-height: 1.35 !important;
+            height: 34px !important;
             overflow: hidden;
             text-overflow: ellipsis;
             display: -webkit-box;
-            -webkit-line-clamp: 3;
+            -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
           }
           .pf-project-card-small .pf-project-body {
-            padding: 0.75rem !important;
-            gap: 0.5rem !important;
+            padding: 0.65rem 0.75rem !important;
+            gap: 0.35rem !important;
           }
           .pf-project-card-small .pf-project-link-btn {
-            padding: 0.35rem 0.6rem !important;
-            font-size: 0.7rem !important;
+            padding: 0.35rem 0.5rem !important;
+            font-size: 0.72rem !important;
             gap: 0.25rem !important;
           }
           .pf-project-card-small .pf-project-undeployed {
-            font-size: 0.7rem !important;
-            padding: 0.35rem 0.6rem !important;
+            font-size: 0.72rem !important;
+            padding: 0.35rem 0.5rem !important;
           }
           /* Certificate smaller styling */
           .pf-cert-card {
@@ -1416,7 +1478,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, authToke
                   width: '100%', 
                   overflow: 'hidden', 
                   margin: '1.5rem 0', 
-                  minHeight: '390px',
+                  minHeight: '340px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -1451,7 +1513,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, authToke
                           width: 'var(--proj-card-width)',
                           minWidth: 'var(--proj-card-width)',
                           maxWidth: 'var(--proj-card-width)',
-                          height: '345px',
+                          height: '305px',
                           transform: isActive ? 'scale(1.06)' : 'scale(0.92)',
                           border: isActive ? '1px solid var(--accent-green)' : '1px solid var(--glass-border)',
                           boxShadow: isActive ? '0 10px 30px rgba(0, 255, 136, 0.15)' : 'none',
@@ -1473,32 +1535,32 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, authToke
                             />
                           ) : (
                             <div className="pf-project-thumb-placeholder">
-                              <Code size={40} style={{ color: 'rgba(0,255,136,0.35)' }} />
+                              <Code size={36} style={{ color: 'rgba(0,255,136,0.35)' }} />
                               <span className="pf-project-thumb-label">Preview Unavailable</span>
                             </div>
                           )}
                         </div>
-                        <div className="pf-project-body" style={{ padding: '1.2rem' }}>
+                        <div className="pf-project-body" style={{ padding: '0.85rem 1rem' }}>
                           <div style={{ display: 'flex', flexDirection: 'column' }}>
-                            <h3 className="pf-project-title" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: '0 0 0.4rem 0', fontSize: '1.1rem' }}>{proj.title}</h3>
-                            <p className="pf-project-summary" style={{ height: '3em', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', fontSize: '0.82rem', lineHeight: '1.5', margin: 0 }}>{proj.summary}</p>
+                            <h3 className="pf-project-title" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: '0 0 0.3rem 0', fontSize: '1.05rem' }}>{proj.title}</h3>
+                            <p className="pf-project-summary" style={{ height: '2.8em', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', fontSize: '0.8rem', lineHeight: '1.4', margin: 0 }}>{proj.summary}</p>
                             <span 
                               onClick={(e) => { e.stopPropagation(); setSelectedProject(proj); }} 
-                              style={{ color: 'var(--accent-green)', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600, marginTop: '0.3rem', display: 'inline-block' }}
+                              style={{ color: 'var(--accent-green)', cursor: 'pointer', fontSize: '0.76rem', fontWeight: 600, marginTop: '0.2rem', display: 'inline-block' }}
                             >
                               Read More...
                             </span>
                           </div>
-                          <div className="pf-project-links" style={{ gap: '0.6rem' }}>
+                          <div className="pf-project-links" style={{ gap: '0.5rem' }}>
                             <a 
                               href={proj.repo_link} 
                               target="_blank" 
                               rel="noreferrer" 
                               className="glass-btn-secondary pf-project-link-btn"
                               onClick={(e) => e.stopPropagation()}
-                              style={{ padding: '0.4rem', fontSize: '0.78rem' }}
+                              style={{ padding: '0.35rem 0.5rem', fontSize: '0.74rem' }}
                             >
-                              <Github size={15} /> Source
+                              <Github size={13} /> Source
                             </a>
                             {proj.is_deployed && proj.live_link ? (
                               <a 
@@ -1507,12 +1569,12 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, authToke
                                 rel="noreferrer" 
                                 className="glass-btn pf-project-link-btn"
                                 onClick={(e) => e.stopPropagation()}
-                                style={{ padding: '0.4rem', fontSize: '0.78rem' }}
+                                style={{ padding: '0.35rem 0.5rem', fontSize: '0.74rem' }}
                               >
-                                <ExternalLink size={15} /> Live
+                                <ExternalLink size={13} /> Live
                               </a>
                             ) : (
-                              <div className="pf-project-undeployed" style={{ padding: '0.4rem', fontSize: '0.78rem' }}>Undeployed</div>
+                              <div className="pf-project-undeployed" style={{ padding: '0.35rem 0.5rem', fontSize: '0.74rem' }}>Undeployed</div>
                             )}
                           </div>
                         </div>
@@ -1544,7 +1606,7 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, authToke
           ) : (
             <div className="pf-projects-all-grid">
               {projects.map(proj => (
-                <div key={proj.id} className="glass-panel pf-project-card pf-project-card-small" style={{ display: 'flex', flexDirection: 'column', height: '390px' }}>
+                <div key={proj.id} className="glass-panel pf-project-card pf-project-card-small" style={{ display: 'flex', flexDirection: 'column', height: '280px' }}>
                   <div className="pf-project-image-wrap">
                     {proj.thumbnail ? (
                       <img
@@ -1554,29 +1616,29 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, authToke
                       />
                     ) : (
                       <div className="pf-project-thumb-placeholder">
-                        <Code size={30} style={{ color: 'rgba(0,255,136,0.35)' }} />
+                        <Code size={26} style={{ color: 'rgba(0,255,136,0.35)' }} />
                         <span className="pf-project-thumb-label">Preview Unavailable</span>
                       </div>
                     )}
                   </div>
                   <div className="pf-project-body">
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      <h3 className="pf-project-title" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: '0 0 0.5rem 0' }}>{proj.title}</h3>
-                      <p className="pf-project-summary" style={{ height: '4.5em', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', fontSize: '0.88rem', lineHeight: '1.5', margin: 0 }}>{proj.summary}</p>
+                      <h3 className="pf-project-title" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: '0 0 0.25rem 0' }}>{proj.title}</h3>
+                      <p className="pf-project-summary" style={{ height: '2.8em', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', fontSize: '0.8rem', lineHeight: '1.4', margin: 0 }}>{proj.summary}</p>
                       <span 
                         onClick={(e) => { e.stopPropagation(); setSelectedProject(proj); }} 
-                        style={{ color: 'var(--accent-green)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, marginTop: '0.35rem', display: 'inline-block' }}
+                        style={{ color: 'var(--accent-green)', cursor: 'pointer', fontSize: '0.76rem', fontWeight: 600, marginTop: '0.2rem', display: 'inline-block' }}
                       >
                         Read More...
                       </span>
                     </div>
                     <div className="pf-project-links">
                       <a href={proj.repo_link} target="_blank" rel="noreferrer" className="glass-btn-secondary pf-project-link-btn">
-                        <Github size={14} /> Source
+                        <Github size={13} /> Source
                       </a>
                       {proj.is_deployed && proj.live_link ? (
                         <a href={proj.live_link} target="_blank" rel="noreferrer" className="glass-btn pf-project-link-btn">
-                          <ExternalLink size={14} /> Live
+                          <ExternalLink size={13} /> Live
                         </a>
                       ) : (
                         <div className="pf-project-undeployed">Undeployed</div>

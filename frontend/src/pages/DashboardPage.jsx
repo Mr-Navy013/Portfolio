@@ -1102,6 +1102,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
   const [showCourseModal, setShowCourseModal] = useState(false);
   const [courseName, setCourseName] = useState('');
   const [courseDesc, setCourseDesc] = useState('');
+  const [courseSubmitting, setCourseSubmitting] = useState(false);
 
   // Project dialog modal
   const [showProjModal, setShowProjModal] = useState(false);
@@ -2470,13 +2471,14 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
   const handleOpenCourseForm = (course = null) => {
     if (course) {
       setEditingCourse(course);
-      setCourseName(course.name);
-      setCourseDesc(course.description);
+      setCourseName(course.name || '');
+      setCourseDesc(course.description || '');
     } else {
       setEditingCourse(null);
       setCourseName('');
       setCourseDesc('');
     }
+    setCourseSubmitting(false);
     setShowCourseModal(true);
   };
 
@@ -2706,10 +2708,12 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
 
   const handleAddCourse = async (e) => {
     e.preventDefault();
-    if (!courseName || !courseDesc) {
+    if (courseSubmitting || loading) return;
+    if (!courseName.trim() || !courseDesc.trim()) {
       showStatus('Course Name and Description are required!', true);
       return;
     }
+    setCourseSubmitting(true);
     setLoading(true);
     try {
       const url = editingCourse ? `${API_BASE}/courses/${editingCourse.id}` : `${API_BASE}/courses`;
@@ -2721,7 +2725,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${authToken}`
         },
-        body: JSON.stringify({ name: courseName, description: courseDesc })
+        body: JSON.stringify({ name: courseName.trim(), description: courseDesc.trim() })
       });
       if (res.ok) {
         showStatus(editingCourse ? 'Course successfully updated.' : 'Course successfully added.');
@@ -2729,7 +2733,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
         setCourseDesc('');
         setShowCourseModal(false);
         setEditingCourse(null);
-        fetchDashboardCollections();
+        await fetchDashboardCollections();
       } else {
         const err = await res.json();
         showStatus(err.message || 'Failed to add course.', true);
@@ -2738,6 +2742,7 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
       showStatus('Failed to add course due to network issues.', true);
     } finally {
       setLoading(false);
+      setCourseSubmitting(false);
     }
   };
 
@@ -5882,7 +5887,19 @@ function DashboardPage({ navigateTo, authToken, onLogout, profile, refreshProfil
 
             <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
               <button type="button" onClick={() => setShowCourseModal(false)} className="glass-btn-secondary" style={{ flex: 1, justifyContent: 'center' }}>Cancel</button>
-              <button type="submit" className="glass-btn" style={{ flex: 1, justifyContent: 'center' }}>Save Course</button>
+              <button 
+                type="submit" 
+                className="glass-btn" 
+                disabled={courseSubmitting || loading}
+                style={{ 
+                  flex: 1, 
+                  justifyContent: 'center',
+                  opacity: (courseSubmitting || loading) ? 0.65 : 1,
+                  cursor: (courseSubmitting || loading) ? 'not-allowed' : 'pointer'
+                }}
+              >
+                {courseSubmitting ? 'Saving...' : (editingCourse ? 'Update Course' : 'Save Course')}
+              </button>
             </div>
           </form>
         </div>
