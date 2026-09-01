@@ -1280,7 +1280,8 @@ function PortfolioPage({ navigateTo, profile, refreshProfile, cameFrom, authToke
                       overflow: 'hidden',
                       display: '-webkit-box',
                       WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical'
+                      WebkitBoxOrient: 'vertical',
+                      textAlign: 'center'
                     }}
                   >
                     {course.description}
